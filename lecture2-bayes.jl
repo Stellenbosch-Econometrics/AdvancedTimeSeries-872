@@ -618,7 +618,7 @@ $$\begin{align*}
 """
 
 # ╔═╡ 92a4aa17-2e2d-45c2-a9a2-803d389077d5
-md" ## Coin toss with `Turing.jl` "
+md" ## Coin toss with `Turing.jl` 🤓"
 
 # ╔═╡ 0a3ed179-b60b-4740-ab73-b176bba08d84
 md" In this section I will construct a coin tossing model in `Turing.jl`. You don't need to worry for now what this package is, we will devote an entire session to it later in the course. However, let us just run the example and I will explain what is going on in class. "

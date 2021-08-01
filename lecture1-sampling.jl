@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, Statistics, StatsPlots
+using BenchmarkTools, Distributions, KernelDensity, LaTeXStrings, LinearAlgebra, Plots, PlutoUI, StatsBase, Statistics, StatsPlots
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -216,20 +216,118 @@ countmap( [bernoulli(p₁) for _ in 1:1000] ) # 10000 iterations, count how many
 # ╔═╡ bda26511-d961-413a-8389-ad5be48f79fe
 md" **Note**: the output for this function is `true` or `false` instead of `heads` or `tails` in the weighted coin example. "
 
+# ╔═╡ 4c6dd3ba-268e-4fad-b8d1-4bc78f24a46f
+md" A Bernoulli random variable model for a weighted coin, for example, will take value 1 with probability $p$ and 0 with probability $(1- p)$. Our Bernoulli function that we wrote provides `true` and `false` values. Let us sample some Bernoulli random variates. "
+
+# ╔═╡ c817e5e6-4cb4-4392-8f7e-e1a4bb009537
+flips = [Int(bernoulli(p₁)) for _ in 1:100];
+
+# ╔═╡ 46bb14fb-62b4-402b-8a0b-8096bd2a6289
+mean(flips) 
+
+# ╔═╡ b9cdd1c8-2f8f-48c5-846d-e40cedc949b7
+md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. "
+
 # ╔═╡ 370a4ccb-fdb6-4e3f-8004-d6f88f025945
 md" # Common probability distributions "
 
-# ╔═╡ 03c0d48e-1b45-4fa3-b4b1-bc3555b2e435
-md" ## Discrete uniform"
+# ╔═╡ c6d85f60-c820-4269-a6b4-57483de13bd8
+md"""
+In this section I will provide some basic properties of common probability distributions that are often used in Bayesian econometrics. It is worthwhile to become comfortable with these distributions and their properties as they will appear frequently throughout the course. Invest some time to get to know distributions well, it pays off in the end. 
+"""
 
 # ╔═╡ 601f3dfa-4ea5-4418-aeba-5ab1203f8753
 md" ## Bernoulli "
 
+# ╔═╡ ce3b13a8-38e8-449a-8b11-7a61b8632fc9
+md" As we have stated, the Bernoulli distribution describes a binary event of a successful experiment. We usually represent 0 as failure and 1 as success, so the result of a Bernoulli distribution is a binary variable. The Bernoulli distribution is widely used to model discrete binary outcomes in which there are only two possible results."
+
+# ╔═╡ ed8b654f-f964-4d8f-a998-1032c197f014
+begin
+	plot(Bernoulli(0.5),
+	        markershape=:circle,
+	        label=L"p=0.5",
+	        alpha=0.7,
+	        xlabel=L"\theta",
+	        ylabel="Mass",
+	        ylim=(0, 1), 
+			lw = 2
+	    )
+	plot!(Bernoulli(0.2),
+	        markershape=:star,
+	        label=L"p=0.2",
+	        alpha=0.7, 
+			lw = 2, 
+			color = :red)
+end
+
+# ╔═╡ c361ae07-61af-44bb-a5ee-be991390fa88
+md" We might want to know what the mean (or expected value) of the process is,"
+
 # ╔═╡ 0a98082a-94c3-41d8-a129-4f42e217bcd1
 md" ### Make Bernoulli a type "
 
+# ╔═╡ 5b38607d-6cfc-4fa0-b19f-5bea8ad38b39
+md" This section is a bit more advanced so you can probably just skim through it on first reading. It relates more to Julia programming than other languages, but it is good knowledge to have. 
+
+Currently we need one function for sampling from a Bernoulli random variable, a different function to calculate the mean and a different function for the standard deviation, etc. 
+
+In mathematical terms we have this Bernoulli random variable and we are calculating properties of the particular concept. We can do the same thing computationally by creating a new object that represents the Bernoulli random variable. "
+
+# ╔═╡ 5aed1914-6960-41c8-91d4-09614766583d
+struct Bernoulli_New
+	p::Float64
+end
+
+# ╔═╡ 5a358aa5-bb4b-4b48-9d46-8628a9722023
+md" We want to be able to sample from this using the `rand()` function and also take its mean. In order to do this we will extend the rand function from the `Base` library of Julia and the mean function from the Statistics library. 
+
+Note that we are adding methods to these particular functions. "
+
+# ╔═╡ 2afe4168-640f-4b7e-ab28-7ae22fba16c9
+Base.rand(X::Bernoulli_New) = Int( rand() < X.p ) # Add method to the rand function
+
+# ╔═╡ 198663dd-941a-4258-800f-80ad0638f884
+B = Bernoulli_New(0.25)
+
+# ╔═╡ 8893ec3a-7b9b-4887-9776-0c9c4f07cf14
+md" The object `B` represents a Bernoulli random variable with probability of success $p$. One should note that this type already exists in a package like `Distributions.jl`, so you should be careful about naming conventions. "
+
+# ╔═╡ b186f0b5-721e-4757-9a4d-a839162b22f2
+rand(B)
+
+# ╔═╡ 827e960e-057e-40ae-beeb-f3c013d9f883
+Statistics.mean(X::Bernoulli_New) = X.p
+
+# ╔═╡ 96787e59-a958-404b-b610-42a28bd0353b
+mean(B)
+
 # ╔═╡ 28578d77-1439-49cf-a9f6-120557bce924
 md" ## Binomial "
+
+# ╔═╡ b6fc9ad1-5f44-4697-be2e-407e2b9308c0
+md" The binomial distribution describes an event of the number of successes in a sequence of $n$ independent experiment(s), each asking a yes-no question with a probability of success $p$. Note that the Bernoulli distribution is a special case of the binomial distribution where the number of experiments is $1$. "
+
+# ╔═╡ 71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
+md" The binomial distribution has two parameters and its notation is $\text{Bin}(n, p)$. An example would be the number of heads in a coin flip, which we will deal with in the next lecture. "
+
+# ╔═╡ 1c20116c-339c-453c-b6d1-4ed1477fcf12
+begin
+	plot(Binomial(5, 0.5),
+	        markershape=:circle,
+	        label=L"p=0.5",
+	        alpha=0.7,
+	        xlabel=L"\theta",
+	        ylabel="Mass", 
+			lw = 2
+	    )
+	plot!(Binomial(5, 0.2),
+	        markershape=:star,
+	        label=L"p=0.2",
+	        alpha=0.7, 
+			lw = 2, 
+			color = :red)
+end
 
 # ╔═╡ 7d74a6be-4aac-4f12-9391-528f9cbf37ba
 md" ## Gaussian "
@@ -255,6 +353,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
@@ -266,6 +365,7 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 BenchmarkTools = "~1.1.1"
 Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
+LaTeXStrings = "~1.2.1"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
 StatsBase = "~0.33.9"
@@ -1358,11 +1458,30 @@ version = "0.9.1+5"
 # ╟─7f8b5d7b-25cf-4464-b01a-e9649001b1a1
 # ╠═3d1e1190-2ba6-42ad-9c5b-3c3316fd75a0
 # ╟─bda26511-d961-413a-8389-ad5be48f79fe
+# ╟─4c6dd3ba-268e-4fad-b8d1-4bc78f24a46f
+# ╠═c817e5e6-4cb4-4392-8f7e-e1a4bb009537
+# ╠═46bb14fb-62b4-402b-8a0b-8096bd2a6289
+# ╟─b9cdd1c8-2f8f-48c5-846d-e40cedc949b7
 # ╟─370a4ccb-fdb6-4e3f-8004-d6f88f025945
-# ╟─03c0d48e-1b45-4fa3-b4b1-bc3555b2e435
+# ╟─c6d85f60-c820-4269-a6b4-57483de13bd8
 # ╟─601f3dfa-4ea5-4418-aeba-5ab1203f8753
+# ╟─ce3b13a8-38e8-449a-8b11-7a61b8632fc9
+# ╠═ed8b654f-f964-4d8f-a998-1032c197f014
+# ╟─c361ae07-61af-44bb-a5ee-be991390fa88
 # ╟─0a98082a-94c3-41d8-a129-4f42e217bcd1
+# ╟─5b38607d-6cfc-4fa0-b19f-5bea8ad38b39
+# ╠═5aed1914-6960-41c8-91d4-09614766583d
+# ╟─5a358aa5-bb4b-4b48-9d46-8628a9722023
+# ╠═2afe4168-640f-4b7e-ab28-7ae22fba16c9
+# ╠═198663dd-941a-4258-800f-80ad0638f884
+# ╟─8893ec3a-7b9b-4887-9776-0c9c4f07cf14
+# ╠═b186f0b5-721e-4757-9a4d-a839162b22f2
+# ╠═827e960e-057e-40ae-beeb-f3c013d9f883
+# ╠═96787e59-a958-404b-b610-42a28bd0353b
 # ╟─28578d77-1439-49cf-a9f6-120557bce924
+# ╟─b6fc9ad1-5f44-4697-be2e-407e2b9308c0
+# ╟─71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
+# ╠═1c20116c-339c-453c-b6d1-4ed1477fcf12
 # ╟─7d74a6be-4aac-4f12-9391-528f9cbf37ba
 # ╟─823013e4-5e83-482e-9cd2-de2ec5fbce89
 # ╟─629dfcc8-83a0-4b57-afb0-c55333c1a5c1

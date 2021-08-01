@@ -69,7 +69,7 @@ html"""
 md" # Introduction "
 
 # ╔═╡ c65ae735-b404-4798-97f2-29083e7ae44c
-md" > A significant portion of the material for this tutorial is based on [Computational Thinking](https://computationalthinking.mit.edu), a live online Julia/Pluto textbook. You should check out the course for some amazing notebooks!  "
+md" > **Note:** A significant portion of the material for this lecture is based on [Computational Thinking](https://computationalthinking.mit.edu), a live online Julia/Pluto textbook. You should check out the course for some amazing notebooks!  "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
 md" In our introductory session (Lecture 0) we had a brief introduction to Julia via the QuantEcon website. In this first tutorial we will be looking at some basic ideas such as sampling and random variables. Julia is an amazing language for computational problems and is much faster than R for most practical applications in Bayesian Econometrics. You are welcome to still code in R if you wish. I will steer you in the right direction with resources from last year. However, I think it is worthwhile to learn Julia since the syntax is similar to Python and Matlab. "
@@ -93,12 +93,12 @@ md" Here are some links to useful resources for this course. I have tried to not
 md"""
 !!! note "Some cool links 😎"
 
-1. MIT (2021). [Computational Thinking](https://computationalthinking.mit.edu).
-2. QuantEcon (2021). [Quantitative Economics with Julia](https://julia.quantecon.org/).
-3. José Eduardo Storopoli (2021). [Bayesian Statistics with Julia and Turing.](https://storopoli.io/Bayesian-Julia/)
-4. Gary Koop (2021). [Bayesian Econometrics](https://sites.google.com/site/garykoop/teaching/sgpe-bayesian-econometrics).
-5. Joshua Chan (2017). [Notes on Bayesian Econometrics](https://joshuachan.org/notes_BayesMacro.html).
-6. Aki Vehtari (2020). [Bayesian Data Analysis](https://avehtari.github.io/BDA_course_Aalto/index.html). 
+1. MIT (2021). [Computational Thinking](https://computationalthinking.mit.edu). -- NB resource! Most of the lecture based on this. 
+2. QuantEcon (2021). [Quantitative Economics with Julia](https://julia.quantecon.org/). -- Important for Julia and computational work.
+3. Aki Vehtari (2020). [Bayesian Data Analysis](https://avehtari.github.io/BDA_course_Aalto/index.html). -- Important for lectures 2, 3, 4
+4. José Eduardo Storopoli (2021). [Bayesian Statistics with Julia and Turing.](https://storopoli.io/Bayesian-Julia/) -- Important for lectures 2, 3, 4, 5
+5. Gary Koop (2021). [Bayesian Econometrics](https://sites.google.com/site/garykoop/teaching/sgpe-bayesian-econometrics). -- Important for lectures 6, 7, 8
+6. Joshua Chan (2017). [Notes on Bayesian Econometrics](https://joshuachan.org/notes_BayesMacro.html). -- Important for lectures 6, 7, 8
 
 """
 
@@ -370,6 +370,124 @@ md" ## Gaussian "
 
 # ╔═╡ 37cbf7a2-6679-40a4-8085-21a4e900c59d
 md" While this section is going to be about the Gaussian distribution, we are also going to use it as a platform to discuss software engineering principles. If you don't care much for the programming side of things then you can still learn some things about the Gaussian distribution. In our third lecture we will delve into some further theorethical properties of the Gaussian distribution, so this will definitely not be the last time you encounter it. In fact, this distribution will feature in almost all our lectures so it is a good idea to introduce the concepts early and then reiterate as we move on to other topics. "
+
+# ╔═╡ f99c393f-308f-4821-8f5a-ee8ebcf5b77b
+md"""
+The two important parameters for the Gaussian distribution are the mean $\mu$ and standard deviation $\sigma$. We can sample from the Gaussian distribution with mean $0$ and variance $1$ with the `randn()` function. 
+"""
+
+# ╔═╡ 06f497e4-d1a3-4e99-86f4-f63f69920f53
+gauss = randn(10^5)
+
+# ╔═╡ 6747980b-7072-4267-84c5-a352abf4ec25
+md"""
+A Gaussian random variable is a **continuous** random variable, i.e. it has a continuous range of possible outcomes. The possible range of outcomes is called the **support** of the distribution. For a Gaussian it is the whole real line, $(-\infty, \infty)$.
+"""
+
+# ╔═╡ fe0ee6b7-9c42-41b8-929c-2dd7101490a3
+md"""
+One way to specify a continous random variable $X$ is via its **probability density function**, or **PDF**, $f_X$. The probability that $X$ lies in the interval $[a, b]$ is given by an area under the curve $f_X(x)$ from $a$ to $b$:
+
+$$\mathbb{P}(X \in [a, b]) = \int_{a}^b f_X(x) \, dx.$$
+"""
+
+# ╔═╡ 7550ccac-ca63-4f96-b576-595888071c34
+md"""
+For a Gaussian distribution with mean $\mu$ and variance $\sigma^2$, the PDF is given by
+
+$$f_X(X) = \frac{1}{\sqrt{2\pi \sigma^2}} \exp \left[ -\frac{1}{2} \left( \frac{x - \mu}{\sigma} \right)^2 \right]$$
+"""
+
+# ╔═╡ abe288f3-9a80-4c29-a918-73c57ab16dc2
+md" This PDF of the Gaussian is captured in the functions below. It is important to remember the equation for the PDF of the Gaussian since we will need to work with and manipulate it a lot in this course. " 
+
+# ╔═╡ c23627d6-91a2-4b69-9e35-71b8a9578dd6
+bell_curve(x) = exp(-x^2 / 2) / √(2π)
+
+# ╔═╡ 24f945be-f3d5-48bd-80e1-12a7cc92d976
+bell_curve(x, μ, σ) = bell_curve( (x - μ) / σ ) / σ
+
+# ╔═╡ 62c3c7f1-2839-4c7e-bba7-1741649b3620
+md"""
+We can shift and scale the Gaussian distribution in the following manner. 
+"""
+
+# ╔═╡ b153e5e7-95ba-4425-91aa-ce9986a64392
+md"""
+μ = $(@bind μ Slider(-3:0.01:3, show_value=true, default=0.0))
+σ = $(@bind σ Slider(0.01:0.01:3, show_value=true, default=1))
+"""
+
+# ╔═╡ 0f7184f5-a03f-482e-8339-fd12c7391e01
+data = μ .+ σ .* randn(10^5)
+
+# ╔═╡ ff9355dc-3e5f-4558-9027-668bd17a7a30
+begin
+	histogram(data, alpha=0.5, norm=true, bins=100, leg=false, title="μ=$(μ), σ=$(σ)", size=(500, 300))
+	
+	xlims!(-6, 6)
+	ylims!(0, 0.6)
+	
+	xs = [μ - σ, μ, μ + σ]
+	
+	plot!(-6:0.01:6, x -> bell_curve(x, μ, σ), lw=2, color = :black)
+	
+	plot!((μ - σ):0.01:(μ + σ), x -> bell_curve(x, μ, σ), fill=true, alpha=0.6, c=:black)
+	
+	plot!([μ, μ], [0.05, bell_curve(μ, μ, σ)], ls=:dash, lw=2, c=:white)
+	annotate!(μ, 0.03, text("μ", :white))
+#	annotate!(μ + σ, 0.03, text("μ+σ", :yellow))
+#	annotate!(μ, 0.03, text("μ", :white))
+
+	
+end
+
+# ╔═╡ a825e358-1fdc-42cb-87cf-ab0dbd092cb0
+md" One fo the nice things about Gaussians is that the sum of two Gaussians is also Gaussian. We will make use of this property of the Gaussian in future, so take note. In order to show this, let us sample from two Gaussian random variables and add the resulting random variable. "
+
+# ╔═╡ 2279f195-a9fa-46ee-925b-f54222d61d9a
+begin
+	data1 = 4 .+ sqrt(0.3) .* randn(10^5)
+	data2 = 6 .+ sqrt(0.7) .* randn(10^5)
+	
+	total = data1 + data2
+end
+
+# ╔═╡ 677da773-6130-41b2-8188-209a8d751f99
+begin
+	
+	histogram(data1, alpha=0.4, norm=true, size=(500, 300), label = "data1", title="Sum of Gaussians")
+	histogram!(data2, alpha=0.4, norm=true, size=(500, 300), label = "data2", color = :black)
+	histogram!(total, alpha=0.8, norm=true, size=(500, 300), label = "total")
+	plot!(2:0.01:14, x -> bell_curve(x, 10, 1), lw=2, color = :black, legend = false)
+end
+
+# ╔═╡ c55f846d-d578-4c81-bdc4-ce5d03c62dba
+md" Quite interesting, we get a Gaussian again -- the green one at the end is the sum.
+
+Importantly, the sum of two Gaussians with means $\mu_1$ and $\mu_2$ and variances $\sigma^{2}_{1}$ and $\sigma^{2}_{2}$ is Gaussian with mean $\mu_1 + \mu_2$ and variance $\sigma_1^2 + \sigma_2^2$. "
+
+# ╔═╡ 071d902e-a952-480e-9c21-5a3315162a6a
+md" ### Let's talk about types "
+
+# ╔═╡ 54bf4640-fa81-4ef4-978a-a87682dd3401
+md"""
+We have shown how we can represent a random variable in software with Bernoulli and Binomial types that we have defined before. In some other programming languages there are different names for the functions associated to certain random variables, but no specific name for the random variable itself. 
+
+Let us take a look at R as an example. Most of you are comfortable with R, so this should pehaps be more familiar. In R there is a standard naming convention with respect to sampling from random variables, which is best explained by an example. Consider the `norm` function, which allows us to sample from the Normal distribution. There are four functions that we can attach as prefix to `norm`. These indicators are `d` for the density, `p` for the distribution function , `q` for the quantile function and `r` for generating random variates. 
+
+In other words, if you want to generate a random draw from the Normal distribution you should use the `rnorm` function. This seems quite intuitive. However, what is wrong with this? 
+
+All these functions are referring to an underlying random variable (or probability distribution), which you will find in any course on probability. However, there is no way for us to refer to the underlying mathematical object. Think on this point for a second. 
+
+How do we rectify this? We would like to be able to refer to the random variable (or probability distribution) itself. We should be able to provide a type with the name and parameters of a random variable, but not yet specify how to generate random instances. This is an example of thinking ahead by providing **abstraction**.
+
+Once we have established the random variable with our type system we can always provide means for random sampling (and more).
+
+"""
+
+# ╔═╡ 8a01d833-3220-4144-8c2a-dde4c1399795
+md" ### Defining abstract types "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1519,5 +1637,24 @@ version = "0.9.1+5"
 # ╟─71128267-d23a-4162-b9b3-52b86ec5f9de
 # ╟─7d74a6be-4aac-4f12-9391-528f9cbf37ba
 # ╟─37cbf7a2-6679-40a4-8085-21a4e900c59d
+# ╟─f99c393f-308f-4821-8f5a-ee8ebcf5b77b
+# ╠═06f497e4-d1a3-4e99-86f4-f63f69920f53
+# ╟─6747980b-7072-4267-84c5-a352abf4ec25
+# ╟─fe0ee6b7-9c42-41b8-929c-2dd7101490a3
+# ╟─7550ccac-ca63-4f96-b576-595888071c34
+# ╟─abe288f3-9a80-4c29-a918-73c57ab16dc2
+# ╠═c23627d6-91a2-4b69-9e35-71b8a9578dd6
+# ╠═24f945be-f3d5-48bd-80e1-12a7cc92d976
+# ╟─62c3c7f1-2839-4c7e-bba7-1741649b3620
+# ╟─b153e5e7-95ba-4425-91aa-ce9986a64392
+# ╠═0f7184f5-a03f-482e-8339-fd12c7391e01
+# ╟─ff9355dc-3e5f-4558-9027-668bd17a7a30
+# ╟─a825e358-1fdc-42cb-87cf-ab0dbd092cb0
+# ╠═2279f195-a9fa-46ee-925b-f54222d61d9a
+# ╟─677da773-6130-41b2-8188-209a8d751f99
+# ╟─c55f846d-d578-4c81-bdc4-ce5d03c62dba
+# ╟─071d902e-a952-480e-9c21-5a3315162a6a
+# ╟─54bf4640-fa81-4ef4-978a-a87682dd3401
+# ╟─8a01d833-3220-4144-8c2a-dde4c1399795
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

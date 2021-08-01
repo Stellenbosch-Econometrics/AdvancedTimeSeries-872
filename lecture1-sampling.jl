@@ -78,7 +78,7 @@ md" In our introductory session (Lecture 0) we had a brief introduction to Julia
 md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-#TableOfContents() # Uncomment for TOC
+TableOfContents() # Uncomment for TOC
 
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
@@ -229,11 +229,11 @@ mean(flips)
 md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. "
 
 # ╔═╡ 370a4ccb-fdb6-4e3f-8004-d6f88f025945
-md" # Common probability distributions "
+md" # Probability distributions and types "
 
 # ╔═╡ c6d85f60-c820-4269-a6b4-57483de13bd8
 md"""
-In this section I will provide some basic properties of common probability distributions that are often used in Bayesian econometrics. It is worthwhile to become comfortable with these distributions and their properties as they will appear frequently throughout the course. Invest some time to get to know distributions well, it pays off in the end. 
+In this section I will provide some basic properties of common probability distributions that are often used in Bayesian econometrics. We will only look at three in this section, and then as we progress we will introduce more. We will also discuss the type system in Julia, which is a key feature of the language. To keep the code clear in the following lectures we won't always use best coding practice, but every now and then we will discuss some core principles. 
 """
 
 # ╔═╡ 601f3dfa-4ea5-4418-aeba-5ab1203f8753
@@ -242,23 +242,22 @@ md" ## Bernoulli "
 # ╔═╡ ce3b13a8-38e8-449a-8b11-7a61b8632fc9
 md" As we have stated, the Bernoulli distribution describes a binary event of a successful experiment. We usually represent 0 as failure and 1 as success, so the result of a Bernoulli distribution is a binary variable. The Bernoulli distribution is widely used to model discrete binary outcomes in which there are only two possible results."
 
+# ╔═╡ c61504df-808a-46f0-b8cc-dcc7197ffb3e
+md"""
+p = $(@bind p₂ Slider(0.0:0.01:1.0, show_value=true, default=0.7))
+"""
+
 # ╔═╡ ed8b654f-f964-4d8f-a998-1032c197f014
 begin
-	plot(Bernoulli(0.5),
+	plot(Bernoulli(p₂),
 	        markershape=:circle,
-	        label=L"p=0.5",
 	        alpha=0.7,
 	        xlabel=L"\theta",
 	        ylabel="Mass",
 	        ylim=(0, 1), 
-			lw = 2
+			lw = 2,
+		legend = false
 	    )
-	plot!(Bernoulli(0.2),
-	        markershape=:star,
-	        label=L"p=0.2",
-	        alpha=0.7, 
-			lw = 2, 
-			color = :red)
 end
 
 # ╔═╡ c361ae07-61af-44bb-a5ee-be991390fa88
@@ -309,43 +308,68 @@ md" ## Binomial "
 md" The binomial distribution describes an event of the number of successes in a sequence of $n$ independent experiment(s), each asking a yes-no question with a probability of success $p$. Note that the Bernoulli distribution is a special case of the binomial distribution where the number of experiments is $1$. "
 
 # ╔═╡ 71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
-md" The binomial distribution has two parameters and its notation is $\text{Bin}(n, p)$. An example would be the number of heads in a coin flip, which we will deal with in the next lecture. "
+md" The binomial distribution has two parameters and its notation is $\text{Bin}(n, p)$. An example would be the number of heads in 5 coin flips (as illustrated below for different values of $p$). We will deal with the coin flip problem in more detail in the next lecture. "
+
+# ╔═╡ b061d6f2-bcd1-410e-a005-d2e993616b3a
+md"""
+p = $(@bind p₃ Slider(0.0:0.01:1.0, show_value=true, default=0.7))
+"""
 
 # ╔═╡ 1c20116c-339c-453c-b6d1-4ed1477fcf12
 begin
-	plot(Binomial(5, 0.5),
+	plot(Binomial(5, p₃),
 	        markershape=:circle,
-	        label=L"p=0.5",
 	        alpha=0.7,
 	        xlabel=L"\theta",
 	        ylabel="Mass", 
-			lw = 2
-	    )
-	plot!(Binomial(5, 0.2),
-	        markershape=:star,
-	        label=L"p=0.2",
-	        alpha=0.7, 
 			lw = 2, 
-			color = :red)
+			legend = false
+	    )
 end
+
+# ╔═╡ 0a5ed3ea-12d9-46f9-aab8-472eae8a971d
+md" We can make the binomial random variable a type, we only require information on $n$ and $p$, so the `struct` is: "
+
+# ╔═╡ 1056e659-b358-451f-85b3-a7ec9a6dac92
+struct Binomial_New
+	n::Int64
+	p::Float64
+end
+
+# ╔═╡ 86d8016f-9179-4bb2-be71-3708896ba216
+md" Note that this does not require methods at first. We can add the methods later, and other people can add methods too if they are able to load the package. "
+
+# ╔═╡ 3a9c6bbe-5078-4f99-9418-dc22f73706cb
+Base.rand(X::Binomial_New) = sum(rand(Bernoulli_New(X.p)) for _ in 1:X.n)
+
+# ╔═╡ 310e07b1-ef44-4588-9fc2-7f70b84e527d
+md" We will discuss how to code up the Binomial random variable in the next lecture. For now one can simply take this code as given. If you understand what is written there that is great, but it is not the focus of this section. "
+
+# ╔═╡ e41adcb9-3c78-404b-a501-b359511b9a39
+rand(Binomial_New(10, 0.25))
+
+# ╔═╡ d34b5710-2f37-4bb1-9e02-6e95996f7242
+md"""
+n = $(@bind binomial_n Slider(1:100, show_value=true, default=1)); 
+p = $(@bind binomial_p Slider(0.0:0.01:1, show_value=true, default=0))
+
+"""
+
+# ╔═╡ 31675329-f1bd-4752-8da1-af82475fe900
+begin
+	binomial_data = [rand(Binomial_New(binomial_n, binomial_p)) for _ in 1:10000]
+	
+	bar(countmap(binomial_data), alpha=0.5, size=(500, 300), leg=false, bin_width=0.5)
+end
+
+# ╔═╡ 71128267-d23a-4162-b9b3-52b86ec5f9de
+md" We will encounter a similar graph in the next lecture. We will go through the code more methodically there. "
 
 # ╔═╡ 7d74a6be-4aac-4f12-9391-528f9cbf37ba
 md" ## Gaussian "
 
-# ╔═╡ 823013e4-5e83-482e-9cd2-de2ec5fbce89
-md" ### Sum of two Gaussians "
-
-# ╔═╡ 629dfcc8-83a0-4b57-afb0-c55333c1a5c1
-md" ## Beta distribution "
-
-# ╔═╡ 729e728b-6efe-46a4-a51f-17bf097d14dc
-md" ## (Inverse) Wishart  "
-
-# ╔═╡ 44871bd0-d911-4106-b57d-88ae3ed13188
-md" ## Gamma distribution "
-
-# ╔═╡ e4a3331c-549a-44ca-9f53-ff9a6e7963dc
-md" ## Random variables as types "
+# ╔═╡ 37cbf7a2-6679-40a4-8085-21a4e900c59d
+md" While this section is going to be about the Gaussian distribution, we are also going to use it as a platform to discuss software engineering principles. If you don't care much for the programming side of things then you can still learn some things about the Gaussian distribution. In our third lecture we will delve into some further theorethical properties of the Gaussian distribution, so this will definitely not be the last time you encounter it. In fact, this distribution will feature in almost all our lectures so it is a good idea to introduce the concepts early and then reiterate as we move on to other topics. "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1466,7 +1490,8 @@ version = "0.9.1+5"
 # ╟─c6d85f60-c820-4269-a6b4-57483de13bd8
 # ╟─601f3dfa-4ea5-4418-aeba-5ab1203f8753
 # ╟─ce3b13a8-38e8-449a-8b11-7a61b8632fc9
-# ╠═ed8b654f-f964-4d8f-a998-1032c197f014
+# ╟─c61504df-808a-46f0-b8cc-dcc7197ffb3e
+# ╟─ed8b654f-f964-4d8f-a998-1032c197f014
 # ╟─c361ae07-61af-44bb-a5ee-be991390fa88
 # ╟─0a98082a-94c3-41d8-a129-4f42e217bcd1
 # ╟─5b38607d-6cfc-4fa0-b19f-5bea8ad38b39
@@ -1481,12 +1506,18 @@ version = "0.9.1+5"
 # ╟─28578d77-1439-49cf-a9f6-120557bce924
 # ╟─b6fc9ad1-5f44-4697-be2e-407e2b9308c0
 # ╟─71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
-# ╠═1c20116c-339c-453c-b6d1-4ed1477fcf12
+# ╟─b061d6f2-bcd1-410e-a005-d2e993616b3a
+# ╟─1c20116c-339c-453c-b6d1-4ed1477fcf12
+# ╟─0a5ed3ea-12d9-46f9-aab8-472eae8a971d
+# ╠═1056e659-b358-451f-85b3-a7ec9a6dac92
+# ╟─86d8016f-9179-4bb2-be71-3708896ba216
+# ╠═3a9c6bbe-5078-4f99-9418-dc22f73706cb
+# ╟─310e07b1-ef44-4588-9fc2-7f70b84e527d
+# ╠═e41adcb9-3c78-404b-a501-b359511b9a39
+# ╟─d34b5710-2f37-4bb1-9e02-6e95996f7242
+# ╠═31675329-f1bd-4752-8da1-af82475fe900
+# ╟─71128267-d23a-4162-b9b3-52b86ec5f9de
 # ╟─7d74a6be-4aac-4f12-9391-528f9cbf37ba
-# ╟─823013e4-5e83-482e-9cd2-de2ec5fbce89
-# ╟─629dfcc8-83a0-4b57-afb0-c55333c1a5c1
-# ╟─729e728b-6efe-46a4-a51f-17bf097d14dc
-# ╟─44871bd0-d911-4106-b57d-88ae3ed13188
-# ╟─e4a3331c-549a-44ca-9f53-ff9a6e7963dc
+# ╟─37cbf7a2-6679-40a4-8085-21a4e900c59d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

@@ -273,7 +273,7 @@ draws = $(@bind iter Slider(1:1000, show_value = true, default=1))
 md" Let us test out some basic examples for the obervational model. Choose from the following set of values $n = \{1, 5, 10 \}$. Also change the value of to see what impact this has on the distribution. What happens when we increase the number of draws?  "
 
 # ╔═╡ d6316b4f-9882-4d25-87d0-31fa3c1f3935
-b = [binomial_rv(n, p) for _ in 1:iter] # Using an array comprehension
+b = [binomial_rv(n, p) for _ in 1:iter]; # Using an array comprehension
 
 # ╔═╡ c4cc482b-815b-4747-9f5a-5779d69086f7
 begin
@@ -333,9 +333,9 @@ $$\begin{align*}
   =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}}
 \end{align*}$$
 
-Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins (normal distribution on prior). Indicate number of heads by $y$ and number of flips by $N$
+Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins (normal distribution on prior). Indicate number of heads by $y$ and number of flips by $n$
 
-Suppose that we flip the coin only once and observe heads, then the data $Y$ consists of $y = 1$ and $n = 1$.
+Suppose that we flip the coin only once and observe heads, then the data consists of $y = 1$ and $n = 1$.
 
 Let us code up the likelihood, prior and updated posterior for this example. In order to do this let us implement the grid method. There are many other ways to do this. However, this method is easy to do and gives us some good coding practice.  
 
@@ -444,18 +444,18 @@ end
 md" Another possible prior distribution that is quite flexible is the Beta distribution "
 
 # ╔═╡ e7a01318-ce31-4169-aaa7-1fb49a4d47be
-md" #### Digression on Beta distribution "
+md" #### Conjugate priors (Beta) "
 
 # ╔═╡ 573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 md"""
-Suppose that for our coin flipping model we want to derive the posterior credibilities of parameter values. We would need a mathematical description of the **prior probability** for each value of the parameter $\theta$ on interval $[0, 1]$. Any relevant probability density function would work, but there are two desiderata for mathematical tractability.
+In our coin flipping model we have derived the posterior credibilities of parameter values given certain priors. Generally, we need a mathematical description of the **prior probability** for each value of the parameter $\theta$ on interval $[0, 1]$. Any relevant probability density function would work, but there are two desiderata for mathematical tractability.
 
 1. Product of $p(y | \theta)$ and $p(\theta)$ results in same form as $p(\theta)$.
 2. Necesarry for $\int p(y | \theta)p(\theta) \text{d} \theta$ to be solvable analytically
 
 When the forms of $p(y | \theta)$ and $p(\theta)$ combine so that the posterior has the same form as the prior distribution then $p(\theta)$ is called **conjugate prior** for $p(y | \theta)$. 
 
-Prior is conjugate with respect to particular likelihood function. We are looking for a functional form for a prior density over $\theta$ that is conjugate to the **Bernoulli likelihood function**.
+Prior is conjugate with respect to particular likelihood function. We are looking for a functional form for a prior density over $\theta$ that is conjugate to the **Bernoulli / Binomial likelihood function**.
 
 If the prior is of the form, $\theta^{a}(1-\theta)^b$ then when you multiply with Bernoulli likelihood you will get
 
@@ -480,7 +480,7 @@ $$\begin{align*}
   B(a,b) = \Gamma(a)\Gamma(b)/\Gamma(a+b)  \quad \text{where} \quad \Gamma(a) = \int_{0}^{\infty} t^{(a-1)}\text{exp}(-t)
 \end{align*}$$
 
-The variables $a$ and $b$ are called the shape parameters of the Beta distribution (they determine the shape). We can use the `Distributions.jl` pacakge to see what Beta looks like for different values of $a$ and $b$ over $\theta$.
+The variables $a$ and $b$ are called the shape parameters of the Beta distribution (they determine the shape). We can use the `Distributions.jl` package to see what Beta looks like for different values of $a$ and $b$ over $\theta$.
 
 """
 
@@ -502,17 +502,17 @@ plot(prior_beta, coins_grid, xlab = "theta", ylab = "prior", color = :black, leg
 
 # ╔═╡ a32faf6c-a5bb-4005-ad42-188af732fba5
 md"""
-Suppose we have set of data with $N$ flips and $z$ heads, then
+Suppose we have set of data with $n$ flips and $y$ heads, then we can calculate the posterior as,
 
 $$\begin{align*}
-  p(\theta | z, N) =& p(z, N | \theta)p(\theta)/p(z, N) \\
-  =& \theta^{z}(1-\theta)^{(N-z)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(z, N) \\
-  =& \theta^{z}(1-\theta)^{(N-z)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(z, N)] \\
-  =& \theta^{((z + a) -1)}(1-\theta)^{((N-z + b)-1)}/ [B(a,b)p(z, N)] \\
-  =& \theta^{((z + a) -1)}(1-\theta)^{((N-z + b)-1)}/ B(z + a, N-z+b)
+  p(\theta | y, n) =& p(y, n | \theta)p(\theta)/p(y, n) \\
+  =& \theta^{y}(1-\theta)^{(n-y)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(y, n) \\
+  =& \theta^{y}(1-\theta)^{(n-y)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(y, n)] \\
+  =& \theta^{((y + a) -1)}(1-\theta)^{((n-y + b)-1)}/ [B(a,b)p(y, n)] \\
+  =& \theta^{((y + a) -1)}(1-\theta)^{((n-y + b)-1)}/ B(y + a, n-y+b)
 \end{align*}$$
 
-Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta | a,b)$ then the posterior will be $\text{Beta}(\theta | z + a, N - z + b)$.
+Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta | a,b)$ then the posterior will be $\text{Beta}(\theta | y+ a, n - y + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
 
 """
 
@@ -541,6 +541,31 @@ end
 
 # ╔═╡ f004ec01-1e27-4e30-9a53-23a299208846
 md" Initially, with $a = 1$ and $b = 1$ this will be the same as the uniform prior. However, play around with the values on the slider to see how it changes for a different parameterisation of the Beta distribution. "
+
+# ╔═╡ 2844b7a6-002e-4459-9e37-30e3a16c88f0
+md" Here are some nice facts about the Beta distribution, you don't need to memorise these, just good to have as a reference. 
+
+$$\begin{equation}
+\begin{array}{ll}
+\text { Notation } & \operatorname{Beta}(\alpha, \beta) \\
+\hline \text { Parameters } & \begin{array}{l}
+\alpha>0 \text { shape (real) } \\
+\beta>0 \text { shape (real) }
+\end{array} \\
+\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
+\text { PDF } & \frac{x^{\alpha-1}(1-x)^{\beta-1}}{\mathrm{~B}(\alpha, \beta)} \\
+\hline \text { Mean } & \frac{\alpha}{\alpha+\beta} \\
+\hline \text { Mode } & \frac{\alpha-1}{\alpha+\beta-2} \text { for } \alpha, \beta>1 \\
+& 0 \text { for } \alpha=1, \beta>1 \\
+& 1 \text { for } \alpha>1, \beta=1 \\
+\hline \text { Variance } & \frac{\alpha \beta}{(\alpha+\beta)^{2}(\alpha+\beta+1)} \\
+\text { Concentration } & \kappa=\alpha+\beta
+\end{array}
+\end{equation}$$
+"
+
+# ╔═╡ 471f5ab0-2601-4d2b-8746-3ffd37a37526
+md" You can read more about the [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) on Wikipedia, which is normally an excellent resource for the properties and discussions on different distributions. "
 
 # ╔═╡ d78fc676-4e17-4eb6-92f4-35dc38ba2624
 md" ### Binomial with unknown $\theta$ "
@@ -1689,7 +1714,7 @@ version = "0.9.1+5"
 # ╠═3c49d3e4-3555-4d18-9445-5347247cf639
 # ╠═f7b158af-537e-4d9f-9c4c-318281097dce
 # ╟─69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
-# ╠═c2718fa8-a111-42de-b117-3d945115fd95
+# ╟─c2718fa8-a111-42de-b117-3d945115fd95
 # ╟─8819fcfb-1ded-4f84-9de1-64f13231698f
 # ╟─6b0f8d56-2384-4a35-ae52-95e8cf5082aa
 # ╟─a5d471d0-7198-4c5e-abf7-7b3e6dab3609
@@ -1739,6 +1764,8 @@ version = "0.9.1+5"
 # ╟─535e63fd-b14a-4dce-adb7-381df9c3b073
 # ╟─11a5614b-c195-45a8-8be0-b99fda6c60fd
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
+# ╟─2844b7a6-002e-4459-9e37-30e3a16c88f0
+# ╟─471f5ab0-2601-4d2b-8746-3ffd37a37526
 # ╟─d78fc676-4e17-4eb6-92f4-35dc38ba2624
 # ╟─8fda9bf2-6680-4187-886c-dab73fcb746f
 # ╟─00000000-0000-0000-0000-000000000001

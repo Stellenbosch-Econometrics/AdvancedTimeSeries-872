@@ -252,21 +252,19 @@ end
 binomial_rv(10000, 0.5) # Compare this with the time it takes to run in R. 
 
 # ╔═╡ 69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
-md" Now let us conduct some experiments with our new binomial random variable. You can use the sliders for some interactive calculations. "
+md" Now let us conduct some experiments with our new binomial random variable. "
 
-# ╔═╡ c2718fa8-a111-42de-b117-3d945115fd95
+# ╔═╡ b6da2479-1545-4b1d-8d7f-07d6d1f67635
 md"""
-trials ($n$) = $(@bind n Slider(1:10:1001, show_value = true, default=1))
-"""
 
-# ╔═╡ 8819fcfb-1ded-4f84-9de1-64f13231698f
-md"""
-probability ($\theta$) = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5))
-"""
+!!! note "Interactive sliders for Binomial random variable"
 
-# ╔═╡ 6b0f8d56-2384-4a35-ae52-95e8cf5082aa
-md"""
+trials = $(@bind n Slider(1:10:1001, show_value = true, default=1));
+prob = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5));  
 draws = $(@bind iter Slider(1:1000, show_value = true, default=1))
+
+> Shift these sliders around to see what happens to the graph below. 
+
 """
 
 # ╔═╡ a5d471d0-7198-4c5e-abf7-7b3e6dab3609
@@ -408,11 +406,7 @@ md" I will put new sliders here so that you can play around with the graph and s
 
 # ╔═╡ 219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 md"""
-y = $(@bind y₂ Slider(1:100, show_value = true, default=1))
-"""
-
-# ╔═╡ 84c80bf6-b730-40f7-8dd9-e6a004f90f1b
-md"""
+y = $(@bind y₂ Slider(1:100, show_value = true, default=1));
 n = $(@bind n₂ Slider(1:100, show_value = true, default=4))
 """
 
@@ -486,11 +480,7 @@ The variables $a$ and $b$ are called the shape parameters of the Beta distributi
 
 # ╔═╡ 1ca20976-757f-4e30-94d4-ee1276a614fb
 md"""
-a = $(@bind α Slider(1:0.1:4, show_value = true, default=0.1))
-"""
-
-# ╔═╡ 8d7d6d33-4690-4d1e-93b6-a9846be29cd4
-md"""
+a = $(@bind α Slider(1:0.1:4, show_value = true, default=0.1)); 
 b = $(@bind β Slider(1:1:4, show_value = true, default=1))
 """
 
@@ -521,11 +511,7 @@ md" Using this Beta distribution then as prior will give us the following poster
 
 # ╔═╡ 43d563ae-a435-417f-83c6-19b3b7d6e6ee
 md"""
-a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=0.1))
-"""
-
-# ╔═╡ 535e63fd-b14a-4dce-adb7-381df9c3b073
-md"""
+a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=0.1));
 b1 = $(@bind β₁ Slider(1:1:4, show_value = true, default=1))
 """
 
@@ -2198,13 +2184,11 @@ version = "0.9.1+5"
 # ╟─4084f646-bce6-4a21-a529-49c7774f5ad1
 # ╠═3c49d3e4-3555-4d18-9445-5347247cf639
 # ╠═f7b158af-537e-4d9f-9c4c-318281097dce
-# ╟─69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
-# ╟─c2718fa8-a111-42de-b117-3d945115fd95
-# ╟─8819fcfb-1ded-4f84-9de1-64f13231698f
-# ╟─6b0f8d56-2384-4a35-ae52-95e8cf5082aa
+# ╠═69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
+# ╟─b6da2479-1545-4b1d-8d7f-07d6d1f67635
 # ╟─a5d471d0-7198-4c5e-abf7-7b3e6dab3609
 # ╠═d6316b4f-9882-4d25-87d0-31fa3c1f3935
-# ╟─c4cc482b-815b-4747-9f5a-5779d69086f7
+# ╠═c4cc482b-815b-4747-9f5a-5779d69086f7
 # ╟─9016cba4-58f0-4b7f-91af-66faaf3fe99c
 # ╠═2eb59993-4ace-4acb-9810-ba064ea1eb3e
 # ╠═7c04e47c-eeed-47ec-9c6f-e2b710d0b746
@@ -2231,8 +2215,7 @@ version = "0.9.1+5"
 # ╠═97c0c719-fb73-4571-9a6c-629a98cc544d
 # ╠═0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
 # ╟─4b141ffc-4100-47e3-941a-4e72c784ccf0
-# ╟─219aafcb-17b1-4f5f-9c2b-9b713ba78b18
-# ╟─84c80bf6-b730-40f7-8dd9-e6a004f90f1b
+# ╠═219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 # ╟─2833e081-45d6-4f64-8d1e-b3a5895b7952
 # ╟─4ac622c8-efec-497a-ba68-cc9d5990c075
 # ╟─50d4f741-1cdc-4889-b839-a57b898fbbe0
@@ -2240,13 +2223,11 @@ version = "0.9.1+5"
 # ╟─e7a01318-ce31-4169-aaa7-1fb49a4d47be
 # ╟─573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 # ╟─1ca20976-757f-4e30-94d4-ee1276a614fb
-# ╟─8d7d6d33-4690-4d1e-93b6-a9846be29cd4
 # ╠═aa69d0e8-cbbb-436c-b488-5bb113cdf97f
 # ╟─84d7e4dd-23a9-4412-a8de-ab8ee8351770
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
 # ╟─448b4ddf-5be2-4843-8e8e-4afb60aa8843
 # ╟─43d563ae-a435-417f-83c6-19b3b7d6e6ee
-# ╟─535e63fd-b14a-4dce-adb7-381df9c3b073
 # ╟─11a5614b-c195-45a8-8be0-b99fda6c60fd
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
 # ╟─2844b7a6-002e-4459-9e37-30e3a16c88f0

@@ -324,11 +324,60 @@ md" ## Marginalisation "
 
 # ╔═╡ b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
 md"""
-In our models thus far we have mostly dealth with one unknown parameter. Consider the case where there is more than one unknonw parameter, but we are only interested in one of them. Joint distribution of parameters
+In our models thus far we have mostly dealth with one unknown parameter. Consider the case where there is more than one unknown parameter, but we are only interested in one of them. 
+
+The joint distribution of parameters is given by the following proportional relationship
 
 $$\begin{align*}
       p(\theta_1,\theta_2 \mid y) \propto p(y \mid \theta_1,\theta_2)p(\theta_1,\theta_2)
 \end{align*}$$
+
+Marginalisation entails averaging over the parameter $\theta_2$ to gain access to $\theta_1$, 
+
+$$\begin{align*}
+        p(\theta_1 \mid y) = \int p(\theta_1,\theta_2 \mid y) d\theta_2
+\end{align*}$$
+
+where $p(\theta_1 \mid y)$ is a marginal distribution. The goal is to find marginal posterior of parameter of interest. We can do this using Monte Carlo approximation.
+
+$$\begin{align*}
+      p(\theta_1 \mid y) \approx  \frac{1}{S}\sum_{s=1}^{S} p(\theta_1,\theta_2^{(s)}\mid y)
+\end{align*}$$
+
+where the $\theta_2^{(s)}$ values are draws from $p(\theta_2 \mid y)$. We can illustrate this with an example using the Gaussian. In the case of the Gaussian we have the following likelihood model
+
+$$\begin{align*}
+    p({y} \mid  \mu, \sigma) = \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}({ y}-\mu)^2 \right)
+\end{align*}$$
+
+We would like to draw from the joint posterior, in other words, we are going to use Monte Carlo methods to draw $\mu^{(s)}, \sigma^{(s)} \sim p(\mu, \sigma  \mid  y)$, where the last part is the joint posterior. We assume that we have a noninformative prior so that $p(\mu,\sigma^2)  \propto \sigma^{-2}$. Note that $p(\mu,\sigma^2)$ is the joint prior here. Now let us get ready for some math to show what the posterior will look like given our prior choice and the likelihood function provided.  
+
+$$\begin{align*}
+    & p(\mu,\sigma^2 \mid y) \propto  \sigma^{-2}\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
+    &{=  \sigma^{-n-2}\exp\left(-\frac{1}{2\sigma^2}\sum_{i=1}^n(y_i-\mu)^2\right)}\\
+    &{  = \sigma^{-n-2}\exp\left(-\frac{1}{2\sigma^2}\left[\sum_{i=1}^n(y_i-\bar{y})^2+n(\bar{y}-\mu)^2\right]\right)}\\
+    &{\color{gray} \text{where } \bar{y}  \color{gray} = \frac{1}{n}\sum_{i=1}^n y_i }\\
+    &{  = \sigma^{-n-2}\exp\left(-\frac{1}{2\sigma^2}\left[(n-1)s^2+n(\bar{y}-\mu)^2\right]\right)}\\
+    &{\color{gray} \text{where }  s^2  \color{gray} =\frac{1}{n-1}\sum_{i=1}^n(y_i-\bar{y})^2}
+\end{align*}$$
+
+It is useful to know the remember the following trick to complete the derivation. If you have done mathematical statistics you will have seen this before,  
+
+
+$$\begin{align*}
+   &{\sum_{i=1}^n(y_i-\mu)^2}\\
+   &{\sum_{i=1}^n(y_i^2-2 y_i \mu + \mu^2)}\\
+   &{\sum_{i=1}^n(y_i^2-2 y_i \mu + \mu^2 -\bar{y}^2 + \bar{y}^2 - 2 y_i \bar{y} + 2 y_i \bar{y})}\\
+   &{\sum_{i=1}^n(y_i^2-2 y_i \bar{y} + \bar{y}^2) + \sum_{i=1}^n(\mu^2 - 2 y_i \mu -\bar{y}^2  + 2 y_i \bar{y})}\\
+   &{\sum_{i=1}^n(y_i-\bar{y})^2 + n(\mu^2 -  2\bar{y}\mu -\bar{y}^2  + 2 \bar{y}\bar{y})}\\
+   &{\sum_{i=1}^n(y_i-\bar{y})^2 + n(\bar{y}-\mu)^2}
+\end{align*}$$
+
+"""
+
+# ╔═╡ 73789404-68c1-43be-a5e2-098305816f92
+md"""
+### Practical implementation 
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1928,5 +1977,6 @@ version = "0.9.1+5"
 # ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+# ╟─73789404-68c1-43be-a5e2-098305816f92
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

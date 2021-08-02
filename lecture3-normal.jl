@@ -69,7 +69,7 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the normal distribution in detail. This distribution features in many places in Bayesian econometrics and it is quite important to understand some of its properties.  We will then move on to a discussion of marginalisation and look at the normal distribution with different types of priors. "
+md" In this session we will be looking at the normal distribution in detail. This distribution features in many places in Bayesian econometrics and it is quite important to understand some of its properties.  We will then move on to a discussion of marginalisation and look at the normal distribution with different types of priors. This lecture almost serves as a reminder of why we don't want to work with analytical distributions, we would much rather perform computational exercises. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 TableOfContents() # Uncomment to see TOC
@@ -258,7 +258,7 @@ $\begin{equation*}
 """
 
 # ╔═╡ 9741e08b-3f54-49d7-8db0-3125f4f90d3c
-md" ### Practical implementation "
+md" #### Practical implementation "
 
 # ╔═╡ e99e1925-6219-4bf2-b743-bb2ea725dfcd
 md" Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
@@ -320,11 +320,11 @@ end
 md" One can see that doing this analytically is quite cumbersome. That is why we will often rely on numerical methods to draw from the posterior. Our next lecture will focus exclusively on such methods. In particular, we will consider different types of **Markov chain Monte Carlo** methods to draw from the posterior distribution of interest. That being said, let us continue with the analytical examples, since they are instructive. "
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
-md" ## Marginalisation "
+md" ### Gaussian with unknown $\mu$ and $\sigma^{2}$ "
 
 # ╔═╡ b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
 md"""
-In our models thus far we have mostly dealth with one unknown parameter. Consider the case where there is more than one unknown parameter, but we are only interested in one of them. 
+In our models thus far we have mostly dealth with one unknown parameter. Consider the case where there is more than one unknown parameter, but we are only interested in one of them. Please go through this section slowly and make sure you understand everything. I have tried to type out as many of the steps as I could, but perhaps I have skipped some without knowing it.  
 
 The joint distribution of parameters is given by the following proportional relationship
 
@@ -373,11 +373,82 @@ $$\begin{align*}
    &{\sum_{i=1}^n(y_i-\bar{y})^2 + n(\bar{y}-\mu)^2}
 \end{align*}$$
 
+We take a look at the marginals since we have a funtional form for the joint posterior (as derived above),
+
+$$\begin{align*}
+p(\mu \mid y)  = \int p(\mu,\sigma \mid y) d \sigma \\
+       {p(\sigma \mid y)  = \int p(\mu,\sigma \mid y) d \mu }\end{align*}$$
+
+The marginal posterior for $p(\sigma^{2} | y)$ (easier for $\sigma^{2}$ than $\sigma$) is the following, 
+
+$$\begin{align*}
+    & {p(\sigma^2 \mid y)} \quad {\propto  \int  p(\mu,\sigma^2 \mid y) d\mu} \\
+    &{=\int \sigma^{-n-2}\exp\left(-\frac{1}{2\sigma^2}\left[(n-1)s^2+n(\bar{y}-\mu)^2\right]\right) d\mu} \\ 
+    &{= \sigma^{-n-2}\exp\left(-\frac{1}{2\sigma^2}(n-1)s^2\right)} \\
+    &{\int \exp\left(-\frac{n}{2\sigma^2}(\bar{y}-\mu)^2\right) d\mu}\\
+    &{\color{gray} \int \frac{1}{\sqrt{2\pi}\sigma} \exp\left(-\frac{1}{2\sigma^2}(y-\theta)^2\right) d\theta = 1} \\
+    &{= \sigma^{-n-2}\exp\left(-\frac{1}{2\sigma^2}(n-1)s^2\right)\sqrt{2\pi\sigma^2/n}} \\
+    &{= (\sigma^2)^{-(n+1)/2}\exp\left(-\frac{(n-1)s^2}{2\sigma^2}\right)}
+\end{align*}$$
+
+From this we can see that $${p(\sigma^2 \mid y) = \text{Inv}\chi^{2}(\sigma^2 \mid n-1,s^2)}$$. With uninformative prior and unknown mean, 
+
+$$\begin{align*}
+      \sigma^2 \mid y  \sim \text{Inv}\chi^{2}(n-1,s^2)\\
+      \text{where} \quad s^2 =\frac{1}{n-1}\sum_{i=1}^{n}(y_i-\bar{y})^2
+  \end{align*}$$
+
+Now we know the marginal distribution for $\sigma$, which means that we can use factorisation of the joint distribution to sample from the joint posterior. The join posterior can be factorised as follows 
+
+$p(\mu,\sigma^2 \mid y) = {\color{darkgreen} p(\mu \mid \sigma^2,y)}{\color{blue} p(\sigma^2 \mid y)}$ 
+
+We have just found the marginal for $\sigma$ as the following, 
+
+${\color{blue} p(\sigma^2 \mid y)}  = \text{Inv}\chi^{2}(\sigma^2 \mid  n-1,s^2)$
+
+This means we can sample from this distribution, 
+
+$(\sigma^2)^{(s)} \sim {\color{blue} p(\sigma^2 \mid y)}$ 
+
+With the variance now known, we know from our previous discussion (Gaussin model with known $\sigma^{2}$ how to sample from the marginal distribution of $\mu$, 
+
+${\color{darkgreen} p(\mu \mid \sigma^2,y)} = \mathcal{N}(\mu \mid \bar{y},\sigma^2/n)\, 
+{ \color{gray} {\textstyle \propto \exp\left(-\frac{n}{2\sigma^2}(\bar{y}-\mu)^2\right)}}$
+
+We will then get a sample from this distribution as follows, 
+
+${\mu^{(s)} \sim {\color{darkgreen} p(\mu \mid \sigma^2,y)} }$
+
+In essence we are now done, we can sample from the joint posterior, 
+
+${{\color{red} \mu^{(s)}, \sigma^{(s)}} \sim p(\mu, \sigma  \mid  y)}$
+
+We can write the analytic form of the marginal posterior distribution of $\mu$ here. It is one of the few multiparameter models that is simple enough to solve in closed form.
+
+$$\begin{align*}
+     & p(\mu \mid y) =\int_0^\infty p(\mu,\sigma^2 \mid y)d\sigma^2\\
+     & { \propto \int_0^\infty \sigma^{-n-2}\exp\left(-{{\color{blue}}\frac{1}{2\sigma^2}\left[{{\color{blue}}(n-1)s^2+n(\bar{y}-\mu)^2}\right]}\right) d\sigma^2}
+\end{align*} $$
+
+Transformation
+
+$$\begin{align*}
+     & {A={\color{blue}}(n-1)s^2+n(\mu-\bar{y})^2}{\quad \text{and} \quad {{\color{blue}}z=\frac{A}{2\sigma^2}}} \\
+     & {p(\mu \mid y) \propto {{\color{blue}}A^{-n/2}}\int_0^\infty {{\color{blue}}z}^{(n-2)/2}\exp(-{{\color{blue}}z})d{{\color{blue}}z}} \\
+& \color{gray} \Gamma(u) = \int_0^\infty x^{u-1}\exp(-x)dx \\
+    &{\propto {{\color{blue}}[(n-1)s^2+n(\mu-\bar{y})^2]^{-n/2}}}\\
+    &{\propto \left[1+\frac{n(\mu-\bar{y})^2}{(n-1)s^2}\right]^{-n/2}} \\
+    &{p(\mu \mid y) = t_{n-1}(\mu \mid \bar{y},s^2/n) \color{gray} \quad \text{Student's $t$}}
+\end{align*}$$
+
+
+We will encounter this idea of marginalisation in many of our Markov chain Monte Carlo algorithms, so make sure that you understand the basic logic. This will be something that features in many of the future lectures. 
+
 """
 
 # ╔═╡ 73789404-68c1-43be-a5e2-098305816f92
 md"""
-### Practical implementation 
+#### Practical implementation 
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001

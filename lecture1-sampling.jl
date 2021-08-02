@@ -247,6 +247,19 @@ md"""
 p = $(@bind p₂ Slider(0.0:0.01:1.0, show_value=true, default=0.7))
 """
 
+# ╔═╡ ed8b654f-f964-4d8f-a998-1032c197f014
+begin
+	plot(Distributions.Bernoulli(p₂),
+	        markershape=:circle,
+	        alpha=0.7,
+	        xlabel=L"\theta",
+	        ylabel="Mass",
+	        ylim=(0, 1), 
+			lw = 2,
+		legend = false
+	    )
+end
+
 # ╔═╡ c361ae07-61af-44bb-a5ee-be991390fa88
 md" We might want to know what the mean (or expected value) of the process is,"
 
@@ -502,7 +515,7 @@ Let's start off by looking at **Gaussian** random variables.
 
 # ╔═╡ fc5709fc-337d-4d42-b023-373089de2c8d
 begin
-	struct Gaussian <: ContinuousRandomVariable
+	struct Gaussian <: ContinuousRandomVariable # Subtype of ContinuousRandomVariable
 		μ     # mean
 		σ²    # variance
 	end
@@ -631,19 +644,6 @@ Note that this is a **discrete** random variable: the possible outcomes are the 
 # ╔═╡ efb934f0-2b02-42c6-9d5d-b0243bf889bd
 struct Bernoulli <: DiscreteRandomVariable
 	p::Float64
-end
-
-# ╔═╡ ed8b654f-f964-4d8f-a998-1032c197f014
-begin
-	plot(Bernoulli(p₂),
-	        markershape=:circle,
-	        alpha=0.7,
-	        xlabel=L"\theta",
-	        ylabel="Mass",
-	        ylim=(0, 1), 
-			lw = 2,
-		legend = false
-	    )
 end
 
 # ╔═╡ 24a2dc89-51db-40d2-8990-832ac2c65fe2

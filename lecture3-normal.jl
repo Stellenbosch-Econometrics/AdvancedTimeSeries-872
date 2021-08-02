@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Chain, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Pipe, Plots, PlutoUI, StatsBase, Statistics, StatsPlots, Turing
+using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -446,23 +446,16 @@ We will encounter this idea of marginalisation in many of our Markov chain Monte
 
 """
 
-# ╔═╡ 73789404-68c1-43be-a5e2-098305816f92
-md"""
-#### Practical implementation 
-"""
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-Pipe = "b98c9c47-44ae-5843-9183-064241ee97a0"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -472,12 +465,10 @@ Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
 BenchmarkTools = "~1.1.1"
-Chain = "~0.4.7"
 Compat = "~3.32.0"
 DataFrames = "~1.2.2"
 Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
-Pipe = "~1.3.0"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
 StatsBase = "~0.33.9"
@@ -620,11 +611,6 @@ deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "e2f47f6d8337369411569fd45ae5753ca10394c6"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.0+6"
-
-[[Chain]]
-git-tree-sha1 = "c72673739e02d65990e5e068264df5afaa0b3273"
-uuid = "8be319e6-bccf-4806-a6f7-6fae938471bc"
-version = "0.4.7"
 
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "Statistics"]
@@ -1381,11 +1367,6 @@ git-tree-sha1 = "94bf17e83a0e4b20c8d77f6af8ffe8cc3b386c0a"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 version = "1.1.1"
 
-[[Pipe]]
-git-tree-sha1 = "6842804e7867b115ca9de748a0cf6b364523c16d"
-uuid = "b98c9c47-44ae-5843-9183-064241ee97a0"
-version = "1.3.0"
-
 [[Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "b4f5d02549a10e20780a24fce72bea96b6329e29"
@@ -2048,6 +2029,5 @@ version = "0.9.1+5"
 # ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
-# ╟─73789404-68c1-43be-a5e2-098305816f92
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

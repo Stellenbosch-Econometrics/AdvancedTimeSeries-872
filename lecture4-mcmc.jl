@@ -60,16 +60,63 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
+md" In this session we will be covering one of the most important topics of the course. This relates to computational work and we will most likely spend two lectures working through the material.  "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-#TableOfContents() # Uncomment to see TOC
+TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Random sampling "
+md" ## Monte Carlo methods overview "
+
+# ╔═╡ bd0dc0fd-63bc-492b-bba1-a3746ea4ec22
+md" In the first part of the lecture we will deal independent Monte Carlo methods in the form of importance and rejection sampling before we move on to Markov chain Monte Carlo methods. 
+
+Monte Carlo methods were used even before computers, with people like Buffon, De Forest, Darwin, Galton, Pearson and Gosset working with these methods during the 18th and 19th century. The term Monte Carlo method was a term proposed by Metropolis, von Neumann or Ulam at the end of the 1940s. They worked together on the atomic bomb project. 
+
+Bayesians started to have enough cheap computation time in 1990s so Monte Carlo methods became popular, with the BUGS project starting 1989 (last OpenBUGS release 2014), innovations by Gelfand and Smith in 1999 and the initial release of Stan in 2012. More recently, for Julia, there was the release of the `Turing.jl` package, which shares some of the features of Stan. 
+
+With Monte Carlo methods one simulates draws from the target distribution. These draws can be treated as any observations and a collection of draws is considered a sample. One can use these draws, for example, to compute means, deviations, quantiles to draw histograms to marginalize, etc.
+
+Monte Carlo = simulation methods. Evaluation points are selected stochastically (randomly). With deterministic methods (e.g. grid) evaluation points are selected by some deterministic rule. Good deterministic methods converge faster (need less function evaluations). 
+
+Grid sampling is prone to curse of dimensionality. Say we have 10 parameters. if we don't know beforehand where the posterior mass is need to choose wide box for the grid and need to have enough grid points to get some of them where essential mass is (e.g. 50 or 1000 grid points per dimension). This means 50$^{10} \approx$ 1e17 grid points and 1000$^{10} \approx$ 1e30 grid points. Using R and an average computer, we can compute the density of a normal distribution about 20 million times per second. Evaluation in 1e17 grid points would take 150 years. Evaluation in 1e30 grid points would take 1 500 billion years!
+"
+
+# ╔═╡ fee1e6c9-ec55-49b7-802c-4456514a89a8
+md" ## Indirect sampling "
+
+# ╔═╡ 46d75d7f-b28b-4479-9de0-ca654e5e2e31
+md" ### Importance sampling "
+
+# ╔═╡ 43a43fc8-f831-4f30-9441-5041a637255e
+md" ### Rejection sampling "
+
+# ╔═╡ 7460cf95-4fc1-4c04-99d7-b13c2014b37a
+md" ## Markov chain Monte Carlo "
+
+# ╔═╡ 26de0997-9548-49b5-9642-b401c6c42c41
+
+
+# ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
+md" ### King Markov and adviser Metropolis "
+
+# ╔═╡ 68fab7b3-b3b7-41fa-89ee-cc5d729c5150
+md" #### Markov chains "
+
+# ╔═╡ f7311d0b-a74c-4a15-be37-5dd8e236cf3d
+md" ### Metropolis algorithm "
+
+# ╔═╡ ff25c980-962d-4566-a9cd-18e94e1dbcf2
+md" #### Metropolis Hastings "
+
+# ╔═╡ 1fde9a98-0ca0-43ed-a290-f19cfb02af6e
+md" ### Gibbs sampling "
+
+# ╔═╡ 03f7e3b7-752b-475a-947f-39dc01134ba9
+md" ### Hamiltonian Monte Carlo "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1142,5 +1189,17 @@ version = "0.9.1+5"
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╟─bd0dc0fd-63bc-492b-bba1-a3746ea4ec22
+# ╟─fee1e6c9-ec55-49b7-802c-4456514a89a8
+# ╟─46d75d7f-b28b-4479-9de0-ca654e5e2e31
+# ╟─43a43fc8-f831-4f30-9441-5041a637255e
+# ╟─7460cf95-4fc1-4c04-99d7-b13c2014b37a
+# ╠═26de0997-9548-49b5-9642-b401c6c42c41
+# ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
+# ╟─68fab7b3-b3b7-41fa-89ee-cc5d729c5150
+# ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
+# ╟─ff25c980-962d-4566-a9cd-18e94e1dbcf2
+# ╟─1fde9a98-0ca0-43ed-a290-f19cfb02af6e
+# ╟─03f7e3b7-752b-475a-947f-39dc01134ba9
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

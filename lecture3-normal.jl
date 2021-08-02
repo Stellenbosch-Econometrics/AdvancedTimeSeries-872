@@ -4,8 +4,17 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Compat, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, TaylorSeries
+using BenchmarkTools, Chain, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Pipe, Plots, PlutoUI, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -168,9 +177,11 @@ md" ### Plotting 🥧 "
 # ╔═╡ a0981303-008c-4e4a-b96e-581b52ab15f2
 md" Let us try to plot the estimate for $\pi$ "
 
+# ╔═╡ 924ea0e4-0133-4711-9e19-662b4d753e37
+N = @bind N Slider(100:10:5000, default=100)
+
 # ╔═╡ 73ddfc2a-ac78-45b1-97fd-ec56ce3b5b00
 begin
-	N = 1000
 	R = 1
 	x = rand(Uniform(-R, R), N)
 	y = rand(Uniform(-R, R), N)
@@ -182,25 +193,16 @@ end
 # ╔═╡ d5c65420-6910-4857-982d-604402968fe0
 begin
 	scatter(x[is_inside], y[is_inside], color = :blue)
-	scatter!(x[.!is_inside], y[.!is_inside], color = :red)
+	scatter!(x[.!is_inside], y[.!is_inside], color = :red, legend = false)
 end
 
 # ╔═╡ 63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
 md" I will also show a simple animation for this in the lecture using the `Makie.jl` package. "
 
-# ╔═╡ e3755fcc-36c1-4d35-b845-a9034dfcbc3d
-md" We now turn to an example to showcase the idea of posterior draws (visualization). We will simulate some fake data and fit a linear model to these data points. Then we draw samples from the posterior distribution using the linear model. We compare the frequentist MLE model and Bayesian fit. "
-
-# ╔═╡ 686011e9-4e3e-49ef-94c4-0711b9507051
-
-
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
 md" ## Normal / Gaussian "
 
-# ╔═╡ 50bdb452-4df5-4b44-8635-ba8c74760561
-md" Discussion on the normal distribution and some examples here. "
-
-# ╔═╡ 3b2e280f-d83a-4f1c-86bb-1397b95210cb
+# ╔═╡ e4730930-c3cd-4a01-a4d9-420bd15004ad
 md"""
 This is a distribution that we will be dealing with a lot in the course, so it is worthwhile getting used to its functional form and different properties. It appears almost everywhere! 
 
@@ -211,7 +213,13 @@ There are some problems
 1. It does not hold for all distributions, e.g., Cauchy
 2. This may require very large values of $n$. See the case of Binomial, when $\theta$ close to $0$ or $1$
 3. Does not hold if one the variables has much larger scale
+"""
 
+# ╔═╡ f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
+md" ### Gaussian model with known $\sigma^2$ "
+
+# ╔═╡ 3b2e280f-d83a-4f1c-86bb-1397b95210cb
+md"""
 For the normal distribution the observations $y$ are real valued. Mean $\theta$ and variance $\sigma^2$ (first assume $\sigma^2$ known). 
 
 $$\begin{align*}
@@ -231,37 +239,129 @@ $$\begin{align*}
 
 \end{align*}$$
 
+Furthermore, we have that, 
+
+$$\begin{align*}
+      & &
+      p(\theta|y)&\propto \exp\left(-\frac{1}{2}\left[
+          \frac{(y-\theta)^2}{\sigma^2}+\frac{(\theta-\mu_0)^2}{\tau_0^2} \right]\right) \\
+      & & & \propto \exp \left(-\frac{1}{2\tau_1^2}(\theta-\mu_1)^2
+      \right)
+\end{align*}$$
+
+$\begin{equation*}
+      \theta|y \sim \mathcal{N}(\mu_1,\tau_1^2), \quad
+      \text{where} \quad
+      \mu_1=\frac{\frac{1}{\tau_0^2}\mu_0+\frac{1}{\sigma^2}y}{\frac{1}{\tau_0^2}+\frac{1}{\sigma^2}} \quad  \text{and}  \quad \frac{1}{\tau_1^2} = \frac{1}{\tau_0^2}+\frac{1}{\sigma^2}
+\end{equation*}$
+
+"""
+
+# ╔═╡ 9741e08b-3f54-49d7-8db0-3125f4f90d3c
+md" ### Practical implementation "
+
+# ╔═╡ e99e1925-6219-4bf2-b743-bb2ea725dfcd
+md" Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
+
+# ╔═╡ 0fc998e7-d824-412b-a138-b626ba118904
+df = DataFrame(id = [1, 2], height_μ = [165, 175], height_σ = [4, 2])
+
+# ╔═╡ 01607a33-ad7e-4fab-b5cf-8ddf20a69a52
+md" The population mean and standard deviation for the male height in South Africa are given as follows, "
+
+# ╔═╡ aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
+pop_μ = 171 # Population mean
+
+# ╔═╡ ef4ccb39-cb95-43a5-a2d8-39efb1a66197
+pop_σ = 6 # Population standard deviation
+
+# ╔═╡ 2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
+grid = range(150, 210, length = 601) |> collect;
+
+# ╔═╡ 1316fbc2-700d-4106-99f0-0b9243a99aba
+begin
+	
+	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.2, :steelblue), labels = "Person 1")
+	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.2, :black), labels = "Person 2")
+	plot!(grid, Normal(pop_μ, pop_σ), xlims = (150, 190), lw = 2, color = :black, fill = (0, 0.5, :green), size = (600,400), labels = "Prior")
+end
+
+# ╔═╡ 3c409c93-545a-4d10-a972-509dff7c0120
+md" The above graph shows the fake guesses, we have also included the prior information from the population. " 
+
+# ╔═╡ 79f77683-faa5-4a25-a78a-1d7d585bc94c
+md" Next we provide the posterior function as analytically calculated above. This calculation needs some work. Typing error must have occured. "
+
+# ╔═╡ cef4da14-ee03-44b8-bd86-c11c263b26b3
+post_σ(prior_σ, obs_σ) = sqrt.(1 ./ (1 ./ prior_σ .^ 2 .+ 1 ./ obs_σ .^ 2))
+
+# ╔═╡ d4f3331d-3dbd-4bad-b043-dff9409005c3
+post_μ(prior_μ, prior_σ, obs_μ, obs_σ) = (prior_μ ./ (prior_σ .^ 2) .+ obs_μ ./ (obs_σ .^ 2)) ./ (1 ./ (prior_σ .^ 2) .+ 1 ./ (obs_σ .^ 2))
+
+# ╔═╡ ec24134e-a9c0-491e-9a68-c95a618f0b1d
+md" The posterior combines information from the prior and the likelihood. We will show in each case how the information retrieved from the data alters the posterior. " 
+
+# ╔═╡ 572653c4-0e3d-4619-bec6-64a01f4b2e06
+posterior_σ = post_σ([df.height_σ[1], df.height_σ[2]], pop_σ)
+
+# ╔═╡ fd9fe53b-3c5c-4e09-837e-bef6f00e485f
+posterior_μ = post_μ([df.height_μ[1], df.height_σ[1]], [df.height_μ[2], df.height_σ[2]], pop_μ, pop_σ)
+
+# ╔═╡ 39b604b9-a4c8-4f54-afaa-faa84d99ad73
+begin
+	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.2, :steelblue), labels = "Person 1")
+	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.2, :black), labels = "Person 2")
+	plot!(grid, Normal(pop_μ, pop_σ), lw = 0, color = :black, fill = (0, 0.5, :green), size = (600,400), labels = "Prior")
+	plot!(grid, Normal(posterior_μ[1], posterior_σ[1]), lw = 2, color = :black, size = (600,400), labels = "Posterior 1")
+	plot!(grid, Normal(posterior_μ[2], posterior_σ[2]), xlims = (150, 190), lw = 2, color = :steelblue, size = (600,400), labels = "Posterior 2") # Something went wrong with this calculation. 
+end
+
+# ╔═╡ a0670eb1-2091-47d0-9d9f-bba76834fbed
+md" One can see that doing this analytically is quite cumbersome. That is why we will often rely on numerical methods to draw from the posterior. Our next lecture will focus exclusively on such methods. In particular, we will consider different types of **Markov chain Monte Carlo** methods to draw from the posterior distribution of interest. That being said, let us continue with the analytical examples, since they are instructive. "
+
+# ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
+md" ## Marginalisation "
+
+# ╔═╡ b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+md"""
+In our models thus far we have mostly dealth with one unknown parameter. Consider the case where there is more than one unknonw parameter, but we are only interested in one of them. Joint distribution of parameters
+
+$$\begin{align*}
+      p(\theta_1,\theta_2 \mid y) \propto p(y \mid \theta_1,\theta_2)p(\theta_1,\theta_2)
+\end{align*}$$
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Pipe = "b98c9c47-44ae-5843-9183-064241ee97a0"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
-TaylorSeries = "6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
 BenchmarkTools = "~1.1.1"
+Chain = "~0.4.7"
 Compat = "~3.32.0"
+DataFrames = "~1.2.2"
 Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
+Pipe = "~1.3.0"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
-StaticArrays = "~1.2.9"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
-TaylorSeries = "~0.11.2"
 Turing = "~0.16.6"
 """
 
@@ -401,6 +501,11 @@ git-tree-sha1 = "e2f47f6d8337369411569fd45ae5753ca10394c6"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.0+6"
 
+[[Chain]]
+git-tree-sha1 = "c72673739e02d65990e5e068264df5afaa0b3273"
+uuid = "8be319e6-bccf-4806-a6f7-6fae938471bc"
+version = "0.4.7"
+
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "Statistics"]
 git-tree-sha1 = "0902fc7f416c8f1e3b1e014786bb65d0c2241a9b"
@@ -495,6 +600,12 @@ version = "4.0.4"
 git-tree-sha1 = "ee400abb2298bd13bfc3df1c412ed228061a2385"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 version = "1.7.0"
+
+[[DataFrames]]
+deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "d785f42445b63fc86caa08bb9a9351008be9b765"
+uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+version = "1.2.2"
 
 [[DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -1150,6 +1261,11 @@ git-tree-sha1 = "94bf17e83a0e4b20c8d77f6af8ffe8cc3b386c0a"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 version = "1.1.1"
 
+[[Pipe]]
+git-tree-sha1 = "6842804e7867b115ca9de748a0cf6b364523c16d"
+uuid = "b98c9c47-44ae-5843-9183-064241ee97a0"
+version = "1.3.0"
+
 [[Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "b4f5d02549a10e20780a24fce72bea96b6329e29"
@@ -1189,6 +1305,12 @@ deps = ["ArrayInterface", "IfElse", "ManualMemory", "Requires", "Static", "Strid
 git-tree-sha1 = "81c59c2bed8c8a76843411ddb33e548bf2bcc9b2"
 uuid = "f517fe37-dbe3-4b94-8317-1923a5111588"
 version = "0.3.8"
+
+[[PooledArrays]]
+deps = ["DataAPI", "Future"]
+git-tree-sha1 = "cde4ce9d6f33219465b55162811d8de8139c0414"
+uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
+version = "1.2.1"
 
 [[Preferences]]
 deps = ["TOML"]
@@ -1461,12 +1583,6 @@ version = "1.5.0"
 [[Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
-
-[[TaylorSeries]]
-deps = ["LinearAlgebra", "Markdown", "Requires", "SparseArrays"]
-git-tree-sha1 = "59ee6d7175a204013d91ad84e55eed1e772e01bd"
-uuid = "6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea"
-version = "0.11.2"
 
 [[TerminalLoggers]]
 deps = ["LeftChildRightSiblingTrees", "Logging", "Markdown", "Printf", "ProgressLogging", "UUIDs"]
@@ -1785,13 +1901,32 @@ version = "0.9.1+5"
 # ╟─94dc15cd-31ea-46a0-8401-aff7f2a74e5e
 # ╟─11a1cec2-2e95-4ebd-a7ce-bbe77f3c9a1d
 # ╟─a0981303-008c-4e4a-b96e-581b52ab15f2
+# ╟─924ea0e4-0133-4711-9e19-662b4d753e37
 # ╠═73ddfc2a-ac78-45b1-97fd-ec56ce3b5b00
-# ╠═d5c65420-6910-4857-982d-604402968fe0
+# ╟─d5c65420-6910-4857-982d-604402968fe0
 # ╟─63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
-# ╟─e3755fcc-36c1-4d35-b845-a9034dfcbc3d
-# ╠═686011e9-4e3e-49ef-94c4-0711b9507051
 # ╟─040c011f-1653-446d-8641-824dc82162eb
-# ╟─50bdb452-4df5-4b44-8635-ba8c74760561
+# ╟─e4730930-c3cd-4a01-a4d9-420bd15004ad
+# ╟─f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
 # ╟─3b2e280f-d83a-4f1c-86bb-1397b95210cb
+# ╟─9741e08b-3f54-49d7-8db0-3125f4f90d3c
+# ╟─e99e1925-6219-4bf2-b743-bb2ea725dfcd
+# ╠═0fc998e7-d824-412b-a138-b626ba118904
+# ╟─01607a33-ad7e-4fab-b5cf-8ddf20a69a52
+# ╠═aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
+# ╠═ef4ccb39-cb95-43a5-a2d8-39efb1a66197
+# ╠═2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
+# ╟─1316fbc2-700d-4106-99f0-0b9243a99aba
+# ╟─3c409c93-545a-4d10-a972-509dff7c0120
+# ╟─79f77683-faa5-4a25-a78a-1d7d585bc94c
+# ╠═cef4da14-ee03-44b8-bd86-c11c263b26b3
+# ╠═d4f3331d-3dbd-4bad-b043-dff9409005c3
+# ╟─ec24134e-a9c0-491e-9a68-c95a618f0b1d
+# ╠═572653c4-0e3d-4619-bec6-64a01f4b2e06
+# ╠═fd9fe53b-3c5c-4e09-837e-bef6f00e485f
+# ╟─39b604b9-a4c8-4f54-afaa-faa84d99ad73
+# ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
+# ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
+# ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

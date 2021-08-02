@@ -4,17 +4,8 @@
 using Markdown
 using InteractiveUtils
 
-# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
-macro bind(def, element)
-    quote
-        local el = $(esc(element))
-        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
-        el
-    end
-end
-
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Compat, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, TaylorSeries
+using BenchmarkTools, Compat, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, TaylorSeries
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -81,13 +72,7 @@ md" Packages used for this notebook are given above. Check them out on **Github*
 md" ## Monte Carlo and posterior draws "
 
 # ╔═╡ 675dfafa-46cb-44b8-bd7b-55395100e1ca
-md" Before we start with the Normal distribution and marginalisation, let us quickly discuss Monte Carlo methods, since we will be using them throughout the rest of the course. The $\theta^{(s)}$ draws from $p(\theta \mid y)$ can be used for visualization and to approximate expectations (integrals) -- most computationally heavy thing in Bayesian inference.
-
-$\begin{align*}
-        E_{p(\theta \mid y)}[\theta] = \int \theta p(\theta \mid y) \approx \frac{1}{S}\sum_{s=1}^{S} \theta^{(s)}
-      \end{align*}$
-
-Our first Monte Carlo example will be to try and estimate the value for $\pi$. 
+md" Before we start with the Normal distribution and marginalisation, let us quickly discuss Monte Carlo methods, since we will be using them throughout the rest of the course. According to Wikpedia, Monte Carlo methods, or Monte Carlo experiments, are a broad class of computational algorithms that rely on repeated random sampling to obtain numerical results. The underlying concept is to use randomness to solve problems that might be deterministic in principle. They are often used in physical and mathematical problems and are most useful when it is difficult or impossible to use other approaches. Monte Carlo methods are mainly used in three problem classes: optimization, numerical integration, and generating draws from a probability distribution.  Our first Monte Carlo example will be to try and estimate the value for $\pi$. 
 
 "
 
@@ -151,28 +136,57 @@ function compute_pi_ifelse(n::Int)
     return n_landed_in_circle / n * 4.0    
   end
 
-# ╔═╡ e7f91a74-9ca4-4490-83d4-966e16b1e4e2
-md"""
-n = $(@bind n Slider(10:10:10000000, show_value = true, default=10))
-"""
-
-# ╔═╡ daff5ab8-cb6a-4afe-9b01-1e968f45dc74
-compute_pi(n)
-
 # ╔═╡ 9e6a45a9-07da-4859-861c-db0c6ca30ec1
-@benchmark compute_pi_naive(10000000) # Compare this with R to see the difference in terms of speed. 
+@benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
 
 # ╔═╡ 4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
-@benchmark compute_pi(10000000) # Compare this with R to see the difference in terms of speed. 
+@benchmark compute_pi(10000000); # Better code, optimised (not fully though)
 
 # ╔═╡ 2ca932e0-6c9f-44e3-b02d-6e8731d2ce4e
-@benchmark compute_pi_ifelse(10000000)
+@benchmark compute_pi_ifelse(10000000);
 
 # ╔═╡ 9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
-md" So we have managed to find an approximation for $\pi$. Let us look at some other methods and also draw some nice graphs in the process to better explain what is going on. "
+md" So we have managed to find an approximation for $\pi$. Let us look at some other methods and also draw some nice graphs in the process to better explain what is going on. Our code above is optimised to a certain extent. However, when writing code, do not worry too much about optimisation. You can always go back to code to optimise. Try and write code that makes sense to you before you expirment with optimisation.  "
 
-# ╔═╡ 3512720c-0882-4690-bb96-d449a274fb71
-md" #### Taylor series expansiotn and "
+# ╔═╡ 880792b2-02b7-444e-a787-d02ee685ee72
+md"""
+ > Programmers waste enormous amounts of time thinking about, or worrying about, the speed of noncritical parts of their programs, and these attempts at efficiency actually have a strong negative impact when debugging and maintenance are considered. We should forget about small efficiencies, say about 97% of the time: **premature optimization is the root of all evil**. Yet we should not pass up our opportunities in that critical 3% -- **Donald Knuth**
+"""
+
+# ╔═╡ 309c4a9b-cd46-43ed-8a59-001057549fc4
+md" ### Parallel programming "
+
+# ╔═╡ 963e30cf-16af-44bf-b28e-f7ea4fe96dcc
+md" Suppose that we want this code to run even faster without changing the underlying code muc. In the data science course for the first semester we talked about parallel programming. This type of problem is embarassingly parallel and can be easily extended to multiple cores. You can read more on this in the following blog post by [Cory Simon](https://corysimon.github.io/articles/parallel-monte-carlo-in-julia/). "
+
+# ╔═╡ 94dc15cd-31ea-46a0-8401-aff7f2a74e5e
+md" This does not work so well in Pluto, so we will illustrate this in `VSCode`. "
+
+# ╔═╡ 11a1cec2-2e95-4ebd-a7ce-bbe77f3c9a1d
+md" ### Plotting 🥧 "
+
+# ╔═╡ a0981303-008c-4e4a-b96e-581b52ab15f2
+md" Let us try to plot the estimate for $\pi$ "
+
+# ╔═╡ 73ddfc2a-ac78-45b1-97fd-ec56ce3b5b00
+begin
+	N = 1000
+	R = 1
+	x = rand(Uniform(-R, R), N)
+	y = rand(Uniform(-R, R), N)
+	is_inside = (x.^2 .+ y.^2) .<= R.^2
+	pi_estimate = 4 * sum(is_inside) / N
+	pi_estimate
+end
+
+# ╔═╡ d5c65420-6910-4857-982d-604402968fe0
+begin
+	scatter(x[is_inside], y[is_inside], color = :blue)
+	scatter!(x[.!is_inside], y[.!is_inside], color = :red)
+end
+
+# ╔═╡ 63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
+md" I will also show a simple animation for this in the lecture using the `Makie.jl` package. "
 
 # ╔═╡ e3755fcc-36c1-4d35-b845-a9034dfcbc3d
 md" We now turn to an example to showcase the idea of posterior draws (visualization). We will simulate some fake data and fit a linear model to these data points. Then we draw samples from the posterior distribution using the linear model. We compare the frequentist MLE model and Bayesian fit. "
@@ -224,6 +238,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -687,9 +702,9 @@ version = "0.58.0+0"
 
 [[GeometryBasics]]
 deps = ["EarCut_jll", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
-git-tree-sha1 = "58bcdf5ebc057b085e58d95c138725628dd7453c"
+git-tree-sha1 = "15ff9a14b9e1218958d3530cc288cf31465d9ae2"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.4.1"
+version = "0.3.13"
 
 [[Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -1760,13 +1775,19 @@ version = "0.9.1+5"
 # ╠═e3f722c1-739f-45b4-8fbf-db07e9483d92
 # ╠═16b216ff-81ed-481a-896b-4ddf2cd139f6
 # ╠═791140fa-1ab7-4d52-818a-baf747bd604f
-# ╟─e7f91a74-9ca4-4490-83d4-966e16b1e4e2
-# ╠═daff5ab8-cb6a-4afe-9b01-1e968f45dc74
 # ╠═9e6a45a9-07da-4859-861c-db0c6ca30ec1
 # ╠═4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
 # ╠═2ca932e0-6c9f-44e3-b02d-6e8731d2ce4e
 # ╟─9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
-# ╠═3512720c-0882-4690-bb96-d449a274fb71
+# ╟─880792b2-02b7-444e-a787-d02ee685ee72
+# ╟─309c4a9b-cd46-43ed-8a59-001057549fc4
+# ╟─963e30cf-16af-44bf-b28e-f7ea4fe96dcc
+# ╟─94dc15cd-31ea-46a0-8401-aff7f2a74e5e
+# ╟─11a1cec2-2e95-4ebd-a7ce-bbe77f3c9a1d
+# ╟─a0981303-008c-4e4a-b96e-581b52ab15f2
+# ╠═73ddfc2a-ac78-45b1-97fd-ec56ce3b5b00
+# ╠═d5c65420-6910-4857-982d-604402968fe0
+# ╟─63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
 # ╟─e3755fcc-36c1-4d35-b845-a9034dfcbc3d
 # ╠═686011e9-4e3e-49ef-94c4-0711b9507051
 # ╟─040c011f-1653-446d-8641-824dc82162eb

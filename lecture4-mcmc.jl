@@ -4,6 +4,15 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, QuantEcon, Random, StatsBase, Statistics, StatsPlots
 
@@ -58,6 +67,13 @@ html"""
 
 # ╔═╡ aa69729a-0b08-4299-a14c-c9eb2eb65d5c
 md" # Introduction "
+
+# ╔═╡ c53220c2-b590-4f40-829b-617d728c7d16
+md"""
+
+> Please note, a signicant portion of these notes are directly taken from [QuantEcon](https://julia.quantecon.org/tools_and_techniques/finite_markov.html#equation-fin-mc-fr) and [Bayesian Statistics using Julia](https://storopoli.io/Bayesian-Julia/pages/5_MCMC/). Please visit their respective sites. These individuals offer amazing free resources! 
+
+"""
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
 md" In this session we will be covering one of the most important topics of the course. This relates to computational work and we will most likely spend two lectures working through the material.  "
@@ -126,7 +142,7 @@ html"""
 md" For a good description of the problem, watch the video above by Richard McElreath. He wrote a book called **Statistical Rethinking**, which is aimed at social scientists and is much less mathy than a lot of the Bayesian textbooks out there. All the code is also available in R. "
 
 # ╔═╡ 76853f63-4969-4823-a16b-d1033af26a2c
-md" > Notes for this section taken directly from [this book](https://rpruim.github.io/Kruschke-Notes/markov-chain-monte-carlo-mcmc.html#quick-intro-to-markov-chains). Code was originally written in R. "
+md" > Narrative for this section taken directly from [this book](https://rpruim.github.io/Kruschke-Notes/markov-chain-monte-carlo-mcmc.html#quick-intro-to-markov-chains). Code was originally written in R. "
 
 # ╔═╡ e9868be9-2c58-45ef-96ad-0a016fdca540
 md"""
@@ -199,9 +215,9 @@ Let $S$ be a finite set, called the **state space**, with $n$ elements $\{x_1, \
 
 A Markov chain $\{X_{t}\}$ on the state space $S$ is a sequence of random variables on $S$ that have the **Markov property**. This Markov property is a defining feature of the Markov chain. 
 
-The Markov property is a memorylessness property. For any date $t$ and any state $x_{i} \in S$ we have that, 
+The Markov property is a memorylessness property. For any date $t$ and any state $x_{j} \in S$ we have that, 
 
-$p(X_{t+1} = x_{i} | X_t ) = p(X_{t+1} = x_{i} | X_t, X_{t-1}, \ldots)$
+$p(X_{t+1} = x_{j} | X_t ) = p(X_{t+1} = x_{j} | X_t, X_{t-1}, \ldots)$
 
 The dynamics of the Markov chain are fully determined by the set of values 
 
@@ -255,58 +271,6 @@ One way in which we can answer these questions is through **simulation**. We hav
 **Note**: The algorithm that we are about to write is for instructive purposes only, it is a much better idea to work with already optimised code, such as the routines found at [QuantEcon](https://quantecon.org/quantecon-jl/).
 
 """
-
-# ╔═╡ 2a6c13a8-3fc0-4965-9ed1-8af336cbd854
-md""" ##### Simulation basics 
-
-"""
-
-# ╔═╡ 3a819d8f-f219-4cb0-a733-bb7dfb48cb03
-md" Before we get to the more complicated function let us construct a simple stochastic matrix and do some basic calculations, so that we make sure we understand what is going on behind the scenes. "
-
-# ╔═╡ e1eff2a5-2a0d-4927-8d3b-10cda0ffa03d
-α = 0.4
-
-# ╔═╡ 417eebdb-a546-410c-8907-dce6092bb162
-β = 0.2
-
-# ╔═╡ 3fcf5382-3e9e-412a-96f8-1e38a5305ee2
-P_island = [(1 - α) α; β (1 - β)]
-
-# ╔═╡ 80bc1169-2399-4092-bf0e-e7f8a396453d
-P0 = [1.0 0.0] # No comma, so this a row vector // Initial state
-
-# ╔═╡ da7d75e8-b039-4918-9c02-bda4f4d5551b
-md" Let us try and trace out the dynamics of this sytem for the individual that starts at the first island. "
-
-# ╔═╡ 2b8849d3-7e41-492d-ac1d-7d326389d3ae
-P1 = P0 * P_island
-
-# ╔═╡ 36ee7edb-85aa-4b96-a02a-a2e338084a1a
-P2 = P1 * P_island
-
-# ╔═╡ d063c55a-bbc0-4e5d-9ade-c621049770b1
-P3 = P2 * P_island
-
-# ╔═╡ f1a06922-c89c-4664-a587-23d1a6fa6181
-md" This iteration is getting somewhat tiresome, so perhaps we would like to write a function. "
-
-# ╔═╡ a76bf58a-58fd-4e74-9c22-7b44aaa01989
-function dynamics(P0, P, n)
-	
-	P_c = copy(P0)
-	
-	for i in 1:n
-		new_P = P_c * P
-		
-		P_c, new_P = new_P, P_c
-	end
-	
-	return P_c
-end
-
-# ╔═╡ fd58c353-609f-4d26-ac2c-7da24dbd3b00
-dyn_vec = [dynamics(P0, P_island, n) for n in 1:10]
 
 # ╔═╡ 27153344-0d5e-4bc1-ba11-2d302bf483ae
 md" ##### Simulating a Markov chain "
@@ -390,11 +354,94 @@ md"""
 
 """
 
+# ╔═╡ 78793993-f6b1-487e-9891-4755697350b5
+md"""
+
+Suppose $\{X_{t}\}$ is a Markov chain with stochastic matrix $P$ where the distribution of the random variable $X_{t}$ is known to be $\psi_{t}$. What is the distribution for $X_{t+1}$ or other random variables in the Markov chain, such as $X_{t+m}$?
+
+Our goal is to find $\psi_{t+1}$ given information on $\psi_t$ and the stochastic matrix $P$.
+
+Pick any $x_{j} \in S$. The law of total probability tells us that,
+
+$p(X_{t+1} = x_{j}) = \sum_{x_{i} \in S} p(X_{t+1} | x_{j}) \cdot p(X_{t} = x_{i})$
+
+This shows that to get the probability of being at $x_{j}$ tomorrow, we account for all the ways in which this can happen and then sum those probabilities. 
+
+We can rewrite this in terms of marginal and conditional probabilities, which gives, 
+
+$\psi_{t+1}(x_{j}) = \sum_{x_{i} \in S} P(x_{i}, x_{j})\psi_{t}(x_{i})$
+
+There are $n$ such equations, one for each $x_{j} \in S$. We can then think about $\psi{t+1}$ and $\psi_{t}$ as row vectors, so that we can summarise everything nicely in matrix notation. 
+
+$\psi_{t+1} = \psi_{t} P$
+
+To move the distribution forward one unit in time means simply postmultiplying by P. If we repeat this $m$ times we move forward $m$ steps into the future. This means that,
+
+$\psi_{t+m} = \psi_{t} P^{m}$
+
+We will not go into the notions of irreducibility and aperiodicity here, but it is worthwhile reading. Please refer to the QuantEcon notes for a good treatment. 
+
+"""
+
 # ╔═╡ 44e0f980-e912-4ad3-aa0d-9ab64d5fdfc9
 md"""
 ##### Stationary distributions
 
 """
+
+# ╔═╡ 018c4a59-3503-4d71-87d2-f150b0c8904b
+md" We now know that we can shift probabilities forward one unit of time via postmultiplication by $P$. However, some distributions are invariant under this updating process. "
+
+# ╔═╡ 813fc5a0-ef7c-4395-b2aa-00ecce7b8455
+ψ = [0.25, 0.75];
+
+# ╔═╡ e26acec5-ba7a-4448-b01f-519d48adb3ae
+ψ' * P # The value of ψ did not change when postmultiplied by P = [0.4 0.6; 0.2 0.8]
+
+# ╔═╡ 70b19d3d-4a6f-450a-8e8e-0e7bdaefaab1
+stationary_distributions(mc)
+
+# ╔═╡ 3f19c62e-e3e2-4650-ba3a-ea8b4f228501
+P₂ = [0.971 0.029 0.000
+	  0.145 0.778 0.077
+      0.000 0.508 0.492]; # stochastic matrix
+
+# ╔═╡ caff2e40-7b71-4a27-b661-1e4c05ec93a2
+ψ₀ = [0.0 0.2 0.8]; # initial distribution
+
+# ╔═╡ 433129ff-9c7d-4388-be68-1b06ff26fec0
+function dynamics(ψ, P, n)
+	
+	#t = 20 # path length
+	x_vals = zeros(n)
+	y_vals = similar(x_vals)
+	z_vals = similar(x_vals)
+	
+	for i in 1:n
+    	x_vals[i] = ψ[1]
+    	y_vals[i] = ψ[2]
+    	z_vals[i] = ψ[3]
+    	ψ = ψ * P # update distribution
+	end
+	return ψ, x_vals, y_vals, z_vals
+end
+
+# ╔═╡ ed9890f1-061c-4ada-90e7-a39e08af7af8
+n = (@bind n Slider(1:20, show_value = true, default=2))
+
+# ╔═╡ 67db0d82-d03b-4dee-aa26-156d9543a28f
+# dynamics(ψ₀, P₂, n)[1];
+
+# ╔═╡ 106087bc-1a39-4e97-b77a-bafe8b692844
+begin
+	colors = [repeat([:red], 20); :black]
+	mc₂ = MarkovChain(P₂)
+	ψ_star = stationary_distributions(mc₂)[1]
+	x_star, y_star, z_star = ψ_star # unpack the stationary dist
+	plt = scatter([dynamics(ψ₀, P₂, n)[2]; x_star], [dynamics(ψ₀, P₂, n)[3]; y_star], [dynamics(ψ₀, P₂, n)[4]; z_star], color = colors,
+		              gridalpha = 0.5, legend = :none)
+	plot!(plt, camera = (45,45))
+end
 
 # ╔═╡ 82e3553d-5b84-48a8-aaf9-82aefd4d7ead
 md"""
@@ -1732,6 +1779,7 @@ version = "0.9.1+5"
 # ╟─09a9d9f9-fa1a-4192-95cc-81314582488b
 # ╟─41eb90d1-9262-42b1-9eb2-d7aa6583da17
 # ╟─aa69729a-0b08-4299-a14c-c9eb2eb65d5c
+# ╟─c53220c2-b590-4f40-829b-617d728c7d16
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
@@ -1759,19 +1807,6 @@ version = "0.9.1+5"
 # ╟─9e907a32-3dfe-4118-9ec1-53593f632745
 # ╟─ac919514-9cdc-4144-99d0-a1b7ef82a4ed
 # ╟─086dc5e2-032c-4cea-9805-dd44567bc012
-# ╟─2a6c13a8-3fc0-4965-9ed1-8af336cbd854
-# ╟─3a819d8f-f219-4cb0-a733-bb7dfb48cb03
-# ╠═e1eff2a5-2a0d-4927-8d3b-10cda0ffa03d
-# ╠═417eebdb-a546-410c-8907-dce6092bb162
-# ╠═3fcf5382-3e9e-412a-96f8-1e38a5305ee2
-# ╠═80bc1169-2399-4092-bf0e-e7f8a396453d
-# ╟─da7d75e8-b039-4918-9c02-bda4f4d5551b
-# ╠═2b8849d3-7e41-492d-ac1d-7d326389d3ae
-# ╠═36ee7edb-85aa-4b96-a02a-a2e338084a1a
-# ╠═d063c55a-bbc0-4e5d-9ade-c621049770b1
-# ╟─f1a06922-c89c-4664-a587-23d1a6fa6181
-# ╠═a76bf58a-58fd-4e74-9c22-7b44aaa01989
-# ╠═fd58c353-609f-4d26-ac2c-7da24dbd3b00
 # ╟─27153344-0d5e-4bc1-ba11-2d302bf483ae
 # ╟─4a65adda-688b-4ce5-9a8c-ebc874cfc969
 # ╟─c9a6391e-2903-4cf3-9aa9-b2e20a7c15f1
@@ -1788,7 +1823,18 @@ version = "0.9.1+5"
 # ╠═fede135f-4a5c-4d40-9341-8e168e186bec
 # ╟─5084a86c-58ef-422e-a495-4bf831be3b1a
 # ╟─a2fdceff-88f5-4cf0-b139-729344373d14
+# ╟─78793993-f6b1-487e-9891-4755697350b5
 # ╟─44e0f980-e912-4ad3-aa0d-9ab64d5fdfc9
+# ╟─018c4a59-3503-4d71-87d2-f150b0c8904b
+# ╠═813fc5a0-ef7c-4395-b2aa-00ecce7b8455
+# ╠═e26acec5-ba7a-4448-b01f-519d48adb3ae
+# ╠═70b19d3d-4a6f-450a-8e8e-0e7bdaefaab1
+# ╠═3f19c62e-e3e2-4650-ba3a-ea8b4f228501
+# ╠═caff2e40-7b71-4a27-b661-1e4c05ec93a2
+# ╠═433129ff-9c7d-4388-be68-1b06ff26fec0
+# ╠═ed9890f1-061c-4ada-90e7-a39e08af7af8
+# ╠═67db0d82-d03b-4dee-aa26-156d9543a28f
+# ╟─106087bc-1a39-4e97-b77a-bafe8b692844
 # ╟─82e3553d-5b84-48a8-aaf9-82aefd4d7ead
 # ╟─3fb2b18d-0509-4ddb-b5f3-8ca2624ed3e4
 # ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa

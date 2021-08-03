@@ -113,7 +113,7 @@ In the sections that follow we will first provide a nice narrative that helps es
 """
 
 # ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
-md" ### King Markov and advisor Metropolis "
+md" ### King Markov 👑 and advisor Metropolis 🧙🏻"
 
 # ╔═╡ df019343-7656-4b41-b7a1-0836ffb668b2
 html"""
@@ -181,13 +181,232 @@ Fortunately, Metropolis knows about Markov Chains. Unfortunately, some of you ma
 md" #### Digression on Markov chains "
 
 # ╔═╡ 7354bf26-7530-4a84-ac4d-1dae6b19b623
-md" Most of these notes draw from the QuantEcon page on finite Markov Chains. This is an important concept to understand, beyond the application of MCMC algorithms. Markov chains underlie many of the workhorse model of economics and finance. We will not go into too much detail on the theory, but will mention some of it along the way. "
+md" Most of these notes draw from the [QuantEcon page](https://julia.quantecon.org/tools_and_techniques/finite_markov.html) on finite Markov chains. This is an important concept to understand, beyond the application of MCMC algorithms. Markov chains underlie many of the workhorse model of economics and finance. We will not go into too much detail on the theory, but will mention some of it along the way. Read the following section carefully, since it can be difficult on first reading. "
 
 # ╔═╡ 5508d626-591f-4147-99ee-e85160162323
 md" ##### Fundamental concepts "
 
 # ╔═╡ eb2624dd-5bf2-4a9f-a92e-a3ae7227dede
-md" A stochastic matrix is an $n \times n$ square matrix $P$ such that each element of $P$ is "
+md"""
+
+Notice that the notation for this section is a bit different from what we had before. Random variables in the section are represented by capital letters and probability distributions are given by $p$, as from before. If you have questions about notation please feel free to ask. I am trying to streamline notation across different sets of notes, but this isn't always easy, since notation is not always standard. 
+
+A **stochastic matrix** is an $n \times n$ square matrix $P$ such that each element of $P$ is nonnegative and each row of $P$ sums to one. **Important**: Each row of $P$ can be regarded as a probability mass function over $n$ possible outcomes.
+
+Stochastic matrices and Markov chains are closely linked.
+
+Let $S$ be a finite set, called the **state space**, with $n$ elements $\{x_1, \ldots, x_{n}\}$. The elements of the set are referred to as the state values. 
+
+A Markov chain $\{X_{t}\}$ on the state space $S$ is a sequence of random variables on $S$ that have the **Markov property**. This Markov property is a defining feature of the Markov chain. 
+
+The Markov property is a memorylessness property. For any date $t$ and any state $x_{i} \in S$ we have that, 
+
+$p(X_{t+1} = x_{i} | X_t ) = p(X_{t+1} = x_{i} | X_t, X_{t-1}, \ldots)$
+
+The dynamics of the Markov chain are fully determined by the set of values 
+
+$P(x_{i}, x_{j}) = p(X_{t+1} = x_{j} | X_{t} = x_{i})$
+
+By construction $P(x_{i}, x_{j})$ is the probability of going from $x_{i}$ to $x_{j}$ in one unit of time. It is important to note that $P(x_{i}, \cdot)$ is the conditional distribution of $X_{t+1}$ given $X_{t} = x_{i}$. We can view $P$ as a stochastic matrix where 
+
+$P_{i j}=P\left(x_{i}, x_{j}\right) \quad 1 \leq i, j \leq n$
+
+If we have the stochastic matrix $P$ then we can generate a Markov chain in the following manner. 
+
+1. Draw $X_{0}$ from some specified distribution
+2. For each $t = 0, 1, \ldots$ draw $X_{t+1}$ from $P(X_{t}, \cdot)$
+
+Let us illustrate these concepts with a basic example that relates to our island problem.  
+
+"""
+
+
+# ╔═╡ b1a9f137-10a3-4940-8948-1c44026ada6c
+md" ##### Island example"
+
+# ╔═╡ 0d572678-5302-4715-b873-500004dcac78
+md"""
+
+Consider a situation where we only have two islands. At any point in time you can be at either island $1$ 🏖️ or island $2$ 🌴. We consider these to be the to state in our Markov model. Suppose that over the period of a month an inhabitant of island $1$ finds himself on island $2$ with probability $\alpha$. While someone who lives on island $2$ might travel to island $1$ with probability $\beta$.
+
+"""
+
+# ╔═╡ 9e907a32-3dfe-4118-9ec1-53593f632745
+md"""
+!!! note "Travel itinerary for September "
+
+>🏖️ $\rightarrow$ 🌴 with probability $\alpha \in (0, 1)$. 🌴  $\rightarrow$ 🏖️ with probability $\beta \in (0, 1)$
+
+"""
+
+# ╔═╡ ac919514-9cdc-4144-99d0-a1b7ef82a4ed
+md" The elements of our Markov model so far are the state space $S = \{1, 2\}$ and the elements of the stochastic matrix $P(1, 2) = \alpha$, $P(2, 1) = \beta$. The transition probabilities can then be written in matrix form as 
+
+$P=\left(\begin{array}{cc}1-\alpha & \alpha \\ \beta & 1-\beta\end{array}\right)$
+
+Once we have the values for $\alpha$ and $\beta$ we can answer questions like, what is the average duration that someone spends on an island. In the long run, what fraction of time does the person on island $1$ find herself there? Conditional on being on island $1$, what is the probability of going to island $2$ next year September? 
+"
+
+# ╔═╡ 086dc5e2-032c-4cea-9805-dd44567bc012
+md"""
+
+One way in which we can answer these questions is through **simulation**. We have already attempted some simulations, so this should not be completely new to you. To estimate the probability that a certain event will occur, we can simulate many times and simply count the number of times that the event occurs. Let us write our own simulation routine to see how this would work. 
+
+**Note**: The algorithm that we are about to write is for instructive purposes only, it is a much better idea to work with already optimised code, such as the routines found at [QuantEcon](https://quantecon.org/quantecon-jl/).
+
+"""
+
+# ╔═╡ 2a6c13a8-3fc0-4965-9ed1-8af336cbd854
+md""" ##### Simulation basics 
+
+"""
+
+# ╔═╡ 3a819d8f-f219-4cb0-a733-bb7dfb48cb03
+md" Before we get to the more complicated function let us construct a simple stochastic matrix and do some basic calculations, so that we make sure we understand what is going on behind the scenes. "
+
+# ╔═╡ e1eff2a5-2a0d-4927-8d3b-10cda0ffa03d
+α = 0.4
+
+# ╔═╡ 417eebdb-a546-410c-8907-dce6092bb162
+β = 0.2
+
+# ╔═╡ 3fcf5382-3e9e-412a-96f8-1e38a5305ee2
+P_island = [(1 - α) α; β (1 - β)]
+
+# ╔═╡ 80bc1169-2399-4092-bf0e-e7f8a396453d
+P0 = [1.0 0.0] # No comma, so this a row vector // Initial state
+
+# ╔═╡ da7d75e8-b039-4918-9c02-bda4f4d5551b
+md" Let us try and trace out the dynamics of this sytem for the individual that starts at the first island. "
+
+# ╔═╡ 2b8849d3-7e41-492d-ac1d-7d326389d3ae
+P1 = P0 * P_island
+
+# ╔═╡ 36ee7edb-85aa-4b96-a02a-a2e338084a1a
+P2 = P1 * P_island
+
+# ╔═╡ d063c55a-bbc0-4e5d-9ade-c621049770b1
+P3 = P2 * P_island
+
+# ╔═╡ f1a06922-c89c-4664-a587-23d1a6fa6181
+md" This iteration is getting somewhat tiresome, so perhaps we would like to write a function. "
+
+# ╔═╡ a76bf58a-58fd-4e74-9c22-7b44aaa01989
+function dynamics(P0, P, n)
+	
+	P_c = copy(P0)
+	
+	for i in 1:n
+		new_P = P_c * P
+		
+		P_c, new_P = new_P, P_c
+	end
+	
+	return P_c
+end
+
+# ╔═╡ fd58c353-609f-4d26-ac2c-7da24dbd3b00
+dyn_vec = [dynamics(P0, P_island, n) for n in 1:10]
+
+# ╔═╡ 27153344-0d5e-4bc1-ba11-2d302bf483ae
+md" ##### Simulating a Markov chain "
+
+# ╔═╡ 4a65adda-688b-4ce5-9a8c-ebc874cfc969
+md" Let us try and write something more advanced to generate a Markov chain. We have an idea of the ingredients that we need to generate the chain. In particular, we need a stochastic matrix $P$ and an initial state. If we don't have an initial state then we need a distribution from which we can draw the initial state. We then construct our Markov chain as discussed in one of the previous sections. Our function takes the following three arguments, 
+
+- A stochastic matrix `P`
+- An initial state `init`
+- A positive integer `sample_size` representing the length of the time series the function should return
+
+"
+
+# ╔═╡ c9a6391e-2903-4cf3-9aa9-b2e20a7c15f1
+md" For this example we will be sampling from the `Categorical distribution`. "
+
+# ╔═╡ 8f22fc64-c0fc-4f10-8bac-bc355edc4780
+d = Categorical([0.4, 0.6])
+
+# ╔═╡ a081553f-35f8-46e1-925b-bd480cc691e5
+[rand(d, 5) for _ = 1:3] # Provides 3 samples with size of 5 for from the Categorical distribution
+
+# ╔═╡ 208d0d6b-f97a-4527-a519-1227c474fdc0
+md" We can see that samples from the Categorical distribution align nicely with our state values in the state space. "
+
+# ╔═╡ b531a759-ab64-4777-8b50-580c1f169576
+function mc_sample_path(P; init = 1, sample_size = 1000)
+    
+	@assert size(P)[1] == size(P)[2] # Require that the matrix be square
+    N = size(P)[1] # In our example P is 2 x 2 matrix, so this should be 2
+
+    # create vector of discrete RVs for each row
+    dists = [Categorical(P[i, :]) for i in 1:N] # N = 2 for this example
+
+    # setup the simulation
+    X = fill(0, sample_size) # allocate memory, or zeros(Int64, sample_size)
+    X[1] = init # set the initial state
+
+    for t in 2:sample_size
+        dist = dists[X[t-1]] # get discrete RV from last state's transition distribution
+        X[t] = rand(dist) # draw new value
+    end
+    return X
+end
+
+# ╔═╡ 0a63d554-c9f0-4df0-91ae-54c59dc312a4
+begin
+	P = [0.4 0.6; 0.2 0.8]
+	X₁ = mc_sample_path(P, init = 1, sample_size = 100_000); # note 100_000 = 100000
+	μ₁ = count(X₁ .== 1)/length(X₁) # .== broadcasts test for equality. Could use mean(X .== 1)
+end
+
+# ╔═╡ 14f6cfaf-50e5-4924-8d40-1a2d7d0a9c8a
+md" The code illustrates the fraction of the sample that takes the value of $1$. In this case it will be about 25% of the time. Doesnt matter from which island you start, you will be at island $1$ roughly 25% of the time, if we allow for a long series of values to be drawn. " 
+
+# ╔═╡ 48a4323f-db34-40bb-9026-39a4f1131c36
+md" We could have also use the QuantEcon routine, with a function called `MarkovChain` that takes a stochastic matrix as input. We can then simulate the a Markov chain with the QuantEcon package. "
+
+# ╔═╡ ddac3546-7949-49be-ac41-3d977d0b99cf
+begin
+	mc = MarkovChain(P)
+	X₂ = simulate(mc, 100_000);
+	μ₂ = count(X₂ .== 1)/length(X₂) # or mean(x -> x == 1, X)
+end
+
+# ╔═╡ c53eab7a-6849-4a2f-b7d2-4a400728cb11
+md" The nice thing about here is that we can add state values in the form of strings (or even emojis if we really want). "
+
+# ╔═╡ 1dcaa4e0-c2a9-4068-af52-39c0215625dc
+mc₁ = MarkovChain(P, ["🏖️", "🌴"])
+
+# ╔═╡ fede135f-4a5c-4d40-9341-8e168e186bec
+simulate(mc₁, 10, init = 1) # start at 🏖️
+
+# ╔═╡ 5084a86c-58ef-422e-a495-4bf831be3b1a
+md" Now we can see how our representative island hopper is jumping between islands. "
+
+# ╔═╡ a2fdceff-88f5-4cf0-b139-729344373d14
+md"""
+##### Marginal distributions
+
+"""
+
+# ╔═╡ 44e0f980-e912-4ad3-aa0d-9ab64d5fdfc9
+md"""
+##### Stationary distributions
+
+"""
+
+# ╔═╡ 82e3553d-5b84-48a8-aaf9-82aefd4d7ead
+md"""
+##### Ergodicity
+
+"""
+
+# ╔═╡ 3fb2b18d-0509-4ddb-b5f3-8ca2624ed3e4
+md"""
+##### Calculating expectations
+
+"""
 
 # ╔═╡ 411d9644-55c7-4cef-81d1-7ca41181d3fa
 md" #### Getting back to King Markov "
@@ -1535,6 +1754,43 @@ version = "0.9.1+5"
 # ╟─7354bf26-7530-4a84-ac4d-1dae6b19b623
 # ╟─5508d626-591f-4147-99ee-e85160162323
 # ╟─eb2624dd-5bf2-4a9f-a92e-a3ae7227dede
+# ╟─b1a9f137-10a3-4940-8948-1c44026ada6c
+# ╟─0d572678-5302-4715-b873-500004dcac78
+# ╟─9e907a32-3dfe-4118-9ec1-53593f632745
+# ╟─ac919514-9cdc-4144-99d0-a1b7ef82a4ed
+# ╟─086dc5e2-032c-4cea-9805-dd44567bc012
+# ╟─2a6c13a8-3fc0-4965-9ed1-8af336cbd854
+# ╟─3a819d8f-f219-4cb0-a733-bb7dfb48cb03
+# ╠═e1eff2a5-2a0d-4927-8d3b-10cda0ffa03d
+# ╠═417eebdb-a546-410c-8907-dce6092bb162
+# ╠═3fcf5382-3e9e-412a-96f8-1e38a5305ee2
+# ╠═80bc1169-2399-4092-bf0e-e7f8a396453d
+# ╟─da7d75e8-b039-4918-9c02-bda4f4d5551b
+# ╠═2b8849d3-7e41-492d-ac1d-7d326389d3ae
+# ╠═36ee7edb-85aa-4b96-a02a-a2e338084a1a
+# ╠═d063c55a-bbc0-4e5d-9ade-c621049770b1
+# ╟─f1a06922-c89c-4664-a587-23d1a6fa6181
+# ╠═a76bf58a-58fd-4e74-9c22-7b44aaa01989
+# ╠═fd58c353-609f-4d26-ac2c-7da24dbd3b00
+# ╟─27153344-0d5e-4bc1-ba11-2d302bf483ae
+# ╟─4a65adda-688b-4ce5-9a8c-ebc874cfc969
+# ╟─c9a6391e-2903-4cf3-9aa9-b2e20a7c15f1
+# ╠═8f22fc64-c0fc-4f10-8bac-bc355edc4780
+# ╠═a081553f-35f8-46e1-925b-bd480cc691e5
+# ╟─208d0d6b-f97a-4527-a519-1227c474fdc0
+# ╠═b531a759-ab64-4777-8b50-580c1f169576
+# ╠═0a63d554-c9f0-4df0-91ae-54c59dc312a4
+# ╟─14f6cfaf-50e5-4924-8d40-1a2d7d0a9c8a
+# ╟─48a4323f-db34-40bb-9026-39a4f1131c36
+# ╠═ddac3546-7949-49be-ac41-3d977d0b99cf
+# ╟─c53eab7a-6849-4a2f-b7d2-4a400728cb11
+# ╠═1dcaa4e0-c2a9-4068-af52-39c0215625dc
+# ╠═fede135f-4a5c-4d40-9341-8e168e186bec
+# ╟─5084a86c-58ef-422e-a495-4bf831be3b1a
+# ╟─a2fdceff-88f5-4cf0-b139-729344373d14
+# ╟─44e0f980-e912-4ad3-aa0d-9ab64d5fdfc9
+# ╟─82e3553d-5b84-48a8-aaf9-82aefd4d7ead
+# ╟─3fb2b18d-0509-4ddb-b5f3-8ca2624ed3e4
 # ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa
 # ╟─dab6db7d-885c-4703-9c9a-cc71fc06d740
 # ╠═f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b

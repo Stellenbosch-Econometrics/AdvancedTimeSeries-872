@@ -194,13 +194,13 @@ Fortunately, Metropolis knows about Markov Chains. Unfortunately, some of you ma
 """
 
 # ╔═╡ 68fab7b3-b3b7-41fa-89ee-cc5d729c5150
-md" #### Digression on Markov chains "
+md" ### Markov chains "
 
 # ╔═╡ 7354bf26-7530-4a84-ac4d-1dae6b19b623
 md" Most of these notes draw from the [QuantEcon page](https://julia.quantecon.org/tools_and_techniques/finite_markov.html) on finite Markov chains. This is an important concept to understand, beyond the application of MCMC algorithms. Markov chains underlie many of the workhorse model of economics and finance. We will not go into too much detail on the theory, but will mention some of it along the way. Read the following section carefully, since it can be difficult on first reading. "
 
 # ╔═╡ 5508d626-591f-4147-99ee-e85160162323
-md" ##### Fundamental concepts "
+md" #### Fundamental concepts "
 
 # ╔═╡ eb2624dd-5bf2-4a9f-a92e-a3ae7227dede
 md"""
@@ -238,7 +238,7 @@ Let us illustrate these concepts with a basic example that relates to our island
 
 
 # ╔═╡ b1a9f137-10a3-4940-8948-1c44026ada6c
-md" ##### Island example"
+md" #### Island example"
 
 # ╔═╡ 0d572678-5302-4715-b873-500004dcac78
 md"""
@@ -273,7 +273,7 @@ One way in which we can answer these questions is through **simulation**. We hav
 """
 
 # ╔═╡ 27153344-0d5e-4bc1-ba11-2d302bf483ae
-md" ##### Simulating a Markov chain "
+md" #### Simulating a Markov chain "
 
 # ╔═╡ 4a65adda-688b-4ce5-9a8c-ebc874cfc969
 md" Let us try and write something more advanced to generate a Markov chain. We have an idea of the ingredients that we need to generate the chain. In particular, we need a stochastic matrix $P$ and an initial state. If we don't have an initial state then we need a distribution from which we can draw the initial state. We then construct our Markov chain as discussed in one of the previous sections. Our function takes the following three arguments, 
@@ -350,7 +350,7 @@ md" Now we can see how our representative island hopper is jumping between islan
 
 # ╔═╡ a2fdceff-88f5-4cf0-b139-729344373d14
 md"""
-##### Marginal distributions
+#### Marginal distributions
 
 """
 
@@ -385,7 +385,7 @@ We will not go into the notions of irreducibility and aperiodicity here, but it 
 
 # ╔═╡ 44e0f980-e912-4ad3-aa0d-9ab64d5fdfc9
 md"""
-##### Stationary distributions
+#### Stationary distributions
 
 """
 
@@ -398,8 +398,31 @@ md" We now know that we can shift probabilities forward one unit of time via pos
 # ╔═╡ e26acec5-ba7a-4448-b01f-519d48adb3ae
 ψ' * P # The value of ψ did not change when postmultiplied by P = [0.4 0.6; 0.2 0.8]
 
+# ╔═╡ fb077380-d79d-45cc-96c2-ab44acadd1e1
+md"""
+
+Distributions like these are referred to as **stationary** or **invariant**. 
+
+More formally, a distribution $\psi^{\star}$ on $S$ is called stationary for $P$ if, 
+
+$\psi^{\star} = \psi^{\star}P$
+
+If the distribution of $X_{0}$ is a stationary distribution, then $X_{t}$ will have the same distribution for all $t$. Hence stationary distributions have a natural interpretation as stochastic steady states. 
+
+Under some conditions (irreducibility and aperiodicity) we have theorems that tell us that the stochastic matrix has exactly one stationary distribution and that for any initial distribution (postmulitplied by the stochatic matrix) we approach the stationary distribution as time goes to infinity. A stochastic matrix that satsifies the conditions of the theorem is normally called **uniformly ergodic**. 
+
+"""
+
+# ╔═╡ dc666834-d602-4800-934b-2c8caae7beb5
+md" There is a function in the QuantEcon package that allows us to calculate this stationary distribution. "
+
 # ╔═╡ 70b19d3d-4a6f-450a-8e8e-0e7bdaefaab1
 stationary_distributions(mc)
+
+# ╔═╡ ca57a81c-5d42-4415-a979-cec0d9c18391
+md"""
+The second part of the theorem above tells us that the distribution of $X_{t}$ converges to the stationary distribution regardless of where we start off. The convergence result is illustrated in the next figure.
+"""
 
 # ╔═╡ 3f19c62e-e3e2-4650-ba3a-ea8b4f228501
 P₂ = [0.971 0.029 0.000
@@ -427,13 +450,14 @@ function dynamics(ψ, P, n)
 end
 
 # ╔═╡ ed9890f1-061c-4ada-90e7-a39e08af7af8
-n = (@bind n Slider(1:20, show_value = true, default=2))
+n = (@bind n Slider(2:20, show_value = true, default=2))
 
 # ╔═╡ 67db0d82-d03b-4dee-aa26-156d9543a28f
 # dynamics(ψ₀, P₂, n)[1];
 
 # ╔═╡ 106087bc-1a39-4e97-b77a-bafe8b692844
 begin
+	gr()
 	colors = [repeat([:red], 20); :black]
 	mc₂ = MarkovChain(P₂)
 	ψ_star = stationary_distributions(mc₂)[1]
@@ -443,20 +467,50 @@ begin
 	plot!(plt, camera = (45,45))
 end
 
-# ╔═╡ 82e3553d-5b84-48a8-aaf9-82aefd4d7ead
-md"""
-##### Ergodicity
+# ╔═╡ 80154dfd-dac5-4579-8cdc-a14b9862df18
+md"""  #### Island time series example
+
+Recall our model of island hopping dynamics. Assuming $\alpha \in (0,1)$ and $\beta \in (0,1)$, the uniform ergodicity condition is satisfied. Let $\psi^{\star}=(p, 1−p)$ be the stationary distribution, so that $p$ corresponds to being on island $1$. Using $\psi^{\star}=\psi^{\star}P$ and a bit of algebra yields
+
+$p = \frac{\beta}{\alpha + \beta}$
+
+This is, in some sense, a steady state probability of being on island $1$. Not surprisingly it tends to zero as $\beta \rightarrow 0$, and to one as $\alpha \rightarrow 0$. It represents the long run fraction of time spent on island $1$.
+
+In other words, if $\{X_{t}\}$ represents a Markov chain, then $\bar X_m \to p$ as $m \to \infty$ where
+
+$\bar X_m := \frac{1}{m} \sum_{t = 1}^m \mathbf{1}\{X_t = 1\}$
+
+In this example we want to generate a simulated time series $\{X_{t}\}$ of length $3000$, starting at $X_{0} = 1$. We will then plot $\bar X_m - p$ against $m$, where $p$ is as defined above. Repeat this step, but taking the initial conidtion as $2$, representing a starting point on the second island. The result looks something like the following. 
 
 """
 
-# ╔═╡ 3fb2b18d-0509-4ddb-b5f3-8ca2624ed3e4
-md"""
-##### Calculating expectations
+# ╔═╡ 3742f58c-de0b-40db-bba0-59a4bf9e58ad
+begin
+	α₃ = 0.4 # probability of staying on island 1
+	β₃ = 0.6 # probability of staying on island 2
+	N₃ = 3000
+	p̄₃ = β₃ / (α₃ + β₃) # steady-state probabilities
+	P₃ = [1 - α₃   α₃
+	     β₃   1 - β₃] # stochastic matrix
+	mc₃ = MarkovChain(P₃)
+	labels = ["start at 1", "start at 2"]
+	y_vals₃ = Array{Vector}(undef, 2) # sample paths holder
+	
+	for x0 in 1:2
+	    X₃ = simulate_indices(mc₃, N₃; init = x0) # generate the sample path
+	    X̄₃ = cumsum(X₃ .== 1) ./ (1:N₃) # compute state fraction. ./ required for precedence
+	    y_vals₃[x0] = X̄₃ .- p̄₃ # plot divergence from steady state
+	end
+	
+	plot(y_vals₃, color = [:blue :green], fillrange = 0, fillalpha = 0.3,
+	     ylims = (-0.25, 0.25), label = reshape(labels, 1, length(labels)))
+end
 
-"""
+# ╔═╡ 635cd82c-8fa6-4bf3-b586-fd2ec915c4b7
+md" So we have now spent a lot of time gaining some basic understanding on Markov chains. Let us get back to our King Markov example and see how to apply our newfound knowledge. "
 
 # ╔═╡ 411d9644-55c7-4cef-81d1-7ca41181d3fa
-md" #### Getting back to King Markov "
+md" ### Getting back to King Markov "
 
 # ╔═╡ dab6db7d-885c-4703-9c9a-cc71fc06d740
 md" Still translating code from R"
@@ -1828,15 +1882,19 @@ version = "0.9.1+5"
 # ╟─018c4a59-3503-4d71-87d2-f150b0c8904b
 # ╠═813fc5a0-ef7c-4395-b2aa-00ecce7b8455
 # ╠═e26acec5-ba7a-4448-b01f-519d48adb3ae
+# ╟─fb077380-d79d-45cc-96c2-ab44acadd1e1
+# ╟─dc666834-d602-4800-934b-2c8caae7beb5
 # ╠═70b19d3d-4a6f-450a-8e8e-0e7bdaefaab1
+# ╟─ca57a81c-5d42-4415-a979-cec0d9c18391
 # ╠═3f19c62e-e3e2-4650-ba3a-ea8b4f228501
 # ╠═caff2e40-7b71-4a27-b661-1e4c05ec93a2
 # ╠═433129ff-9c7d-4388-be68-1b06ff26fec0
-# ╠═ed9890f1-061c-4ada-90e7-a39e08af7af8
+# ╟─ed9890f1-061c-4ada-90e7-a39e08af7af8
 # ╠═67db0d82-d03b-4dee-aa26-156d9543a28f
-# ╟─106087bc-1a39-4e97-b77a-bafe8b692844
-# ╟─82e3553d-5b84-48a8-aaf9-82aefd4d7ead
-# ╟─3fb2b18d-0509-4ddb-b5f3-8ca2624ed3e4
+# ╠═106087bc-1a39-4e97-b77a-bafe8b692844
+# ╟─80154dfd-dac5-4579-8cdc-a14b9862df18
+# ╠═3742f58c-de0b-40db-bba0-59a4bf9e58ad
+# ╟─635cd82c-8fa6-4bf3-b586-fd2ec915c4b7
 # ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa
 # ╟─dab6db7d-885c-4703-9c9a-cc71fc06d740
 # ╠═f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b

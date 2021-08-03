@@ -131,15 +131,8 @@ In the sections that follow we will first provide a nice narrative that helps es
 # ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
 md" ### King Markov 👑 and advisor Metropolis 🧙🏻"
 
-# ╔═╡ df019343-7656-4b41-b7a1-0836ffb668b2
-html"""
-
-<iframe width="680" height="400" src="https://www.youtube.com/watch?v=v-j0UmWf3Us" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-"""
-
 # ╔═╡ 5f8c67ac-c5c7-4999-8d22-417d8199ddac
-md" For a good description of the problem, watch the video above by Richard McElreath. He wrote a book called **Statistical Rethinking**, which is aimed at social scientists and is much less mathy than a lot of the Bayesian textbooks out there. All the code is also available in R. "
+md" For a good description of the problem, watch the [video](https://www.youtube.com/watch?v=v-j0UmWf3Us) by Richard McElreath. He wrote a book called **Statistical Rethinking**, which is aimed at social scientists and is much less mathy than a lot of the Bayesian textbooks out there. All the code is also available in R. "
 
 # ╔═╡ 76853f63-4969-4823-a16b-d1033af26a2c
 md" > Narrative for this section taken directly from [this book](https://rpruim.github.io/Kruschke-Notes/markov-chain-monte-carlo-mcmc.html#quick-intro-to-markov-chains). Code was originally written in R. "
@@ -174,22 +167,24 @@ md"""
 md"""
 The following scheme is the one that Metropolis came up with...
 
-Each morning, have breakfast with the island clerk and inquire about the population of the current island. Randomly pick one of the 4 other islands (a proposal island) and travel there in the morning
+1. Each morning, have breakfast with the island clerk and inquire about the population of the current island.
 
-- Let  $J(b ∣ a)$ be the conditional probability of selecting island $b$ as the candidate if $a$ is the current island.
+2. Randomly pick one of the 2 other islands. Remember that we are in a chain, so that we can only go to adjacent islands. The King doesn't like sailing across wide open bodies of water, since he is afraid of sea monsters 🦑 that live in the deep. Call that island the **proposal island** and travel there in the morning. One might think perhaps to flip a coin to choose the proposal island. 
 
-- The value of $J$ does not depend on the populations of the islands (since the King can’t remember them).
+3. Over lunch at the proposal island, inquire about its population.
 
-Over lunch at the proposal island, inquire about its population.
+4. If the proposal island has more people, stay at the proposal island for the night (since the King should prefer more populated islands).
 
-- If the proposal island has more people, stay at the proposal island for the night (since the king should prefer more populated islands).
+5. If the proposal island has fewer people, stay at the proposal island with probability $r$, else return to the “current” island (ie, last night’s island).
 
-- If the proposal island has fewer people, stay at the proposal island with probability $A$, else return to the “current” island (ie, last night’s island).
+6. Repeat this process, starting from the first step. 
 
-Metropolis is convinced that for the right choices of $J$ and $A$, this will satisfy the law. It seems like $A$ might need to depend on the populations of the current and proposal islands. When we want to emphasize that, we’ll denote it as $A = A(b∣a)$. But how? If $A$ is too large, the king will visit small islands too often. If  
-$A$ is too small, he will visit large islands too often.
+Let us quickly define some terms. Let  $J(\theta_{b} ∣ \theta_{a})$ be the conditional probability of selecting island $\theta_{b}$ given $\theta_{a}$ is the current island. The value of $J$ does not depend on the populations of the islands (since the King can’t remember them).
 
-Fortunately, Metropolis knows about Markov Chains. Unfortunately, some of you may not. So let’s learn a little bit about Markov Chains and then figure out how Metropolis should choose $J$ and $A$.
+Metropolis is convinced that for the right choices of $J$ and $r$, this will satisfy the law (and he is right). It seems like $r$ might need to depend on the populations of the current and proposal islands. But how? If $r$ is too large, the king will visit small islands too often. If  
+$r$ is too small, he will visit large islands too often.
+
+Fortunately, Metropolis knows about Markov Chains. Unfortunately, some of you may not. So let’s learn a little bit about Markov Chains and then figure out how Metropolis should choose $J$ and $r$.
 
 """
 
@@ -470,17 +465,17 @@ end
 # ╔═╡ 80154dfd-dac5-4579-8cdc-a14b9862df18
 md"""  #### Island time series example
 
-Recall our model of island hopping dynamics. Assuming $\alpha \in (0,1)$ and $\beta \in (0,1)$, the uniform ergodicity condition is satisfied. Let $\psi^{\star}=(p, 1−p)$ be the stationary distribution, so that $p$ corresponds to being on island $1$. Using $\psi^{\star}=\psi^{\star}P$ and a bit of algebra yields
+Recall our model of island hopping dynamics. Assuming $\alpha \in (0,1)$ and $\beta \in (0,1)$, the uniform ergodicity condition is satisfied. Let $\psi^{\star}=(q, 1−q)$ be the stationary distribution, so that $q$ corresponds to being on island $1$. Using $\psi^{\star}=\psi^{\star}P$ and a bit of algebra yields
 
-$p = \frac{\beta}{\alpha + \beta}$
+$q = \frac{\beta}{\alpha + \beta}$
 
 This is, in some sense, a steady state probability of being on island $1$. Not surprisingly it tends to zero as $\beta \rightarrow 0$, and to one as $\alpha \rightarrow 0$. It represents the long run fraction of time spent on island $1$.
 
-In other words, if $\{X_{t}\}$ represents a Markov chain, then $\bar X_m \to p$ as $m \to \infty$ where
+In other words, if $\{X_{t}\}$ represents a Markov chain, then $\bar X_m \to q$ as $m \to \infty$ where
 
 $\bar X_m := \frac{1}{m} \sum_{t = 1}^m \mathbf{1}\{X_t = 1\}$
 
-In this example we want to generate a simulated time series $\{X_{t}\}$ of length $3000$, starting at $X_{0} = 1$. We will then plot $\bar X_m - p$ against $m$, where $p$ is as defined above. Repeat this step, but taking the initial conidtion as $2$, representing a starting point on the second island. The result looks something like the following. 
+In this example we want to generate a simulated time series $\{X_{t}\}$ of length $3000$, starting at $X_{0} = 1$. We will then plot $\bar X_m - q$ against $m$, where $q$ is as defined above. Repeat this step, but taking the initial conidtion as $2$, representing a starting point on the second island. The result looks something like the following. 
 
 """
 
@@ -512,44 +507,55 @@ md" So we have now spent a lot of time gaining some basic understanding on Marko
 # ╔═╡ 411d9644-55c7-4cef-81d1-7ca41181d3fa
 md" ### Getting back to King Markov "
 
-# ╔═╡ dab6db7d-885c-4703-9c9a-cc71fc06d740
-md" Still translating code from R"
-
 # ╔═╡ f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
-function KingMarkovSimple()
-	num_weeks = 1e5
+# Super simple algorithm, mostly for illustrative purposes. 
+function KingMarkovSimple(num_weeks = 100000, current = 1)
+	
 	positions = zeros(num_weeks)
-	current   = 10
 	
 	for i in 1:num_weeks
   		# record current position
   		positions[i] = current
+		
   		# flip coin to generate proposal
-  		proposal = current + sample((-1, 1), size = 1)
+  		proposal = current + sample([-1, 1])
+		
  	 	# now make sure he loops around the archipelago
   		if proposal < 1
 			proposal = 10
 		end
+		
   		if proposal > 10
 			proposal = 1
 		end
+		
   		# move?
   		prob_move = proposal / current
-  		current   = ifelse(runif(1) < prob_move, proposal, current)
+  		current   = rand(Uniform()) < prob_move ? proposal : current
 	end
+	return current
 end
 
-# ╔═╡ a0894992-169e-4e83-ace9-6ca2be417876
+# ╔═╡ d0da16dd-880a-4354-84f7-89fccb572605
+travels = [KingMarkovSimple(50000, 8) for _ in 1:100];
+
+# ╔═╡ bc1b3e2c-9501-4e3f-a377-02e9c13418c1
+md" Below we show a figure indicating the islands that King Markov has visited in his travels. "
+
+# ╔═╡ 0e73488b-9981-44dd-b7cc-d314e8f123c1
 begin
-	  num_steps    = 1e5
-	  population   = 1:5
-	  island_names = 1:length(population)
-	  start        = 1
-	  J(a, b) = 1 / (length(population) - 1)
+	scatter(travels, color = :red, alpha = 0.6)
+	plot!(travels, legend = false, alpha = 0.5, lw = 1.5, color = :black, size = (700, 400), title = "Journey of King Markov")
 end
+
+# ╔═╡ 0c26c6f2-f96f-4bdc-9379-81a76179bd11
+histogram(travels, bins = 10, color = :steelblue, alpha = 0.8)
 
 # ╔═╡ f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 md" ### Metropolis algorithm "
+
+# ╔═╡ 9e9af560-3898-4bb2-8aa7-0e660f738a72
+md" From our previous example we know everything we need to know to understand the Metropolis algorithm more formally. In this section we will write out the algorithm in full and also provide the code to show how we can explore the posterior probability distribution space using this method. "
 
 # ╔═╡ ff25c980-962d-4566-a9cd-18e94e1dbcf2
 md" #### Metropolis Hastings "
@@ -1846,7 +1852,6 @@ version = "0.9.1+5"
 # ╟─7460cf95-4fc1-4c04-99d7-b13c2014b37a
 # ╟─26de0997-9548-49b5-9642-b401c6c42c41
 # ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
-# ╟─df019343-7656-4b41-b7a1-0836ffb668b2
 # ╟─5f8c67ac-c5c7-4999-8d22-417d8199ddac
 # ╟─76853f63-4969-4823-a16b-d1033af26a2c
 # ╟─e9868be9-2c58-45ef-96ad-0a016fdca540
@@ -1896,10 +1901,13 @@ version = "0.9.1+5"
 # ╠═3742f58c-de0b-40db-bba0-59a4bf9e58ad
 # ╟─635cd82c-8fa6-4bf3-b586-fd2ec915c4b7
 # ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa
-# ╟─dab6db7d-885c-4703-9c9a-cc71fc06d740
 # ╠═f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
-# ╠═a0894992-169e-4e83-ace9-6ca2be417876
+# ╠═d0da16dd-880a-4354-84f7-89fccb572605
+# ╟─bc1b3e2c-9501-4e3f-a377-02e9c13418c1
+# ╠═0e73488b-9981-44dd-b7cc-d314e8f123c1
+# ╠═0c26c6f2-f96f-4bdc-9379-81a76179bd11
 # ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
+# ╟─9e9af560-3898-4bb2-8aa7-0e660f738a72
 # ╟─ff25c980-962d-4566-a9cd-18e94e1dbcf2
 # ╟─1fde9a98-0ca0-43ed-a290-f19cfb02af6e
 # ╟─03f7e3b7-752b-475a-947f-39dc01134ba9

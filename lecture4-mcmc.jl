@@ -101,15 +101,6 @@ Monte Carlo = simulation methods. Evaluation points are selected stochastically 
 Grid sampling is prone to curse of dimensionality. Say we have 10 parameters. if we don't know beforehand where the posterior mass is need to choose wide box for the grid and need to have enough grid points to get some of them where essential mass is (e.g. 50 or 1000 grid points per dimension). This means 50$^{10} \approx$ 1e17 grid points and 1000$^{10} \approx$ 1e30 grid points. Using R and an average computer, we can compute the density of a normal distribution about 20 million times per second. Evaluation in 1e17 grid points would take 150 years. Evaluation in 1e30 grid points would take 1 500 billion years!
 "
 
-# ╔═╡ fee1e6c9-ec55-49b7-802c-4456514a89a8
-md" ## Indirect sampling "
-
-# ╔═╡ 46d75d7f-b28b-4479-9de0-ca654e5e2e31
-md" ### Importance sampling "
-
-# ╔═╡ 43a43fc8-f831-4f30-9441-5041a637255e
-md" ### Rejection sampling "
-
 # ╔═╡ 7460cf95-4fc1-4c04-99d7-b13c2014b37a
 md" ## Markov chain Monte Carlo "
 
@@ -184,7 +175,7 @@ Let us quickly define some terms. Let  $J(\theta_{b} ∣ \theta_{a})$ be the con
 Metropolis is convinced that for the right choices of $J$ and $r$, this will satisfy the law (and he is right). It seems like $r$ might need to depend on the populations of the current and proposal islands. But how? If $r$ is too large, the king will visit small islands too often. If  
 $r$ is too small, he will visit large islands too often.
 
-Fortunately, Metropolis knows about Markov Chains. Unfortunately, some of you may not. So let’s learn a little bit about Markov Chains and then figure out how Metropolis should choose $J$ and $r$.
+Fortunately, Metropolis knows about Markov chains. Unfortunately, some of you may not. So let’s learn a little bit about Markov chains and then figure out how Metropolis should choose $J$ and $r$.
 
 """
 
@@ -404,7 +395,7 @@ $\psi^{\star} = \psi^{\star}P$
 
 If the distribution of $X_{0}$ is a stationary distribution, then $X_{t}$ will have the same distribution for all $t$. Hence stationary distributions have a natural interpretation as stochastic steady states. 
 
-Under some conditions (irreducibility and aperiodicity) we have theorems that tell us that the stochastic matrix has exactly one stationary distribution and that for any initial distribution (postmulitplied by the stochatic matrix) we approach the stationary distribution as time goes to infinity. A stochastic matrix that satsifies the conditions of the theorem is normally called **uniformly ergodic**. 
+Under some conditions (irreducibility and aperiodicity) we have theorems that tell us that the stochastic matrix has exactly one stationary distribution and that for any initial distribution (postmulitplied by the stochatic matrix) we approach the stationary distribution as time goes to infinity. A stochastic matrix that satsifies the conditions of the theorem is normally called **uniformly ergodic**. We can also say that the Markov chain is **regular** in this case.  
 
 """
 
@@ -507,13 +498,28 @@ md" So we have now spent a lot of time gaining some basic understanding on Marko
 # ╔═╡ 411d9644-55c7-4cef-81d1-7ca41181d3fa
 md" ### Getting back to King Markov "
 
+# ╔═╡ e9819877-d4c1-4378-8430-04f43d057f1f
+md"""
+
+**Note**: Our jumping rule $J$ is very simple right now, we just flip a coin. Our selection of $r$ is going to be the ratio of the size of the population of the islands. 
+
+Metropolis learns from Markov chain theory that for his scheme to work, he must choose $J$ and $r$ such that the algorithm results in a regular Markov chain with uniformly ergodic stochastic matrix $P$. If $\psi$ represents the law-prescribed probabilities for island harboring, then $\psi = \psi P$.  
+
+From our previous example, if $r$ is between $0$ and $1$, and the jumping rule allows us to get to all the islands (eventually), then the Markov chain will be regular, so there will be a stationary (limiting) distribution. But the stationary distribution must be the one the law requires. 
+
+It suffices to show (which we will do later on) that if the law is satisfied at time $t$ it is satisfied at time $t+1$. We will get back to this idea in the section discussing the Metropolis algorithm. This example provides some required background information to make the Metropolis algorithm easier to understand. 
+
+Let us provide a small code snippet to show how King Markov moves around the archipelago. His decision on which island is going to be the proposal island is based on a coin flip in this example, but we will generalise the selection of $J$ in the next section. We want to keep things simple for now.  
+
+"""
+
 # ╔═╡ f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
 # Super simple algorithm, mostly for illustrative purposes. 
-function KingMarkovSimple(num_weeks = 100000, current = 1)
+function KingMarkovSimple(n = 100000, current = 1)
 	
-	positions = zeros(num_weeks)
+	positions = zeros(n)
 	
-	for i in 1:num_weeks
+	for i in 1:n
   		# record current position
   		positions[i] = current
 		
@@ -530,26 +536,35 @@ function KingMarkovSimple(num_weeks = 100000, current = 1)
 		end
 		
   		# move?
-  		prob_move = proposal / current
+  		prob_move = proposal / current # Selection of r
   		current   = rand(Uniform()) < prob_move ? proposal : current
 	end
 	return current
 end
 
 # ╔═╡ d0da16dd-880a-4354-84f7-89fccb572605
-travels = [KingMarkovSimple(50000, 8) for _ in 1:100];
+travels = [KingMarkovSimple(100, 8) for _ in 1:100];
 
 # ╔═╡ bc1b3e2c-9501-4e3f-a377-02e9c13418c1
 md" Below we show a figure indicating the islands that King Markov has visited in his travels. "
 
 # ╔═╡ 0e73488b-9981-44dd-b7cc-d314e8f123c1
 begin
-	scatter(travels, color = :red, alpha = 0.6)
-	plot!(travels, legend = false, alpha = 0.5, lw = 1.5, color = :black, size = (700, 400), title = "Journey of King Markov")
+	scatter(travels, color = :steelblue, alpha = 1, markershape = :hexagon)
+	plot!(travels, legend = false, alpha = 0.3, lw = 1.5, color = :black, size = (700, 400), title = "Journey of King Markov")
 end
 
+# ╔═╡ 6791bc6f-ef88-4894-881b-6a89d836efe2
+md" We would expect that our posterior distribution would be almost like a staircase, with the islands with smaller population being visited less. If we increase the number of iterations this algorithm is allowed to run, we will eventually get to the correct posterior distribution. However, this algorithm can be quite slow. It will explore the posterior space, but it takes quite a long time to do so. "
+
+# ╔═╡ ba8e0383-c149-4fd0-b358-5d00e5b0db5a
+travels_new = [KingMarkovSimple(100, 8) for _ in 1:2000];
+
 # ╔═╡ 0c26c6f2-f96f-4bdc-9379-81a76179bd11
-histogram(travels, bins = 10, color = :steelblue, alpha = 0.8)
+histogram(travels_new, bins = 10, color = :steelblue, alpha = 0.8, legend = false)
+
+# ╔═╡ ec1270ca-5943-4fe7-8017-6904c72673f0
+md" Now let us continue to a more formal / general discussion of the Metropolis algorithm. "
 
 # ╔═╡ f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 md" ### Metropolis algorithm "
@@ -1846,9 +1861,6 @@ version = "0.9.1+5"
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─bd0dc0fd-63bc-492b-bba1-a3746ea4ec22
-# ╟─fee1e6c9-ec55-49b7-802c-4456514a89a8
-# ╟─46d75d7f-b28b-4479-9de0-ca654e5e2e31
-# ╟─43a43fc8-f831-4f30-9441-5041a637255e
 # ╟─7460cf95-4fc1-4c04-99d7-b13c2014b37a
 # ╟─26de0997-9548-49b5-9642-b401c6c42c41
 # ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
@@ -1901,11 +1913,15 @@ version = "0.9.1+5"
 # ╠═3742f58c-de0b-40db-bba0-59a4bf9e58ad
 # ╟─635cd82c-8fa6-4bf3-b586-fd2ec915c4b7
 # ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa
+# ╟─e9819877-d4c1-4378-8430-04f43d057f1f
 # ╠═f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
 # ╠═d0da16dd-880a-4354-84f7-89fccb572605
 # ╟─bc1b3e2c-9501-4e3f-a377-02e9c13418c1
-# ╠═0e73488b-9981-44dd-b7cc-d314e8f123c1
+# ╟─0e73488b-9981-44dd-b7cc-d314e8f123c1
+# ╟─6791bc6f-ef88-4894-881b-6a89d836efe2
+# ╠═ba8e0383-c149-4fd0-b358-5d00e5b0db5a
 # ╠═0c26c6f2-f96f-4bdc-9379-81a76179bd11
+# ╟─ec1270ca-5943-4fe7-8017-6904c72673f0
 # ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 # ╟─9e9af560-3898-4bb2-8aa7-0e660f738a72
 # ╟─ff25c980-962d-4566-a9cd-18e94e1dbcf2

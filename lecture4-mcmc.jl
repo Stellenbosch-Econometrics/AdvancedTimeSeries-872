@@ -51,7 +51,7 @@ overflow-x: hidden;
 html"""
 <style>
   main {
-    max-width: 800px;
+    max-width: 700px;
   }
 </style>
 """
@@ -98,13 +98,169 @@ md" ### Rejection sampling "
 md" ## Markov chain Monte Carlo "
 
 # ╔═╡ 26de0997-9548-49b5-9642-b401c6c42c41
+md"""
+The main computational barrier for Bayesian statistics is the denominator $p(y)$ of the Bayes formula. In the continuous case the denominator $p(y)$ becomes a very large and complicated integral to calculate:
 
+$p(y) = \int_{\theta} p(y | \theta) \times p(\theta) d\theta$
+
+In many cases this integral becomes intractable (incalculable) and therefore we must find other ways to calculate the posterior probability $p(\theta \mid y)$ without using the denominator $p(y)$.
+
+The purpose of this denominator is to normalize the posterior in order to make it a valid probability distribution. When we remove the denominator we have that the posterior is proportional to the prior multiplied by the likelihood, as discussed in previous lectures.
+
+This is where Markov Chain Monte Carlo comes in. MCMC is a broad class of computational tools for approximating integrals and generating samples from a posterior probability. MCMC is used when it is not possible to sample $\theta$ directly from the subsequent probabilistic distribution $p(\theta \mid y)$. Instead, we sample in an iterative manner such that at each step of the process we expect the distribution from which we sample to become increasingly similar to the posterior. All of this is to eliminate the (often impossible) calculation of the denominator of Bayes' rule. 
+
+In the sections that follow we will first provide a nice narrative that helps establish the idea behind the Metropolis algorithm. We then touch on the idea of Markov chains, which are an essential part of the simulation process.
+"""
 
 # ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
-md" ### King Markov and adviser Metropolis "
+md" ### King Markov and advisor Metropolis "
+
+# ╔═╡ 5f8c67ac-c5c7-4999-8d22-417d8199ddac
+md" For a good description of the problem, watch the video above by Richard McElreath. He wrote a book called **Statistical Rethinking**, which is aimed at social scientists and is much less mathy than a lot of the Bayesian textbooks out there. All the code is also available in R. "
+
+# ╔═╡ 76853f63-4969-4823-a16b-d1033af26a2c
+md" > Notes for this section taken directly from [this book](https://rpruim.github.io/Kruschke-Notes/markov-chain-monte-carlo-mcmc.html#quick-intro-to-markov-chains). Code was originally written in R. "
+
+# ╔═╡ e9868be9-2c58-45ef-96ad-0a016fdca540
+md"""
+King Markov is king of a **chain of 5 islands**. Rather than live in a palace, he lives in a royal boat. Each night the royal boat anchors in the harbor of one of the islands. The law declares that the king must harbor at each island in proportion to the population of the island.
+
+Our main question is the following: If the populations of the islands are 100, 200, 300, 400, and 500 people, how often must King Markov harbor at each island?
+
+King Markov is a peculiar man though, here are **some of his quirks**. 
+
+1. He can’t stand record keeping. So he doesn’t know the populations on his islands and doesn’t keep track of which islands he has visited when.
+
+2. He can’t stand routine (variety is the spice of his life), so he doesn’t want to know each night where he will be the next night.
+
+He asks Advisor Metropolis to devise a way for him to obey the law but that
+
+1. Randomly picks which island to stay at each night.
+2. Doesn’t require him to remember where he has been in the past.
+3. Doesn’t require him to remember the populations of all the islands.
+
+He can ask the clerk on any island what the island’s population is whenever he needs to know. But it takes half a day to sail from one island to another, so he is limited in how much information he can obtain this way each day.
+"""
+
+# ╔═╡ 97a92a03-64ce-4f12-be98-f66233b27142
+md"""
+#### Metropolis' scheme for the King
+"""
+
+# ╔═╡ 452fc619-f315-43ef-af4c-4770808f89fe
+md"""
+The following scheme is the one that Metropolis came up with...
+
+Each morning, have breakfast with the island clerk and inquire about the population of the current island. Randomly pick one of the 4 other islands (a proposal island) and travel there in the morning
+
+- Let  $J(b ∣ a)$ be the conditional probability of selecting island $b$ as the candidate if $a$ is the current island.
+
+- The value of $J$ does not depend on the populations of the islands (since the King can’t remember them).
+
+Over lunch at the proposal island, inquire about its population.
+
+- If the proposal island has more people, stay at the proposal island for the night (since the king should prefer more populated islands).
+
+- If the proposal island has fewer people, stay at the proposal island with probability $A$, else return to the “current” island (ie, last night’s island).
+
+Metropolis is convinced that for the right choices of $J$ and $A$, this will satisfy the law. It seems like $A$ might need to depend on the populations of the current and proposal islands. When we want to emphasize that, we’ll denote it as $A = A(b∣a)$. But how? If $A$ is too large, the king will visit small islands too often. If  
+$A$ is too small, he will visit large islands too often.
+
+Fortunately, Metropolis knows about Markov Chains. Unfortunately, some of you may not. So let’s learn a little bit about Markov Chains and then figure out how Metropolis should choose $J$ and $A$.
+
+"""
 
 # ╔═╡ 68fab7b3-b3b7-41fa-89ee-cc5d729c5150
 md" #### Markov chains "
+
+# ╔═╡ 59c2b8d6-0250-4310-94ec-e29dae6a3ae9
+M = [0 0.5 0.5; 0.25 0.25 0.5; 0.5 0.3 0.2] # Stochastic matrix
+
+# ╔═╡ cf12e536-bdb3-47ac-b5ab-f1196e5f5945
+M ^ 20
+
+# ╔═╡ 2c4018c8-52c9-4c94-839b-20e913176cae
+M ^ 21 # Seems to be converging quite quickly
+
+# ╔═╡ 7176430c-5bbe-48a3-93f1-f60031049e43
+W = M ^ 30
+
+# ╔═╡ 943b67ff-3d35-41fc-a253-a425ec25ba58
+W[1, :] 
+
+# ╔═╡ 5508d626-591f-4147-99ee-e85160162323
+
+
+# ╔═╡ 411d9644-55c7-4cef-81d1-7ca41181d3fa
+md" #### Getting back to King Markov "
+
+# ╔═╡ dab6db7d-885c-4703-9c9a-cc71fc06d740
+md" Still translating code from R"
+
+# ╔═╡ cf322486-398e-4a3a-8a42-134535de729b
+function KingMarkov(num_steps, population, island_names, start, J)
+	num_islands  = length(population)
+  	island_seq   = fill(NaN, num_steps)  # trick to pre-alocate memory
+  	proposal_seq = fill(NaN, num_steps)  # trick to pre-alocate memory
+  	current      = start
+  	proposal     = NaN
+	
+	for i in 1:num_steps 
+    	# record current island
+    	island_seq[i]   = current
+    	proposal_seq[i] = proposal
+    
+    	# propose one of the other islands
+    	other_islands = setdiff(1:num_islands, current)
+    	proposal <- 
+      	sample(other_islands, 1, 
+             prob = purrr::map(other_islands, ~ J(current, .x)))
+    	# move?
+    	prob_move = population[proposal] / population[current]
+    	# new current island (either current current or proposal)
+    	current   = ifelse(runif(1) < prob_move, proposal, current)
+	end 
+	
+	tibble(
+    step     = 1:num_steps,
+    island   = island_names[island_seq],
+    proposal = island_names[proposal_seq]
+  )
+	
+end
+
+# ╔═╡ f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
+function KingMarkovSimple()
+	num_weeks = 1e5
+	positions = zeros(num_weeks)
+	current   = 10
+	
+	for i in 1:num_weeks
+  		# record current position
+  		positions[i] = current
+  		# flip coin to generate proposal
+  		proposal = current + sample((-1, 1), size = 1)
+ 	 	# now make sure he loops around the archipelago
+  		if proposal < 1
+			proposal = 10
+		end
+  		if proposal > 10
+			proposal = 1
+		end
+  		# move?
+  		prob_move = proposal / current
+  		current   = ifelse(runif(1) < prob_move, proposal, current)
+	end
+end
+
+# ╔═╡ a0894992-169e-4e83-ace9-6ca2be417876
+begin
+	  num_steps    = 1e5
+	  population   = 1:5
+	  island_names = 1:length(population)
+	  start        = 1
+	  J(a, b) = 1 / (length(population) - 1)
+end
 
 # ╔═╡ f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 md" ### Metropolis algorithm "
@@ -1194,9 +1350,25 @@ version = "0.9.1+5"
 # ╟─46d75d7f-b28b-4479-9de0-ca654e5e2e31
 # ╟─43a43fc8-f831-4f30-9441-5041a637255e
 # ╟─7460cf95-4fc1-4c04-99d7-b13c2014b37a
-# ╠═26de0997-9548-49b5-9642-b401c6c42c41
+# ╟─26de0997-9548-49b5-9642-b401c6c42c41
 # ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
+# ╟─5f8c67ac-c5c7-4999-8d22-417d8199ddac
+# ╟─76853f63-4969-4823-a16b-d1033af26a2c
+# ╟─e9868be9-2c58-45ef-96ad-0a016fdca540
+# ╟─97a92a03-64ce-4f12-be98-f66233b27142
+# ╟─452fc619-f315-43ef-af4c-4770808f89fe
 # ╟─68fab7b3-b3b7-41fa-89ee-cc5d729c5150
+# ╠═59c2b8d6-0250-4310-94ec-e29dae6a3ae9
+# ╠═cf12e536-bdb3-47ac-b5ab-f1196e5f5945
+# ╠═2c4018c8-52c9-4c94-839b-20e913176cae
+# ╠═7176430c-5bbe-48a3-93f1-f60031049e43
+# ╠═943b67ff-3d35-41fc-a253-a425ec25ba58
+# ╠═5508d626-591f-4147-99ee-e85160162323
+# ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa
+# ╟─dab6db7d-885c-4703-9c9a-cc71fc06d740
+# ╠═cf322486-398e-4a3a-8a42-134535de729b
+# ╠═f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
+# ╠═a0894992-169e-4e83-ace9-6ca2be417876
 # ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 # ╟─ff25c980-962d-4566-a9cd-18e94e1dbcf2
 # ╟─1fde9a98-0ca0-43ed-a290-f19cfb02af6e

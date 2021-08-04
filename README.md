@@ -6,7 +6,7 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 
 # Rough course outline
 
-0. Introduction to Julia
+0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html)
 1. Sampling, random variables and distributions
 2. Bayesian thinking (Bernoulli / Binomial)
 3. Gauss is everywhere (Normal) 

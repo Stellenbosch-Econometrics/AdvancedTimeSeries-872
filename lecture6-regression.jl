@@ -127,6 +127,11 @@ md"""
 ### Normal model with unknown $\sigma^{2}$
 """
 
+# ╔═╡ d3ceb4ea-6d45-4545-be09-8446f103c2e5
+md" We have already covered the normal model with known variance in great detail in a previous lecture. You can scan through the notes of Chen for a review of the math we did in that lecture. 
+
+"
+
 # ╔═╡ b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
 begin
 	nsim = 10_000
@@ -181,7 +186,6 @@ md" Let us see what this looks like when we plot it... "
 
 # ╔═╡ 3335094d-a67b-471c-834d-e22089933104
 begin
-	gr()
 	const N₁ = 100_000
 	const μ₁ = [post_gibbs[1], post_gibbs[1]]
 	const Σ = [1 post_gibbs[2]; post_gibbs[2] 1]
@@ -196,7 +200,10 @@ begin
 end
 
 # ╔═╡ 80e6619b-ac42-453b-8f38-850b2b99d000
-surface(x₁, y₁, dens_mvnormal, fillcolour = :ice)
+surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
+
+# ╔═╡ 952f022e-002f-4982-b03c-c79c72c69366
+
 
 # ╔═╡ 82b96729-33c2-49b0-b908-562faf903a1e
 md"""
@@ -1281,6 +1288,7 @@ version = "0.9.1+5"
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─f3823457-8757-4665-86a8-bf536d80e24d
 # ╟─f95ccee4-a2d3-4492-b869-551e61acf995
+# ╟─d3ceb4ea-6d45-4545-be09-8446f103c2e5
 # ╠═b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
 # ╠═1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
 # ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
@@ -1289,6 +1297,7 @@ version = "0.9.1+5"
 # ╟─3aeab073-c98a-4213-a835-3098233ba90c
 # ╠═3335094d-a67b-471c-834d-e22089933104
 # ╠═80e6619b-ac42-453b-8f38-850b2b99d000
+# ╠═952f022e-002f-4982-b03c-c79c72c69366
 # ╟─82b96729-33c2-49b0-b908-562faf903a1e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

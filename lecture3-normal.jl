@@ -218,6 +218,16 @@ There are some problems
 # ╔═╡ f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
 md" ### Gaussian model with known $\sigma^2$ "
 
+# ╔═╡ 8ffaa0dc-36f8-49da-9742-74db90c6d5a8
+md"""
+
+**Note** The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$.
+
+To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$ 
+
+Our goal is to obtain the posterior distribution $p(\theta \mid {y})$ given the sample ${y}=$ $\left(y_{1}, \ldots, y_{N}\right)^{\prime} .$ To that end, we need two ingredients: a likelihood function and a prior for the parameter $\theta$.
+"""
+
 # ╔═╡ 3b2e280f-d83a-4f1c-86bb-1397b95210cb
 md"""
 For the normal distribution the observations $y$ are real valued. Mean $\theta$ and variance $\sigma^2$ (first assume $\sigma^2$ known). 
@@ -226,7 +236,7 @@ $$\begin{align*}
     p(y|\theta)&=\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}(y-\theta)^2\right), \quad y \sim \mathcal{N}(\theta,\sigma^2)
 \end{align*}$$
 
-Assume $\sigma^2$ known
+Assume $\sigma^2$ known. Remember that model defines likelihood function, 
 
 $$\begin{align*}
       &\text{Likelihood} & p(y|\theta) & \propto
@@ -2030,6 +2040,7 @@ version = "0.9.1+5"
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─e4730930-c3cd-4a01-a4d9-420bd15004ad
 # ╟─f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
+# ╟─8ffaa0dc-36f8-49da-9742-74db90c6d5a8
 # ╟─3b2e280f-d83a-4f1c-86bb-1397b95210cb
 # ╟─9741e08b-3f54-49d7-8db0-3125f4f90d3c
 # ╟─e99e1925-6219-4bf2-b743-bb2ea725dfcd

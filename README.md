@@ -14,6 +14,8 @@ The notebooks folder contains all the `Pluto.jl` notebooks for this class.
 - Hamiltonian Monte Carlo and `Turing.jl`
 - Bayesian linear regression
 - Bayesian Vector Autoregression (BVAR)
-- Bayesian Time Varying Parameter VARs (TVP-VAR) (time permitting)
-- Kalman filter (time permitting)
+- Time Varying Parameter VARs (TVP-VAR) (**time permitting**)
+- Kalman filter (**time permitting**)
+
+`R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 
 

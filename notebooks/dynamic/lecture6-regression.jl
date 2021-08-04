@@ -128,7 +128,7 @@ md"""
 """
 
 # ╔═╡ d3ceb4ea-6d45-4545-be09-8446f103c2e5
-md" We have already covered the normal model with known variance in great detail in a previous lecture. You can scan through the notes of Chen for a review of the math we did in that lecture. 
+md" We have already covered the normal model with known variance in great detail in a previous lecture. We also covered the case of a normal model with unknown variance in theory. However, now we will introduce our knowledge of Markov chain Monte Carlo methods to estimate the posterior distribution of a normal model with unknown variance. We will use Gibbs sampling to achieve this.  
 
 "
 
@@ -200,7 +200,7 @@ begin
 end
 
 # ╔═╡ 80e6619b-ac42-453b-8f38-850b2b99d000
-surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
+#surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
 
 # ╔═╡ 952f022e-002f-4982-b03c-c79c72c69366
 

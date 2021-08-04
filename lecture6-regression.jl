@@ -38,7 +38,7 @@ font-size: 1.5rem;
 opacity: 0.8;
 ">ATS 872: Lecture 6</p>
 <p style="text-align: center; font-size: 1.8rem;">
- Bayesian linear regression
+ Bayesian basics and regression
 </p>
 
 <style>
@@ -59,6 +59,13 @@ html"""
 # ╔═╡ aa69729a-0b08-4299-a14c-c9eb2eb65d5c
 md" # Introduction "
 
+# ╔═╡ a681c4c5-1451-44d6-be27-f9003340883f
+md"""
+
+> These lecture notes draw heavily from the notes of [Joshua Chen](https://joshuachan.org/papers/BayesMacro.pdf) and [Gary Koop](https://sites.google.com/site/garykoop/) 
+
+"""
+
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
 md"  
 We will recap some of the basics on Bayesian econometrics. 
@@ -71,7 +78,46 @@ We will recap some of the basics on Bayesian econometrics.
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Bayesian econometrics (recap) "
+md" ## Bayesian methods overview "
+
+# ╔═╡ f3823457-8757-4665-86a8-bf536d80e24d
+md"""
+
+**Please read** the following section carefully. It is from the notes by Joshua Chen and it explains in clear detail what we have been trying to do up to this point. 
+
+As we have established, the fundamental organizing principle in Bayesian econometrics is **Bayes' theorem**. It forms the unifying principle on how Bayesians estimate model parameters, conduct inference, compare models, etc. 
+
+Bayes' theorem states that for events $A$ and $B$, the conditional probability of $A$ given $B$ is:
+
+$$\mathbb{P}(A \mid B)=\frac{\mathbb{P}(A) \mathbb{P}(B \mid A)}{\mathbb{P}(B)}$$
+
+where $\mathbb{P}(A)$ and $\mathbb{P}(B)$ are the marginal probabilities for events $A$ and $B$, respectively. This expression tells us how our view about event $A$ should change in light of information in event $B$.
+
+To apply Bayes' theorem to estimation and inference, we first introduce some notation. Notice that we are going to start talking about vectors and matrices. Which means that matrix algebra will feature heavily from now on. 
+
+Suppose we have a model that is characterized by the likelihood function $p(\mathbf{y} \mid \boldsymbol{\theta})$, where $\boldsymbol{\theta}$ is a vector of model parameters. Intuitively, the likelihood function specifies how the observed data are generated from the model given a particular set of parameters. 
+
+Now, suppose we have obtained an observed sample $\mathbf{y}=\left(y_{1}, \ldots, y_{T}\right)^{\prime}$, and we would like to learn about $\boldsymbol{\theta}$. How should we proceed? The goal of Bayesian methods is to obtain the posterior distribution $p(\boldsymbol{\theta} \mid \mathbf{y})$ that summaries all the information about the parameter vector $\boldsymbol{\theta}$ given the data.
+
+Applying Bayes' theorem, the posterior distribution can be computed as
+
+$$p(\boldsymbol{\theta} \mid \mathbf{y})=\frac{p(\boldsymbol{\theta}) p(\mathbf{y} \mid \boldsymbol{\theta})}{p(\mathbf{y})} \propto p(\boldsymbol{\theta}) p(\mathbf{y} \mid \boldsymbol{\theta})$$
+
+where $p(\boldsymbol{\theta})$ is the prior distribution and
+
+$$p(\mathbf{y})=\int p(\boldsymbol{\theta}) p(\mathbf{y} \mid \boldsymbol{\theta}) \mathrm{d} \boldsymbol{\theta}$$
+
+is the marginal likelihood that plays a crucial role in Bayesian model comparisonwe will discuss this quantity in more detail in later chapters. Bayes' theorem says that knowledge of $\boldsymbol{\theta}$ comes from two sources: the prior distribution and an observed sample $y_{1}, \ldots, y_{T}$ summarized by the likelihood. The prior distribution $p(\boldsymbol{\theta})$ incorporates our subjective beliefs about $\boldsymbol{\theta}$ before we look at the data. 
+
+The posterior distribution $p(\boldsymbol{\theta} \mid \mathbf{y})$ characterizes all relevant information about $\boldsymbol{\theta}$ given the data. For example, if we wish to obtain a point estimate of $\boldsymbol{\theta}$, we might compute the posterior mean $\mathbb{E}(\boldsymbol{\theta} \mid \mathbf{y})$. To characterize the uncertainty about $\boldsymbol{\theta}$, we might report the posterior standard deviations of the parameters. For instance, for the $i$ th element of $\boldsymbol{\theta}$, we can compute $\sqrt{\operatorname{Var}\left(\theta_{i} \mid \mathbf{y}\right)}$
+
+In principle, these quantities can be computed given the posterior distribution $p(\boldsymbol{\theta} \mid \mathbf{y}) .$ In practice, however, they are often not available analytically. In those cases we would require simulation to approximate those quantities of interest.
+
+To outline the main idea, suppose we obtain $R$ independent draws from $p(\boldsymbol{\theta} \mid \mathbf{y})$, say, $\boldsymbol{\theta}^{(1)}, \ldots, \boldsymbol{\theta}^{(R)}$. If we assume the first moment exists, i.e., $\mathbb{E}(\boldsymbol{\theta} \mid \mathbf{y})<\infty$, then by the weak law of large numbers the sample mean $\widehat{\boldsymbol{\theta}}=R^{-1} \sum_{r=1}^{R} \boldsymbol{\theta}^{(r)}$ converges in probability to $\mathbb{E}(\boldsymbol{\theta} \mid \mathbf{y})$ as $R$ tends to infinity. Since we can control the simulation size, we could approximate the posterior mean arbitrarily well - if we are patient enough. Similarly, other moments or quantiles can be estimated using the sample analogs.
+
+Hence, estimation and inference become essentially a computational problem of obtaining draws from the posterior distribution. In general, sampling from arbitrary distribution is a difficult problem. Fortunately, there is now a large family of algorithms generally called Markov chain Monte Carlo (MCMC) methods to sample from complex distributions.
+
+"""
 
 # ╔═╡ f95ccee4-a2d3-4492-b869-551e61acf995
 md"""
@@ -1206,11 +1252,13 @@ version = "0.9.1+5"
 # ╟─09a9d9f9-fa1a-4192-95cc-81314582488b
 # ╟─41eb90d1-9262-42b1-9eb2-d7aa6583da17
 # ╟─aa69729a-0b08-4299-a14c-c9eb2eb65d5c
+# ╟─a681c4c5-1451-44d6-be27-f9003340883f
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╟─f3823457-8757-4665-86a8-bf536d80e24d
 # ╟─f95ccee4-a2d3-4492-b869-551e61acf995
 # ╠═b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
 # ╠═1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf

@@ -146,13 +146,13 @@ function compute_pi_ifelse(n::Int)
   end
 
 # ╔═╡ 9e6a45a9-07da-4859-861c-db0c6ca30ec1
-@benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
+#@benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
 
 # ╔═╡ 4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
-@benchmark compute_pi(10000000); # Better code, optimised (not fully though)
+#@benchmark compute_pi(10000000); # Better code, optimised (not fully though)
 
 # ╔═╡ 2ca932e0-6c9f-44e3-b02d-6e8731d2ce4e
-@benchmark compute_pi_ifelse(10000000);
+#@benchmark compute_pi_ifelse(10000000);
 
 # ╔═╡ 9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
 md" So we have managed to find an approximation for $\pi$. Let us look at some other methods and also draw some nice graphs in the process to better explain what is going on. Our code above is optimised to a certain extent. However, when writing code, do not worry too much about optimisation. You can always go back to code to optimise. Try and write code that makes sense to you before you expirment with optimisation.  "
@@ -221,7 +221,7 @@ md" ### Gaussian model with known $\sigma^2$ "
 # ╔═╡ 8ffaa0dc-36f8-49da-9742-74db90c6d5a8
 md"""
 
-**Note** The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$.
+**Note** The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
 
 To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$ 
 
@@ -327,7 +327,43 @@ begin
 end
 
 # ╔═╡ a0670eb1-2091-47d0-9d9f-bba76834fbed
-md" One can see that doing this analytically is quite cumbersome. That is why we will often rely on numerical methods to draw from the posterior. Our next lecture will focus exclusively on such methods. In particular, we will consider different types of **Markov chain Monte Carlo** methods to draw from the posterior distribution of interest. That being said, let us continue with the analytical examples, since they are instructive. "
+md" One can see that doing this analytically is quite cumbersome. That is why we will often rely on numerical methods to draw from the posterior. Our next lecture will focus exclusively on such methods. In particular, we will consider different types of **Markov chain Monte Carlo** methods to draw from the posterior distribution of interest. We can use a basic Monte Carlo simulation to get an answer, before we move to another analytical example.  "
+
+# ╔═╡ 116982c6-80c9-4cc8-8140-804a631a77a8
+md" #### Monte Carlo integration "
+
+# ╔═╡ 9e8aa12a-540b-4153-9dbf-8b503c16b091
+md" 
+
+If we wish to calculate the posterior mean of some function $g$ of $\mu$, which may not be available analytically. More precisely, consider
+
+$$\mathbb{E}(g(\mu) \mid {y})=\int g(\mu) p(\mu \mid {y}) \mathrm{d} \mu$$
+
+In general, this integration cannot be solved analytically. However, we can estimate this quantity using Monte Carlo integration. Specifically, we generate $S$ draws $\mu^{(1)}, \ldots, \mu^{(S)}$ from $p(\mu \mid {y})$, and compute
+
+$$\widehat{g}=\frac{1}{S} \sum_{r=1}^{S} g\left(\mu^{(s)}\right)$$
+
+By the weak law of large numbers, $\widehat{g}$ converges weakly in probability to $\mathbb{E}(g(\mu) \mid {y})$ as $S$ tends to infinity. Since we control the simulation size $S$, we can in principle estimate $\mathbb{E}(g(\mu) \mid {y})$ arbitrarily well.
+"
+
+# ╔═╡ 8f5de37a-6c2c-400d-97c2-7f04e0fa4857
+begin
+	S = 10000
+	mu_hat = 19.09
+	Dmu = 0.09
+end
+
+# ╔═╡ ec119ee9-ef16-475c-8a42-0fa5e46d1434
+mu = mu_hat .+ sqrt(Dmu) .* randn(S, 1);  # Remember to broadcast. Think about what broadcasting does here. 
+
+# ╔═╡ 3db81fbb-31c3-416e-92d0-258f2d4d8cd5
+g_hat = mean.(log.(abs.(mu)));
+
+# ╔═╡ 8973afa7-2325-42f4-8e14-28aa090448d6
+begin
+	histogram(g_hat, alpha = 0.3, norm = true)
+	StatsPlots.density!(g_hat, lw = 2, color = :black)
+end
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
 md" ### Gaussian with unknown $\mu$ and $\sigma^{2}$ "
@@ -455,27 +491,6 @@ $$\begin{align*}
 We will encounter this idea of marginalisation in many of our Markov chain Monte Carlo algorithms, so make sure that you understand the basic logic. This will be something that features in many of the future lectures. 
 
 """
-
-# ╔═╡ 1c5724c7-b58d-4784-af44-21074a9ff070
-md" ### Some interesting plots "
-
-# ╔═╡ 8667111e-d33e-47cd-8ceb-879d4bd09ee8
-begin
-	const N₁ = 100_000
-	const μ = [0, 0]
-	const Σ = [1 0.8; 0.8 1]
-
-	const mvnormal = MvNormal(μ, Σ)
-
-	data = rand(mvnormal, N₁)'
-	x₁ = -3:0.01:3
-	y₁ = -3:0.01:3
-	dens_mvnormal = [pdf(mvnormal, [i, j]) for i in x₁, j in y₁]
-	contour(x₁, y₁, dens_mvnormal, xlabel="X", ylabel="Y", fill=true)
-end
-
-# ╔═╡ 70ad37d2-80e0-47f0-8b08-64c42e41462f
-surface(x₁, y₁, dens_mvnormal, xlabel="X", ylabel="Y", zlabel="PDF")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2059,10 +2074,13 @@ version = "0.9.1+5"
 # ╠═fd9fe53b-3c5c-4e09-837e-bef6f00e485f
 # ╟─39b604b9-a4c8-4f54-afaa-faa84d99ad73
 # ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
+# ╟─116982c6-80c9-4cc8-8140-804a631a77a8
+# ╟─9e8aa12a-540b-4153-9dbf-8b503c16b091
+# ╠═8f5de37a-6c2c-400d-97c2-7f04e0fa4857
+# ╠═ec119ee9-ef16-475c-8a42-0fa5e46d1434
+# ╠═3db81fbb-31c3-416e-92d0-258f2d4d8cd5
+# ╟─8973afa7-2325-42f4-8e14-28aa090448d6
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
-# ╟─1c5724c7-b58d-4784-af44-21074a9ff070
-# ╠═8667111e-d33e-47cd-8ceb-879d4bd09ee8
-# ╠═70ad37d2-80e0-47f0-8b08-64c42e41462f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

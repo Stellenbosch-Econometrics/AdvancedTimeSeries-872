@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, Statistics, StatsPlots
+using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, StaticArrays, Statistics, StatsPlots
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -60,7 +60,9 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
+md"  
+We will recap some of the basics on Bayesian econometrics. 
+"
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 #TableOfContents() # Uncomment to see TOC
@@ -69,7 +71,72 @@ md" In this session we will be looking at the basics of Bayesian econometrics / 
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Random sampling "
+md" ## Bayesian econometrics (recap) "
+
+# ╔═╡ f95ccee4-a2d3-4492-b869-551e61acf995
+md"""
+
+### Normal model with unknown $\sigma^{2}$
+"""
+
+# ╔═╡ b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
+begin
+	nsim = 10_000
+	burnin = 1000
+	μ = 3.0
+	σ2 = 0.1
+	N = 100
+	μ_0 = 0.0
+	σ2_0 = 100
+	ν_0 = 3.0
+	Σ_0 = 0.5
+	μ_1 = 0.0
+	σ2_1 = 1.0
+end
+
+# ╔═╡ 1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
+function data_gen(μ, σ2, N)
+    μ .+ sqrt(σ2) .* randn(N, 1)
+end
+
+# ╔═╡ 0980d7a1-129b-4724-90fb-b46e3088d2d6
+data_gen(μ, σ2, N)
+
+# ╔═╡ 0919cb0d-ba03-49c8-b2b9-53a467c39f87
+function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
+    y = data_gen(μ, σ2, N) # Generated data
+    store_θ = zeros(nsim, 2) # Initialise the store_θ array
+
+    # Start the Gibbs sampling procedure
+    for i in 1:nsim + burnin
+        # Sample from μ (refer to Chan notes for the math)
+        D_μ   = 1/(1/σ2_0 .+ N/ σ2_1)
+        μ_hat = D_μ.*(μ_0/σ2_0 .+ sum(y)/σ2_1)
+        μ_1   = μ_hat .+ sqrt(D_μ) .* randn() # Affine transformation is also normal
+
+        # Sample from σ2
+        σ2_1  = 1/rand(Gamma(ν_0 .+ N/2, 1/(Σ_0 .+ sum((y .- μ_1).^2)/2)))
+
+        if i > burnin
+            isave = i .- burnin
+            store_θ[isave, :] = @SVector [μ_1, σ2_1]
+        end
+    end
+    mean(store_θ[:, 1]), mean(store_θ[:, 2])
+end
+
+# ╔═╡ 343202b3-23b5-4600-b912-7db4ab58deaf
+post_gibbs = gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1) # posterior mean of μ and σ^2
+
+# ╔═╡ 8216f31f-1421-4697-9046-a486fe1d35d7
+post_sample = [post_gibbs for _ in 1:10] 
+
+# ╔═╡ 82b96729-33c2-49b0-b908-562faf903a1e
+md"""
+
+### Bayesian linear regression
+
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -80,6 +147,7 @@ KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
@@ -90,6 +158,7 @@ Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
+StaticArrays = "~1.2.9"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
 """
@@ -1142,5 +1211,13 @@ version = "0.9.1+5"
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╟─f95ccee4-a2d3-4492-b869-551e61acf995
+# ╠═b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
+# ╠═1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
+# ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
+# ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
+# ╠═343202b3-23b5-4600-b912-7db4ab58deaf
+# ╠═8216f31f-1421-4697-9046-a486fe1d35d7
+# ╟─82b96729-33c2-49b0-b908-562faf903a1e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

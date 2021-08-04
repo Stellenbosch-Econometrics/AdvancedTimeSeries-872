@@ -284,10 +284,10 @@ end
 md" Naturally, one would want to use a pre-packaged solution to sampling with a binomial random variable. The `Distributions.jl` package contains optimised routines that work faster than our code, but is still a good idea to code some things yourself to fully understand the mechanisms. " 
 
 # ╔═╡ 2eb59993-4ace-4acb-9810-ba064ea1eb3e
-@benchmark rand(Binomial(n, p), iter) # Will generally give the same result as above, but likely much faster. 
+#@benchmark rand(Binomial(n, p), iter) # Will generally give the same result as above, but likely much faster. 
 
 # ╔═╡ 7c04e47c-eeed-47ec-9c6f-e2b710d0b746
-@benchmark [binomial_rv(n, p) for _ in 1:iter] # We can see from our benchmarking that this is much slower. 
+#@benchmark [binomial_rv(n, p) for _ in 1:iter] # We can see from our benchmarking that this is much slower. 
 
 # ╔═╡ a99b65bd-b39d-4d78-8ba1-d3a662592bce
 rand(Binomial(n, p), iter, iter); # What do you think happens if we run this code? Think about it first. 

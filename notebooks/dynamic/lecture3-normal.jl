@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, Statistics, StatsPlots, Turing
+using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, SpecialFunctions, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -47,7 +47,7 @@ font-size: 1.5rem;
 opacity: 0.8;
 ">ATS 872: Lecture 3</p>
 <p style="text-align: center; font-size: 1.8rem;">
- Gaussian distribution
+ Gauss all the things
 </p>
 
 <style>
@@ -69,7 +69,9 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the normal distribution in detail. This distribution features in many places in Bayesian econometrics and it is quite important to understand some of its properties.  We will then move on to a discussion of marginalisation and look at the normal distribution with different types of priors. This lecture almost serves as a reminder of why we don't want to work with analytical distributions, we would much rather perform computational exercises. "
+md" In this session we will be looking at the normal distribution in detail. This distribution features in many places in Bayesian econometrics and it is quite important to understand some of its properties.  We will then move on to a discussion of marginalisation and look at the normal distribution with different types of priors. This lecture almost serves as a reminder of why we don't want to work with analytical distributions, we would much rather perform computational exercises. 
+
+In this session we use some mathematics and theorethical constructs. Make sure you follow the logic. The math is not particularly difficult, you should have all the necesarry tools. If you are struggling with any part, please let me know.  "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 TableOfContents() # Uncomment to see TOC
@@ -192,15 +194,15 @@ end
 
 # ╔═╡ d5c65420-6910-4857-982d-604402968fe0
 begin
-	scatter(x[is_inside], y[is_inside], color = :blue)
-	scatter!(x[.!is_inside], y[.!is_inside], color = :red, legend = false)
+	scatter(x[is_inside], y[is_inside], color = :dodgerblue)
+	scatter!(x[.!is_inside], y[.!is_inside], color = :firebrick3, legend = false)
 end
 
 # ╔═╡ 63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
 md" I will also show a simple animation for this in the lecture using the `Makie.jl` package. "
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Normal / Gaussian "
+md" ## Gaussian (Normal) "
 
 # ╔═╡ e4730930-c3cd-4a01-a4d9-420bd15004ad
 md"""
@@ -221,16 +223,107 @@ md" ### Gaussian model with known $\sigma^2$ "
 # ╔═╡ 8ffaa0dc-36f8-49da-9742-74db90c6d5a8
 md"""
 
-**Note** The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
+In this first part we provide some context to the problem, then we move to the derivation. 
 
-To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$ 
+**Note**: The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
+
+To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$. 
 
 Our goal is to obtain the posterior distribution $p(\theta \mid {y})$ given the sample ${y}=$ $\left(y_{1}, \ldots, y_{N}\right)^{\prime} .$ To that end, we need two ingredients: a likelihood function and a prior for the parameter $\theta$.
+
+One simple model for this measurement problem is the normal model:
+
+$$\left(y_{n} \mid \theta \right) \sim \mathcal{N}\left(\mu, \sigma^{2}\right), \quad n=1, \ldots, N$$
+
+where the variance $\sigma^{2}$ is assumed to be known. Then, the model defines the likelihood function $p({y} \mid \theta)$. 
+
+Since the scale of the study is small, there is uncertainty around the estimate. A reasonable prior would be
+
+$$\theta \sim \mathcal{N}\left(\mu_{0}, \tau_{0}^{2}\right)$$
+
+where both $\mu_{0}$ and $\sigma_{0}^{2}$ are known. **Note**, this is a distribution around our unknown parameter $\theta$. Our prior distribution is normal with these specific parameters. 
+
+Relevant information about $\theta$ is summarized by posterior distribution, which can be obtained by Bayes' theorem:
+
+$$p(\theta \mid {y})=\frac{p(\theta) p({y} \mid \theta)}{p({y})}$$
+
+It turns out that $p(\theta | y)$ is a Gaussian distribution. We will now try and show this. The derivation can get a bit messy, but the logic is important. If you have done mathematical statistics at any stage you will feel right at home! 😉
+
 """
+
+# ╔═╡ 5d97bab1-346d-4edd-bc5e-bc6b1a510912
+md"""
+
+#### Derivation
+
+"""
+
+# ╔═╡ 39d705ff-4540-4103-ae10-694d5b64e82b
+md"""
+
+In the first step, we write out the likelihood function $p(y \mid {\theta})$. Recall from our first lecture that we say a random variable $X$ follows a normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, if its density is given by
+
+$$f\left(x ; a, b^{2}\right)=\left(2 \pi b^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 b^{2}}(x-a)^{2}}$$
+
+The likelihood function is a product of $N$ normal densities, so we can write
+
+$$\begin{aligned}
+p(\theta \mid {y}) &=\prod_{n=1}^{N}\left(2 \pi \sigma^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}}\left(y_{n}-\theta\right)^{2}} \\
+&=\left(2 \pi \sigma^{2}\right)^{-\frac{N}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}} \sum_{n=1}^{N}\left(y_{n}-\theta\right)^{2}}
+\end{aligned}$$
+
+Similarly, the prior density $p(\theta)$ is given by
+
+$$p(\theta)=\left(2 \pi \sigma_{0}^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \tau_{0}^{2}}\left(\theta-\mu_{0}\right)^{2}}$$
+
+Remember the assumption that we made about the distribution for the prior density in the previous section. 
+
+Now, as you would expect from Bayes' theorem, we will combine the prior and likelihood to obtain the posterior distribution. Note that the variable in $p(\theta \mid {y})$ is $\theta$, and we can ignore any constants that do not involve $\theta$.
+
+$$\begin{aligned}
+p(\theta \mid {y}) & \propto p(\theta) p({y} \mid \theta) \\
+& \propto \mathrm{e}^{-\frac{1}{2 \tau_{0}^{2}}\left(\theta-\mu_{0}\right)^{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}} \sum_{n=1}^{N}\left(y_{n}-\theta\right)^{2}} \\
+& \propto \exp \left[-\frac{1}{2}\left(\frac{\theta^{2}-2 \theta \mu_{0}}{\tau_{0}^{2}}+\frac{N \theta^{2}-2 \theta \sum_{n=1}^{N} y_{n}}{\sigma^{2}}\right)\right] \\
+& \propto \exp \left[-\frac{1}{2}\left(\left(\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}\right) \theta^{2}-2 \theta\left(\frac{\mu_{0}}{\tau_{0}^{2}}+\frac{N \bar{y}}{\sigma^{2}}\right)\right)\right]
+\end{aligned}$$
+
+where $\bar{y}=N^{-1} \sum_{n=1}^{N} y_{n}$ is the sample mean. Since the exponent is quadratic in $\theta$, $p(\theta \mid {y})$ is Gaussian, and we next determine the mean and variance of the distribution.
+
+In this example, the posterior distribution is in the same family as the prior - both are Gaussian. In this case, the prior is called a conjugate prior for the likelihood function.
+
+Now, suppose $(\theta \mid {y}) \sim \mathcal{N}\left(\mu_1, \tau_{1}^{2}\right)$ for some mean $\mu_{1}$ and variance $\tau_{1}^{2}$. Using the definition of the Gaussian density, we can rewrite the posterior distribution as
+
+$$\begin{aligned}
+p(\theta \mid {y}) &=\left(2 \pi \tau_{1}^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \tau_{1}^{2}}(\theta-\mu_1)^{2}} \\
+& \propto \exp {-\frac{1}{2}\left(\frac{1}{\tau^{2}_1} \theta^{2}-2 \theta \frac{\mu_1}{\tau_{1}^{2}}\right)}
+\end{aligned}$$
+
+We now have two expressions for the posterior distribution, which are identical for any $\theta \in \mathbb{R}$. The coefficients on $\theta^{2}$ must be the same, in other words we have that 
+
+$$\tau_{1}^{2}=\left(\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}\right)^{-1}$$
+
+Similarily the coefficients on $\theta$ must be the same as well, 
+
+$$\begin{aligned}
+\frac{\mu_1}{\tau_{1}^{2}} &=\frac{\mu_{0}}{\tau_{0}^{2}}+\frac{N \bar{y}}{\sigma^{2}} \\
+\mu_{1} &=\tau_{1}^{2}\left(\frac{\mu_{0}}{\tau_{0}^{2}}+\frac{N \bar{y}}{\sigma^{2}}\right)
+\end{aligned}$$
+
+Subtituting the definition of $\tau_{1}^{2}$ into this equation we can write the posterior mean as, 
+
+$$\begin{aligned}
+\mu_{1} &=\left(\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}\right)^{-1}\left(\frac{\mu_{0}}{\tau_{0}^{2}}+\frac{N \bar{y}}{\sigma^{2}}\right) \\
+&=\frac{\frac{1}{\tau_{0}^{2}}}{\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}} \mu_{0}+\frac{\frac{N}{\sigma^{2}}}{\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}} \bar{y}
+\end{aligned}$$
+
+"""
+
+# ╔═╡ 7644cfa5-c296-475d-bd8b-b78911ff98f3
+md" #### Summary "
 
 # ╔═╡ 3b2e280f-d83a-4f1c-86bb-1397b95210cb
 md"""
-For the normal distribution the observations $y$ are real valued. Mean $\theta$ and variance $\sigma^2$ (first assume $\sigma^2$ known). 
+To make things a bit easier in terms of notation, set $N = 1$. For unknown mean $\theta$ and known variance $\sigma^2$ we have the folowing summary. Some simplifications have been made to make things more readable,   
 
 $$\begin{align*}
     p(y|\theta)&=\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}(y-\theta)^2\right), \quad y \sim \mathcal{N}(\theta,\sigma^2)
@@ -291,9 +384,9 @@ grid = range(150, 210, length = 601) |> collect;
 # ╔═╡ 1316fbc2-700d-4106-99f0-0b9243a99aba
 begin
 	
-	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.2, :steelblue), labels = "Person 1")
-	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.2, :black), labels = "Person 2")
-	plot!(grid, Normal(pop_μ, pop_σ), xlims = (150, 190), lw = 2, color = :black, fill = (0, 0.5, :green), size = (600,400), labels = "Prior")
+	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Person 1")
+	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Person 2")
+	plot!(grid, Normal(pop_μ, pop_σ), xlims = (150, 190), lw = 2.5, color = :green4, fill = (0, 0.6, :green), size = (600,400), labels = "Prior")
 end
 
 # ╔═╡ 3c409c93-545a-4d10-a972-509dff7c0120
@@ -303,10 +396,10 @@ md" The above graph shows the fake guesses, we have also included the prior info
 md" Next we provide the posterior function as analytically calculated above. This calculation needs some work. Typing error must have occured. "
 
 # ╔═╡ cef4da14-ee03-44b8-bd86-c11c263b26b3
-post_σ(prior_σ, obs_σ) = sqrt.(1 ./ (1 ./ prior_σ .^ 2 .+ 1 ./ obs_σ .^ 2))
+post_σ(prior_σ, obs_σ) = sqrt.(1 ./ ((1 ./ prior_σ .^ 2) .+ (1 ./ obs_σ .^ 2)))
 
 # ╔═╡ d4f3331d-3dbd-4bad-b043-dff9409005c3
-post_μ(prior_μ, prior_σ, obs_μ, obs_σ) = (prior_μ ./ (prior_σ .^ 2) .+ obs_μ ./ (obs_σ .^ 2)) ./ (1 ./ (prior_σ .^ 2) .+ 1 ./ (obs_σ .^ 2))
+post_μ(prior_μ, prior_σ, obs_μ, obs_σ) = ((prior_μ ./ (prior_σ .^ 2)) .+ (obs_μ ./ (obs_σ .^ 2))) ./ ((1 ./ (prior_σ .^ 2)) .+ (1 ./ (obs_σ .^ 2)))
 
 # ╔═╡ ec24134e-a9c0-491e-9a68-c95a618f0b1d
 md" The posterior combines information from the prior and the likelihood. We will show in each case how the information retrieved from the data alters the posterior. " 
@@ -314,16 +407,22 @@ md" The posterior combines information from the prior and the likelihood. We wil
 # ╔═╡ 572653c4-0e3d-4619-bec6-64a01f4b2e06
 posterior_σ = post_σ([df.height_σ[1], df.height_σ[2]], pop_σ)
 
+# ╔═╡ 168df9b2-340c-4e06-8985-d2a1fad60bea
+post_μ₁ = post_μ(df.height_μ[1], df.height_σ[1], pop_μ, pop_σ)
+
+# ╔═╡ 74e1be5b-503d-48cb-97fd-c22b634cc361
+post_μ₂ = post_μ(df.height_μ[2], df.height_σ[2], pop_μ, pop_σ)
+
 # ╔═╡ fd9fe53b-3c5c-4e09-837e-bef6f00e485f
-posterior_μ = post_μ([df.height_μ[1], df.height_σ[1]], [df.height_μ[2], df.height_σ[2]], pop_μ, pop_σ)
+posterior_μ = [post_μ₁, post_μ₂];
 
 # ╔═╡ 39b604b9-a4c8-4f54-afaa-faa84d99ad73
 begin
-	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.2, :steelblue), labels = "Person 1")
-	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.2, :black), labels = "Person 2")
+	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Person 1")
+	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Person 2")
 	plot!(grid, Normal(pop_μ, pop_σ), lw = 0, color = :black, fill = (0, 0.5, :green), size = (600,400), labels = "Prior")
-	plot!(grid, Normal(posterior_μ[1], posterior_σ[1]), lw = 2, color = :black, size = (600,400), labels = "Posterior 1")
-	plot!(grid, Normal(posterior_μ[2], posterior_σ[2]), xlims = (150, 190), lw = 2, color = :steelblue, size = (600,400), labels = "Posterior 2") # Something went wrong with this calculation. 
+	plot!(grid, Normal(posterior_μ[1], posterior_σ[1]), lw = 2, color = :steelblue4, size = (600,400), labels = "Posterior 1")
+	plot!(grid, Normal(posterior_μ[2], posterior_σ[2]), xlims = (150, 190), lw = 2, color = :grey20, size = (600,400), labels = "Posterior 2") # Something went wrong with this calculation. 
 end
 
 # ╔═╡ a0670eb1-2091-47d0-9d9f-bba76834fbed
@@ -348,13 +447,13 @@ By the weak law of large numbers, $\widehat{g}$ converges weakly in probability 
 
 # ╔═╡ 8f5de37a-6c2c-400d-97c2-7f04e0fa4857
 begin
-	S = 10000
-	mu_hat = 19.09
-	Dmu = 0.09
+	S   = 10000
+	μ₁  = 19.09
+	τ₁  = 0.09
 end
 
 # ╔═╡ ec119ee9-ef16-475c-8a42-0fa5e46d1434
-mu = mu_hat .+ sqrt(Dmu) .* randn(S, 1);  # Remember to broadcast. Think about what broadcasting does here. 
+mu = μ₁ .+ sqrt(τ₁) .* randn(S);  # Remember to broadcast. Think about what broadcasting does here. 
 
 # ╔═╡ 3db81fbb-31c3-416e-92d0-258f2d4d8cd5
 g_hat = mean.(log.(abs.(mu)));
@@ -492,6 +591,87 @@ We will encounter this idea of marginalisation in many of our Markov chain Monte
 
 """
 
+# ╔═╡ 7453b184-2256-4626-8802-0521e72414c2
+md" #### Practical implementation (WIP) "
+
+# ╔═╡ 23185d7e-14be-443e-9acc-b35120b66fba
+md" This part is still a work in progress, trying out some code here. Will be difficult to follow along, notes are mostly for myself, working through the problem.  "
+
+# ╔═╡ ac095ff8-bcab-466c-b71f-4b738b38010a
+fake = [93, 112, 122, 135, 122, 150, 118, 90, 124, 114]
+
+# ╔═╡ e2c97257-0c41-44ad-85c3-10fa4b7ffc80
+n = length(fake)
+
+# ╔═╡ ec4e4af3-bac9-45e2-942a-0df6de5540ba
+s2 = var(fake)
+
+# ╔═╡ 9aeff475-a51c-4d2e-8b76-f38eb548bd57
+m_fake = mean(fake)
+
+# ╔═╡ 57742df7-86bf-46ad-b0f7-986cffee0599
+md" We can factorise the join posterior and sample from the joint posterior using this factorisation. Two components in this factorisation. $\nu$ is the degrees of freedom while $s^{2}$ is the scaling parameter. In our construction we are ignoring the normalising constant, which means this is not a probability distribution -- see the [wikipedia entry](https://en.wikipedia.org/wiki/Scaled_inverse_chi-squared_distribution) "
+
+# ╔═╡ abed48f3-6d91-46d5-9630-ac887ec264f7
+rsinvchisq(n, ν, s2, args...) = ν .* s2 / rand.(Chisq(ν), n, args...) # nu*s2 is the scaling component multiplied by the inverse chi-squared distribution -- see Albert page 64. See also page 583 in Gelman.
+
+# ╔═╡ 65846207-be74-4668-9b80-eac52ba9c745
+# rsinvchisq(n, 2, σ2) # Appears to work. 
+
+# ╔═╡ 2655f444-ad4f-4e42-91ec-d84c89933695
+md" Construct helper function to get exact marginal density of $\sigma$."
+
+# ╔═╡ 29762462-1936-4b10-8ee7-6a71d3f2a70a
+dsinvchisq(x, ν, s2) = (exp.(log.(ν ./ 2)) .* (ν ./ 2)) .- loggamma.(ν./2) .+ (log.(s2) ./ (2 .* ν)) .- (log.(x) .* ((ν ./ 2) .+ 1)) - (((ν .* s2) ./ 2) ./ x) # Helper function to get exact marginal density of sigma. Check if this is right at a later stage. 
+
+# ╔═╡ c3720edc-79c5-4013-918d-76c123df584c
+md" Sample $1000$ random numbers from $p(\sigma^{2} | y)$ "
+
+# ╔═╡ 2fb62696-bc08-49fc-8988-5fc2a7a7b3e7
+ns = 1000
+
+# ╔═╡ 567f67ed-6a39-424b-bd5e-12a7dcdd05d0
+σ2 = rsinvchisq(ns, n-1, s2)
+
+# ╔═╡ e1fc9ace-0f09-4fb5-b429-0d2907747e26
+md" Next we sample from $p(\mu | \sigma^2, y)$ "
+
+# ╔═╡ 4a3564a6-8647-4b98-a462-79537d58266f
+μ = m_fake .+ sqrt.(σ2 ./ n) .* randn(length(σ2)) # length(sigma) tells us how many variables to generate. In this case the defaults for rnorm are used. Shifted by ybar and multiplied by standard deviation. 
+
+# ╔═╡ c654671f-b481-4b93-a405-18d2c0f2a024
+md" Potentially another way to do this would have been to use the following, but matrix dimensions are off. "
+
+# ╔═╡ 81fe2acd-cffa-49c4-ac03-f1500547ac46
+mu₁ = rand.(Normal.(m_fake, sqrt.(σ2) ./ sqrt.(n)), length(σ2)) # Check dimensions here
+
+# ╔═╡ bd08a2ac-27fb-4146-9f99-d889d7f10c3c
+σ = sqrt.(σ2)
+
+# ╔═╡ d5a935c8-f497-4f75-aa67-cdb636e6e5e8
+md" For $\mu$, $\sigma$ compute the density in a grid (ranges of the grid are specified) "
+
+# ╔═╡ d66115cf-32ca-48bd-95e3-3ff1af1c3746
+begin
+	t1l = [90, 150]
+	t2l = [10, 60]
+	t1  = range(t1l[1], t1l[2], length = ns)
+	t2  = range(t2l[1], t2l[2], length = ns)
+end
+
+# ╔═╡ 013b8fcf-3bc5-4ccd-a6cf-577a48c29599
+md"""
+
+We can also compute the exact marginal density (analytical) of $\mu$. See page $21$ of Gelman for the discussion on the transformation of a variable. Multiply by $1/\sqrt{(s2/n)}$ since $z = (x - (\bar y)) / \sqrt{(s2/n)}$.
+
+"""
+
+# ╔═╡ 8d5b471a-745a-47f2-baf8-b5142d332c5b
+tdist = TDist(n - 1)
+
+# ╔═╡ 7b2d18e6-eaa9-4eb5-91a6-d3a9bc6e8447
+pm = pdf(tdist, (t1 .- m_fake) ./ sqrt.(s2 ./ n)) ./ sqrt.(s2 ./ n)
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -504,6 +684,7 @@ KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
@@ -517,6 +698,7 @@ Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
 Plots = "~1.20.0"
 PlutoUI = "~0.7.9"
+SpecialFunctions = "~1.6.0"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
 Turing = "~0.16.6"
@@ -2056,6 +2238,9 @@ version = "0.9.1+5"
 # ╟─e4730930-c3cd-4a01-a4d9-420bd15004ad
 # ╟─f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
 # ╟─8ffaa0dc-36f8-49da-9742-74db90c6d5a8
+# ╟─5d97bab1-346d-4edd-bc5e-bc6b1a510912
+# ╟─39d705ff-4540-4103-ae10-694d5b64e82b
+# ╟─7644cfa5-c296-475d-bd8b-b78911ff98f3
 # ╟─3b2e280f-d83a-4f1c-86bb-1397b95210cb
 # ╟─9741e08b-3f54-49d7-8db0-3125f4f90d3c
 # ╟─e99e1925-6219-4bf2-b743-bb2ea725dfcd
@@ -2064,13 +2249,15 @@ version = "0.9.1+5"
 # ╠═aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
 # ╠═ef4ccb39-cb95-43a5-a2d8-39efb1a66197
 # ╠═2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
-# ╟─1316fbc2-700d-4106-99f0-0b9243a99aba
+# ╠═1316fbc2-700d-4106-99f0-0b9243a99aba
 # ╟─3c409c93-545a-4d10-a972-509dff7c0120
 # ╟─79f77683-faa5-4a25-a78a-1d7d585bc94c
 # ╠═cef4da14-ee03-44b8-bd86-c11c263b26b3
 # ╠═d4f3331d-3dbd-4bad-b043-dff9409005c3
 # ╟─ec24134e-a9c0-491e-9a68-c95a618f0b1d
 # ╠═572653c4-0e3d-4619-bec6-64a01f4b2e06
+# ╠═168df9b2-340c-4e06-8985-d2a1fad60bea
+# ╠═74e1be5b-503d-48cb-97fd-c22b634cc361
 # ╠═fd9fe53b-3c5c-4e09-837e-bef6f00e485f
 # ╟─39b604b9-a4c8-4f54-afaa-faa84d99ad73
 # ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
@@ -2082,5 +2269,29 @@ version = "0.9.1+5"
 # ╟─8973afa7-2325-42f4-8e14-28aa090448d6
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+# ╟─7453b184-2256-4626-8802-0521e72414c2
+# ╟─23185d7e-14be-443e-9acc-b35120b66fba
+# ╠═ac095ff8-bcab-466c-b71f-4b738b38010a
+# ╠═e2c97257-0c41-44ad-85c3-10fa4b7ffc80
+# ╠═ec4e4af3-bac9-45e2-942a-0df6de5540ba
+# ╠═9aeff475-a51c-4d2e-8b76-f38eb548bd57
+# ╟─57742df7-86bf-46ad-b0f7-986cffee0599
+# ╠═abed48f3-6d91-46d5-9630-ac887ec264f7
+# ╠═65846207-be74-4668-9b80-eac52ba9c745
+# ╟─2655f444-ad4f-4e42-91ec-d84c89933695
+# ╠═29762462-1936-4b10-8ee7-6a71d3f2a70a
+# ╟─c3720edc-79c5-4013-918d-76c123df584c
+# ╠═2fb62696-bc08-49fc-8988-5fc2a7a7b3e7
+# ╠═567f67ed-6a39-424b-bd5e-12a7dcdd05d0
+# ╟─e1fc9ace-0f09-4fb5-b429-0d2907747e26
+# ╠═4a3564a6-8647-4b98-a462-79537d58266f
+# ╟─c654671f-b481-4b93-a405-18d2c0f2a024
+# ╠═81fe2acd-cffa-49c4-ac03-f1500547ac46
+# ╠═bd08a2ac-27fb-4146-9f99-d889d7f10c3c
+# ╟─d5a935c8-f497-4f75-aa67-cdb636e6e5e8
+# ╠═d66115cf-32ca-48bd-95e3-3ff1af1c3746
+# ╟─013b8fcf-3bc5-4ccd-a6cf-577a48c29599
+# ╠═8d5b471a-745a-47f2-baf8-b5142d332c5b
+# ╠═7b2d18e6-eaa9-4eb5-91a6-d3a9bc6e8447
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

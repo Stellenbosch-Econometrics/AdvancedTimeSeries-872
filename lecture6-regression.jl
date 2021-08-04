@@ -117,6 +117,8 @@ To outline the main idea, suppose we obtain $R$ independent draws from $p(\bolds
 
 Hence, estimation and inference become essentially a computational problem of obtaining draws from the posterior distribution. In general, sampling from arbitrary distribution is a difficult problem. Fortunately, there is now a large family of algorithms generally called Markov chain Monte Carlo (MCMC) methods to sample from complex distributions.
 
+The basic idea behind these algorithms is to construct a Markov chain so that its limiting distribution is the target distribution - in our case the target is the posterior distribution. By construction, samples from the MCMC algorithms are autocorrelated. Fortunately, similar convergence theorems - called ergodic theorems-hold for these correlated samples. Under some weak regularity conditions, we can use draws from these MCMC algorithms to estimate any functions of the parameters arbitrary well, provided that the population analogs exist.
+
 """
 
 # ╔═╡ f95ccee4-a2d3-4492-b869-551e61acf995
@@ -174,8 +176,27 @@ end
 # ╔═╡ 343202b3-23b5-4600-b912-7db4ab58deaf
 post_gibbs = gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1) # posterior mean of μ and σ^2
 
-# ╔═╡ 8216f31f-1421-4697-9046-a486fe1d35d7
-post_sample = [post_gibbs for _ in 1:10] 
+# ╔═╡ 3aeab073-c98a-4213-a835-3098233ba90c
+md" Let us see what this looks like when we plot it... "
+
+# ╔═╡ 3335094d-a67b-471c-834d-e22089933104
+begin
+	gr()
+	const N₁ = 100_000
+	const μ₁ = [post_gibbs[1], post_gibbs[1]]
+	const Σ = [1 post_gibbs[2]; post_gibbs[2] 1]
+
+	const mvnormal = MvNormal(μ₁, Σ)
+
+	data = rand(mvnormal, N₁)'
+	x₁ = 0:0.01:6
+	y₁ = 0:0.01:6
+	dens_mvnormal = [pdf(mvnormal, [i, j]) for i in x₁, j in y₁]
+	contour(x₁, y₁, dens_mvnormal, xlabel="X", ylabel="Y", fill=true, fillcolour = :ice)
+end
+
+# ╔═╡ 80e6619b-ac42-453b-8f38-850b2b99d000
+surface(x₁, y₁, dens_mvnormal, fillcolour = :ice)
 
 # ╔═╡ 82b96729-33c2-49b0-b908-562faf903a1e
 md"""
@@ -1265,7 +1286,9 @@ version = "0.9.1+5"
 # ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
 # ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
 # ╠═343202b3-23b5-4600-b912-7db4ab58deaf
-# ╠═8216f31f-1421-4697-9046-a486fe1d35d7
+# ╟─3aeab073-c98a-4213-a835-3098233ba90c
+# ╠═3335094d-a67b-471c-834d-e22089933104
+# ╠═80e6619b-ac42-453b-8f38-850b2b99d000
 # ╟─82b96729-33c2-49b0-b908-562faf903a1e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

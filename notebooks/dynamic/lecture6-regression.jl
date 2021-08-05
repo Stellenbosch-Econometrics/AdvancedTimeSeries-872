@@ -290,17 +290,23 @@ As an illustration, the following code first generates a dataset of $N=100$ obse
 
 # ╔═╡ b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
 begin
-	nsim = 10_000
-	burnin = 1000
-	μ = 3.0
-	σ2 = 0.1
-	N = 100
-	μ_0 = 0.0
-	σ2_0 = 100
-	ν_0 = 3.0
-	Σ_0 = 0.5
-	μ_1 = 0.0
-	σ2_1 = 1.0
+	# Parameters for first example
+	nsim 	= 10_000
+	burnin 	= 1000
+	μ 		= 3.0
+	σ2 		= 0.1
+	N 		= 100
+	μ_0 	= 0.0
+	σ2_0 	= 100
+	ν_0 	= 3.0
+	Σ_0 	= 0.5
+	μ_1 	= 0.0
+	σ2_1 	= 1.0
+	
+	# Additional parameters for second example
+	T 		= 500
+	β 		= [1.0 5.0]
+	β_0 	= [0.0 0.0]
 end
 
 # ╔═╡ 1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
@@ -596,6 +602,85 @@ md"""
 ### Practical implementation
 
 """
+
+# ╔═╡ edaf930a-4933-4047-8854-bbb02ea9c39c
+md"""
+
+As an example, the following code first generates a sample of $T=500$ observations from a normal linear regression model. It then implements the Gibbs sampler in our second algorithm, where the sampler is initialized using the least squares estimate. The posterior means of the model parameters are stored in the variable `theta_hat` and the corresponding $95$ percent credible intervals are stored in `theta_CI`.
+
+"""
+
+# ╔═╡ c9c8d57b-3010-4056-aaa3-a0354cf456fd
+function data_gen2(T, β, σ2)
+	
+    X = [ones(T, 1) 1 .+ randn(T, 1)]
+    X * β' .+ sqrt(σ2) .* randn(T, 1)
+end
+
+# ╔═╡ 7faf5fbb-ac78-4466-8329-88e3f8d2a527
+data_gen2(T, β, σ2)
+
+# ╔═╡ 000cf50f-d3f8-452b-b661-11545c2ec0c4
+function get_prior(ν_0)
+
+    Vβ_0 = I(2) ./ 100
+    Σ_0  = 1 * (ν_0 - 1)
+
+    return Vβ_0, Σ_0
+end
+
+# ╔═╡ a2f9e4f0-5cf9-4379-9fd2-46d5c7e6e8f0
+get_prior(ν_0)
+
+# ╔═╡ 7b70270e-2991-40ee-97a9-082691e68701
+function ols_est(T, β, σ2)
+
+    y = data_gen(T, β, σ2) # Generated data
+    X = [ones(T, 1) 1 .+ randn(T, 1)]
+
+    β_1 = (X' * X) \ (X' * y)
+    σ2_1 = sum((y .- X * β_1) .^ 2) / T
+
+    return β_1, σ2_1
+end
+
+# ╔═╡ 3be16f2d-0f8d-4be3-965e-4e6569866e63
+# y = data_gen(T, β, σ2)
+
+# ╔═╡ 791939ae-3e00-4d6b-968c-5a82a78f55f8
+function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
+
+    y = data_gen(T, β, σ2) # Generated data
+    X = [ones(T, 1) 1 .+ randn(T, 1)]
+
+    Vβ_0, Σ_0 = get_prior(ν_0)
+    β_1, σ2_1 = ols_est(T, β, σ2)
+
+    # Initialise Markov Chain
+    store_θ = @SMatrix zeros(nsim, 3)
+
+    # Start the Gibbs sampling procedure
+    for i in 1:nsim + burnin
+
+        # Sample from μ (refer to Chan notes for the math)
+        D_β   = (Vβ_0 .+ X'*X/σ2_1)\I(2)
+        β_hat = D_β*(Vβ_0 * β_0' .+ X'*y./σ2_1)
+
+        # See the note with respect to algorithm 2.1 for this
+        C = cholesky(Symmetric(D_β)).L
+        β_1 = β_hat .+ C * randn(2,1)
+
+        # Sample from σ2
+        e = y - X*β_1
+        sig2 = 1/rand(Gamma(ν_0 .+ T/2, 1/(Σ_0 + (e'*e/2)[1])))
+
+        if i > burnin
+            isave = i .- burnin
+            store_θ[isave, :] = [β_1' σ2_1]
+        end
+    end
+    [mean(store_θ[:, 1]), mean(store_θ[:, 2])]
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1709,5 +1794,13 @@ version = "0.9.1+5"
 # ╟─c5c4da02-8b6b-4318-b625-ce4f31703c79
 # ╟─428eb291-d516-4b56-91e7-df3a92cd3a4f
 # ╟─223f4b6f-8321-4142-9dfa-1afe371d40ac
+# ╟─edaf930a-4933-4047-8854-bbb02ea9c39c
+# ╠═c9c8d57b-3010-4056-aaa3-a0354cf456fd
+# ╠═7faf5fbb-ac78-4466-8329-88e3f8d2a527
+# ╠═000cf50f-d3f8-452b-b661-11545c2ec0c4
+# ╠═a2f9e4f0-5cf9-4379-9fd2-46d5c7e6e8f0
+# ╠═7b70270e-2991-40ee-97a9-082691e68701
+# ╠═3be16f2d-0f8d-4be3-965e-4e6569866e63
+# ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

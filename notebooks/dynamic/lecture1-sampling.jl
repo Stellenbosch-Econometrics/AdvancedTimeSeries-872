@@ -196,7 +196,7 @@ simple_weighted_coin()
 md" Another way to do this might be with a **ternary operator**, see the Julia documentation [here](https://docs.julialang.org/en/v1/manual/control-flow/). "
 
 # ╔═╡ f40f5823-f383-4d6e-a651-91c5a03cbf1e
-simple_weighted_coin2() = rand(1:10) ≤ 7 ? "heads" : "tails"
+simple_weighted_coin2() = rand(1:10) ≤ 7 ? "heads" : "tails" 
 
 # ╔═╡ 2970a6d2-599a-44ce-ab09-d52db64c0c64
 simple_weighted_coin2()
@@ -327,7 +327,7 @@ md" ## Binomial "
 md" The binomial distribution describes an event of the number of successes in a sequence of $n$ independent experiment(s), each asking a yes-no question with a probability of success $p$. Note that the Bernoulli distribution is a special case of the binomial distribution where the number of experiments is $1$. "
 
 # ╔═╡ 71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
-md" The binomial distribution has two parameters and its notation is $\text{Bin}(n, p)$. An example would be the number of heads in 5 coin flips (as illustrated below for different values of $p$). We will deal with the coin flip problem in more detail in the next lecture. "
+md" The binomial distribution has two parameters and its notation is $\text{Bin}(n, p)$. An example would be the number of heads in $5$ coin flips (as illustrated below for different values of $p$). We will deal with the coin flip problem in more detail in the next lecture. "
 
 # ╔═╡ b061d6f2-bcd1-410e-a005-d2e993616b3a
 md"""
@@ -347,7 +347,7 @@ begin
 end
 
 # ╔═╡ 0a5ed3ea-12d9-46f9-aab8-472eae8a971d
-md" We can make the binomial random variable a type, we only require information on $n$ and $p$, so the `struct` is: "
+md" We can make the binomial random variable a type. We only require information on $n$ and $p$, so the `struct` is: "
 
 # ╔═╡ 1056e659-b358-451f-85b3-a7ec9a6dac92
 struct Binomial_New

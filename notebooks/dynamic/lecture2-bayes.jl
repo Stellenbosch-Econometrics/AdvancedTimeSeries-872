@@ -301,35 +301,34 @@ md"""
 
 !!! note "Interactive sliders for Binomial random variable"
 
-n = $(@bind n Slider(10:10:1001, show_value = true, default=100));
-p = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5));  
-draws = $(@bind iter Slider(1:2000, show_value = true, default=1))
+n = $(@bind n Slider(1:1:100, show_value = true, default=100));
+p = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5)); 
 
-> Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and $n$ and increase the number of draws, what happens to the distribution? What theorem is at play here?
+> Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and increase the number of $n$, what happens to the distribution? What theorem is at play here?
 
 """
 
 # ╔═╡ d6316b4f-9882-4d25-87d0-31fa3c1f3935
-b = [binomial_rv(n, p) for _ in 1:iter]; # Using an array comprehension
+b = [binomial_rv(n, p) for _ in 1:1000]; # Using an array comprehension
 
 # ╔═╡ c4cc482b-815b-4747-9f5a-5779d69086f7
 begin
-	dens_b = kde(b)
-	plot(dens_b, line = 2, color = :black, legend = false)
-	histogram!(b, alpha = 0.5, c = :steelblue, legend = false, size = (700, 500), norm = true)
+	#dens_b = kde(b)
+	#plot(dens_b, line = 2, color = :black, legend = false, norm = true)
+	histogram(b, alpha = 0.5, c = :steelblue, legend = false, size = (700, 500), norm = true)
 end
 
 # ╔═╡ 9016cba4-58f0-4b7f-91af-66faaf3fe99c
 md" Naturally, one would want to use a pre-packaged solution to sampling with a binomial random variable. The `Distributions.jl` package contains optimised routines that work faster than our code, but is still a good idea to code some things yourself to fully understand the mechanisms. " 
 
 # ╔═╡ 2eb59993-4ace-4acb-9810-ba064ea1eb3e
-#@benchmark rand(Binomial(n, p), iter) # Will generally give the same result as above, but likely much faster. 
+#@benchmark rand(Binomial(n, p), 1000) # Will generally give the same result as above, but likely much faster. 
 
 # ╔═╡ 7c04e47c-eeed-47ec-9c6f-e2b710d0b746
-#@benchmark [binomial_rv(n, p) for _ in 1:iter] # We can see from our benchmarking that this is much slower. 
+#@benchmark [binomial_rv(n, p) for _ in 1:1000] # We can see from our benchmarking that this is much slower. 
 
 # ╔═╡ a99b65bd-b39d-4d78-8ba1-d3a662592bce
-rand(Binomial(n, p), iter, iter); # What do you think happens if we run this code? Think about it first. 
+rand(Binomial(n, p), 1000, 1000); # What do you think happens if we run this code? Think about it first. 
 
 # ╔═╡ ee9336ea-816b-42ef-b6bf-3c3d2dfc0e0a
 md" Now we are going to utilise this distribution as a potential model to estimate the bias in a coin. In other words we are going to work with the case where the $\theta$ parameter is unknown. We will see in this section how Bayes' rule is applied.  "

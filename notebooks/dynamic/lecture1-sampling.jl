@@ -426,6 +426,9 @@ bell_curve(x) = exp(-x^2 / 2) / √(2π)
 # ╔═╡ 24f945be-f3d5-48bd-80e1-12a7cc92d976
 bell_curve(x, μ, σ) = bell_curve( (x - μ) / σ ) / σ
 
+# ╔═╡ 9c93fdce-c678-4c53-986d-e870c53a50e4
+methods(bell_curve);
+
 # ╔═╡ 62c3c7f1-2839-4c7e-bba7-1741649b3620
 md"""
 We can shift and scale the Gaussian distribution in the following manner. 
@@ -438,7 +441,7 @@ md"""
 """
 
 # ╔═╡ 0f7184f5-a03f-482e-8339-fd12c7391e01
-data = μ .+ σ .* randn(10^5)
+data = μ .+ σ .* randn(10^5) # Take note of the broadcasting performed by the dot operator
 
 # ╔═╡ ff9355dc-3e5f-4558-9027-668bd17a7a30
 begin
@@ -510,7 +513,7 @@ md" ### Defining abstract types "
 
 # ╔═╡ 760eaee1-0af1-41c1-b38a-c0041559c0ed
 md"""
-Define an **abstract type** using `abstract type <Name> end`, where `<Name>` is replaced with name of the type.
+Thus far we have only defined **concrete types**. Think about concrete types as the types with specific data attached. Now we will define an **abstract type** using `abstract type <Name> end`, where `<Name>` is replaced with name of the type.
 
 We can think of an abstract type as being a collection of types that share a particular property. In our case, we want to create a type to represent "any random variable", and also the sub-types "any continuous(-valued) random variable" and "any discrete(-valued) random variable".
 
@@ -548,7 +551,7 @@ G = Gaussian(1, 2)
 # ╔═╡ ada8809b-8f3a-4298-94d9-e8225df4087d
 md" We have now created a Gaussian random variable with given parameter value, without sampling from it. We have not even defined the notion of sampling. However, we will easily be able to apply it to our Gaussian type. More importantly, we will be able to apply it to any random variable that falls under the RandomVariable type that we have defined. 
 
-Important to note that the `Gaussian` type that we have created here is a concrete type.
+Important to note that the `Gaussian` type that we have created here is a **concrete type**.
 
 We now extend the `mean`, `var` and `std` function from the Statistics library to act on our newly created object. "
 
@@ -1983,7 +1986,7 @@ version = "0.9.1+5"
 # ╟─310e07b1-ef44-4588-9fc2-7f70b84e527d
 # ╠═e41adcb9-3c78-404b-a501-b359511b9a39
 # ╟─d34b5710-2f37-4bb1-9e02-6e95996f7242
-# ╠═31675329-f1bd-4752-8da1-af82475fe900
+# ╟─31675329-f1bd-4752-8da1-af82475fe900
 # ╟─71128267-d23a-4162-b9b3-52b86ec5f9de
 # ╟─7d74a6be-4aac-4f12-9391-528f9cbf37ba
 # ╟─37cbf7a2-6679-40a4-8085-21a4e900c59d
@@ -1995,6 +1998,7 @@ version = "0.9.1+5"
 # ╟─abe288f3-9a80-4c29-a918-73c57ab16dc2
 # ╠═c23627d6-91a2-4b69-9e35-71b8a9578dd6
 # ╠═24f945be-f3d5-48bd-80e1-12a7cc92d976
+# ╠═9c93fdce-c678-4c53-986d-e870c53a50e4
 # ╟─62c3c7f1-2839-4c7e-bba7-1741649b3620
 # ╟─b153e5e7-95ba-4425-91aa-ce9986a64392
 # ╠═0f7184f5-a03f-482e-8339-fd12c7391e01

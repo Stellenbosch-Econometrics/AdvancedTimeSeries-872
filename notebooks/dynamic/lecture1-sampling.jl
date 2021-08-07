@@ -72,7 +72,9 @@ md" # Introduction "
 md" > **Note:** A significant portion of the material for this lecture is based on [Computational Thinking](https://computationalthinking.mit.edu), a live online Julia/Pluto textbook. You should check out the course for some amazing notebooks!  "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In our introductory session (Lecture 0) we had a brief introduction to Julia via the QuantEcon website. In this first tutorial we will be looking at some basic ideas such as sampling and random variables. Julia is an amazing language for computational problems and is much faster than R for most practical applications in Bayesian Econometrics. You are welcome to still code in R if you wish. I will steer you in the right direction with resources from last year. However, I think it is worthwhile to learn Julia since the syntax is similar to Python and Matlab. "
+md" In our introductory session (Lecture 0) we had a brief introduction to Julia via the QuantEcon website. In this first tutorial we will be looking at some basic ideas such as sampling and random variables. Julia is an amazing language for computational problems and is much faster than R for most practical applications in Bayesian Econometrics. You are welcome to still code in R if you wish. I will steer you in the right direction with resources from last year. However, I think it is worthwhile to learn Julia since the syntax is similar to Python and Matlab. 
+
+**Note**: In terms of the project that you have to do at the end of the semester, most of you might want to use packages that are available in R, since the ecosystem is more mature and more packages are available. If you want to code up your own routines for your project using Julia, this will be more difficult. However, if you follow the notebooks carefully it should be within your reach. "
 
 # ╔═╡ 49033e09-fd64-4707-916c-9435d3f0a9d2
 md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. "
@@ -170,12 +172,12 @@ md" ## Tossing a weighted coin "
 
 # ╔═╡ ea5a71b7-845b-4310-b1fb-f69ee71ac3fb
 md"""
-How could we model a coin that is **weighted**, so that it is more likely to come up heads? We want to assign a probability $p = 0.7$ to heads, and $q = 0.3$ to tails.
+How could we model a coin that is **weighted**, so that it is more likely to come up heads? We want to assign a probability $p = 0.7$ to heads, and $q = 0.3$ to tails. 
 """
 
 # ╔═╡ d6aa79f3-45c8-4ff5-84d6-1cd79b845b2f
 md"""
-One way would be to generate random integers between 1 and 10 and assign heads to a subset of the possible results with the desired probability, e.g. 1:7 get heads, and 8:10 get tails. We will use this same logic later in other examples, so it is important to understand what we are doing here. "
+One way would be to generate random integers between $1$ and $10$ and assign heads to a subset of the possible results with the desired probability, e.g. $1:7$ get heads, and $8:10$ get tails. We will use this same logic later in other examples, so it is important to understand what we are doing here. 
 """
 
 # ╔═╡ 0d46dd99-c614-40a6-9cd0-69b453ec782f
@@ -200,7 +202,7 @@ simple_weighted_coin2() = rand(1:10) ≤ 7 ? "heads" : "tails"
 simple_weighted_coin2()
 
 # ╔═╡ 5b54210f-9a7d-447e-9491-f8fbb0892e7f
-md" If we generate a uniform number between 0 and 1 and then check if it is less than some probability, this is known as a **Bernoulli trial**. We can construct a simple Bernoulli function that encapsulates this idea.  "
+md" If we generate a uniform number between $0$ and $1$ and then check if it is less than some probability, this is known as one **Bernoulli trial**. Binomial and Bernoulli random variables will be covered in more detail later in the lecture and also defined more formally in the next lecture. For now you simply need to understand the process. We can construct a simple Bernoulli function that encapsulates this idea.  "
 
 # ╔═╡ e9df057d-3781-4fe1-b0ca-fab08b895ca2
 bernoulli(p) = rand() < p # Takes in a value p between 0 and 1 to compare against
@@ -217,7 +219,7 @@ countmap( [bernoulli(p₁) for _ in 1:1000] ) # 10000 iterations, count how many
 md" **Note**: the output for this function is `true` or `false` instead of `heads` or `tails` in the weighted coin example. "
 
 # ╔═╡ 4c6dd3ba-268e-4fad-b8d1-4bc78f24a46f
-md" A Bernoulli random variable model for a weighted coin, for example, will take value 1 with probability $p$ and 0 with probability $(1- p)$. Our Bernoulli function that we wrote provides `true` and `false` values. Let us sample some Bernoulli random variates. "
+md" A Bernoulli random variable model for a weighted coin, for example, will take value $1$ with probability $p$ and $0$ with probability $(1- p)$. Our Bernoulli function that we wrote provides `true` and `false` values. Let us sample some Bernoulli random variates. "
 
 # ╔═╡ c817e5e6-4cb4-4392-8f7e-e1a4bb009537
 flips = [Int(bernoulli(p₁)) for _ in 1:100];
@@ -226,21 +228,21 @@ flips = [Int(bernoulli(p₁)) for _ in 1:100];
 mean(flips) 
 
 # ╔═╡ b9cdd1c8-2f8f-48c5-846d-e40cedc949b7
-md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. "
+md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. How would you increase the number of flips in the code above? Play around with the code to see if you can do it. "
 
 # ╔═╡ 370a4ccb-fdb6-4e3f-8004-d6f88f025945
 md" # Probability distributions and types "
 
 # ╔═╡ c6d85f60-c820-4269-a6b4-57483de13bd8
 md"""
-In this section I will provide some basic properties of common probability distributions that are often used in Bayesian econometrics. We will only look at three in this section, and then as we progress we will introduce more. We will also discuss the type system in Julia, which is a key feature of the language. To keep the code clear in the following lectures we won't always use best coding practice, but every now and then we will discuss some core principles. 
+In this section I will provide some basic properties of common probability distributions that are often used in Bayesian econometrics. We will brielfy introduce three distributions in this section, and then as we progress we will introduce more. We will also discuss the type system in Julia, which is a key feature of the language. To keep the code clear in the following lectures we won't always use best coding practice, but every now and then we will discuss some core principles. 
 """
 
 # ╔═╡ 601f3dfa-4ea5-4418-aeba-5ab1203f8753
 md" ## Bernoulli "
 
 # ╔═╡ ce3b13a8-38e8-449a-8b11-7a61b8632fc9
-md" As we have stated, the Bernoulli distribution describes a binary event of a successful experiment. We usually represent 0 as failure and 1 as success, so the result of a Bernoulli distribution is a binary variable. The Bernoulli distribution is widely used to model discrete binary outcomes in which there are only two possible results."
+md" As we have stated, the Bernoulli distribution describes a binary event of a successful experiment. We usually represent $0$ as failure and $1$ as success, so the result of a Bernoulli distribution is a binary variable. The Bernoulli distribution is widely used to model discrete binary outcomes in which there are only two possible results. The value of $p$ represents the probability of success. "
 
 # ╔═╡ c61504df-808a-46f0-b8cc-dcc7197ffb3e
 md"""
@@ -261,15 +263,14 @@ begin
 end
 
 # ╔═╡ c361ae07-61af-44bb-a5ee-be991390fa88
-md" We might want to know what the mean (or expected value) of the process is,"
+md" We might want to know what the mean (or expected value) of the process is. We can do this easily by constructing a Bernoulli `type` with certain properties. If you are new to programming, the idea of types will be strange. However, try and follow along with the example to see what the benefit is in creating types.  "
 
 # ╔═╡ 0a98082a-94c3-41d8-a129-4f42e217bcd1
 md" ### Make Bernoulli a type "
 
 # ╔═╡ 5b38607d-6cfc-4fa0-b19f-5bea8ad38b39
-md" This section is a bit more advanced so you can probably just skim through it on first reading. It relates more to Julia programming than other languages, but it is good knowledge to have. 
-
-Currently we need one function for sampling from a Bernoulli random variable, a different function to calculate the mean and a different function for the standard deviation, etc. 
+md"
+Currently we need one function for sampling from a Bernoulli random variable, a different function to calculate the mean and a different function for the standard deviation. So many different functions! 
 
 In mathematical terms we have this Bernoulli random variable and we are calculating properties of the particular concept. We can do the same thing computationally by creating a new object that represents the Bernoulli random variable. "
 
@@ -279,12 +280,15 @@ struct Bernoulli_New
 end
 
 # ╔═╡ 5a358aa5-bb4b-4b48-9d46-8628a9722023
-md" We want to be able to sample from this using the `rand()` function and also take its mean. In order to do this we will extend the rand function from the `Base` library of Julia and the mean function from the Statistics library. 
+md" We want to be able to sample from this using the `rand()` function and also take its mean. In order to do this we will extend the rand function from the `Base` library of Julia and the `mean` function from the `Statistics.jl` library. 
 
-Note that we are adding methods to these particular functions. "
+Note that we are adding [methods](https://docs.julialang.org/en/v1/manual/methods/) to these particular functions. "
 
 # ╔═╡ 2afe4168-640f-4b7e-ab28-7ae22fba16c9
 Base.rand(X::Bernoulli_New) = Int( rand() < X.p ) # Add method to the rand function
+
+# ╔═╡ cc4578f7-358c-4635-9a16-816e0b0f9d4e
+md" Adding a method to a function in Julia means that depending on the `type` of the input received, the function will output something different. This is the idea behind multiple dispatch in Julia. You can read more about multiple dispatch [here](https://opensourc.es/blog/basics-multiple-dispatch/)."
 
 # ╔═╡ 198663dd-941a-4258-800f-80ad0638f884
 B = Bernoulli_New(0.25)
@@ -295,11 +299,26 @@ md" The object `B` represents a Bernoulli random variable with probability of su
 # ╔═╡ b186f0b5-721e-4757-9a4d-a839162b22f2
 rand(B)
 
+# ╔═╡ ad2cadea-d982-4b4c-939d-7c8c4b587539
+md" Next we can extend the `mean` function to accept our Bernoulli `type`. This means that whenever we input a variable of the `Bernoulli_New` type the mean will be calculated in the way specified. If we were for example to calculate the mean of a sum of floating point values, Julia would recognise that we are inputting a different type and therefore look for the associated method. "
+
 # ╔═╡ 827e960e-057e-40ae-beeb-f3c013d9f883
 Statistics.mean(X::Bernoulli_New) = X.p
 
 # ╔═╡ 96787e59-a958-404b-b610-42a28bd0353b
 mean(B)
+
+# ╔═╡ 797f952a-abac-4dde-9834-0e46a06bfa96
+sum_of = 2.0 + 3 + 4 + 5 # If we have one floating point value then the sum gets `promoted` to a floating point value, even if the other values are integers. 
+
+# ╔═╡ 16db4c10-cac0-4cc4-a473-9c5ccf488e92
+mean(sum_of)
+
+# ╔═╡ 8aa2ed56-95e4-48ee-8f7e-3da02e7c51c6
+typeof(sum_of) # In this case the type relates to the sum that we have taken
+
+# ╔═╡ 55bb47ce-558c-451d-a752-aa56b8640832
+typeof(B) # You can see that this is an instance of our created type!
 
 # ╔═╡ 28578d77-1439-49cf-a9f6-120557bce924
 md" ## Binomial "
@@ -1941,11 +1960,17 @@ version = "0.9.1+5"
 # ╠═5aed1914-6960-41c8-91d4-09614766583d
 # ╟─5a358aa5-bb4b-4b48-9d46-8628a9722023
 # ╠═2afe4168-640f-4b7e-ab28-7ae22fba16c9
+# ╟─cc4578f7-358c-4635-9a16-816e0b0f9d4e
 # ╠═198663dd-941a-4258-800f-80ad0638f884
 # ╟─8893ec3a-7b9b-4887-9776-0c9c4f07cf14
 # ╠═b186f0b5-721e-4757-9a4d-a839162b22f2
+# ╟─ad2cadea-d982-4b4c-939d-7c8c4b587539
 # ╠═827e960e-057e-40ae-beeb-f3c013d9f883
 # ╠═96787e59-a958-404b-b610-42a28bd0353b
+# ╠═797f952a-abac-4dde-9834-0e46a06bfa96
+# ╠═16db4c10-cac0-4cc4-a473-9c5ccf488e92
+# ╠═8aa2ed56-95e4-48ee-8f7e-3da02e7c51c6
+# ╠═55bb47ce-558c-451d-a752-aa56b8640832
 # ╟─28578d77-1439-49cf-a9f6-120557bce924
 # ╟─b6fc9ad1-5f44-4697-be2e-407e2b9308c0
 # ╟─71f12fb3-901d-4feb-9fbc-a5fc6e0f4750

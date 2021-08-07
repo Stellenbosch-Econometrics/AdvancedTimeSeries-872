@@ -63,13 +63,228 @@ md" # Introduction "
 md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-#TableOfContents() # Uncomment to see TOC
+TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Random sampling "
+md" ## Vector Autoregressions "
+
+# ╔═╡ 41221332-0a22-43c7-b1b2-8a8d84e61dd4
+md"""
+
+Vector autoregressions (VARs) have been widely used for macroeconomic forecasting and structural analysis since the seminal work of Sims $(1980)$. In particular, VARs are often served as the benchmark for comparing forecast performance of new models and methods. VARs are also used to better understand the interactions between macroeconomic variables, often through the estimation of impulse response functions that characterize the effects of a variety of structural shocks on key economic variables.
+
+Despite the empirical success of the standard constant-coefficient and homoscedastic VAR, there is a lot of recent work in extending these conventional VARs to models with time-varying regression coefficients and stochastic volatility. These extensions are motivated by the widely observed structural instabilities and time-varying volatility in a variety of macroeconomic time series.
+
+In this chapter we will study a few of these more flexible VARs, including the timevarying parameter (TVP) VAR and VARs with stochastic volatility. An excellent review paper that covers many of the same topics is Koop and Korobilis (2010). We will begin with a basic VAR.
+
+"""
+
+# ╔═╡ 77fde8ac-f019-4b4c-9d03-9a9c0d7ca2a0
+md"""
+
+### Basic VAR
+"""
+
+# ╔═╡ 7e0462d4-a307-465b-ae27-737431ecb565
+md"""
+
+Suppose $\mathbf{y}_{t}=\left(y_{1 t}, \ldots, y_{n t}\right)^{\prime}$ is a vector of dependent variables at time $t$. Consider the following $\operatorname{VAR}(p)$ :
+
+$$\mathbf{y}_{t}=\mathbf{b}+\mathbf{A}_{1} \mathbf{y}_{t-1}+\cdots+\mathbf{A}_{p} \mathbf{y}_{t-p}+\varepsilon_{t}$$
+
+where $\mathbf{b}$ is an $n \times 1$ vector of intercepts, $\mathbf{A}_{1}, \ldots, \mathbf{A}_{p}$ are $n \times n$ coefficient matrices and $\varepsilon_{t} \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$. In other words, $\operatorname{VAR}(p)$ is simply a multiple-equation regression where the regressors are the lagged dependent variables.
+
+To fix ideas, consider a simple example with $n=2$ variables and $p=1$ lag. Then the equation above can be written explicitly as:
+
+$$\left(\begin{array}{l}
+y_{1 t} \\
+y_{2 t}
+\end{array}\right)=\left(\begin{array}{l}
+b_{1} \\
+b_{2}
+\end{array}\right)+\left(\begin{array}{ll}
+A_{1,11} & A_{1,12} \\
+A_{1,21} & A_{1,22}
+\end{array}\right)\left(\begin{array}{l}
+y_{1(t-1)} \\
+y_{2(t-1)}
+\end{array}\right)+\left(\begin{array}{c}
+\varepsilon_{1 t} \\
+\varepsilon_{2 t}
+\end{array}\right)$$
+
+where
+
+$$\left(\begin{array}{l}
+\varepsilon_{1 t} \\
+\varepsilon_{2 t}
+\end{array}\right) \sim \mathcal{N}\left(\left(\begin{array}{l}
+0 \\
+0
+\end{array}\right),\left(\begin{array}{ll}
+\sigma_{11} & \sigma_{12} \\
+\sigma_{21} & \sigma_{22}
+\end{array}\right)\right)$$
+
+The model runs from $t=1, \ldots, T$, and it depends on the $p$ initial conditions $\mathbf{y}_{-p+1}, \ldots, \mathbf{y}_{0}$. In principle these initial conditions can be modeled explicitly. Here all the analysis is done conditioned on these initial conditions. If the series is sufficiently long (e.g., $T>50)$, both approaches typically give essentially the same results.
+
+"""
+
+
+# ╔═╡ a34d8b43-152c-42ff-ae2c-1d439c538c8a
+md""" ### Likelihood """
+
+# ╔═╡ 01213f94-8dee-4475-b307-e8b18806d453
+md"""
+
+To derive the likelihood for the $\operatorname{VAR}(p)$, we aim to write the system as the linear regression model
+
+$$\mathbf{y}=\mathbf{X} \boldsymbol{\beta}+\varepsilon$$
+
+Then, we can simply apply the linear regression results to derive the likelihood.
+
+Let's first work out our example with $n=2$ variables and $p=1$ lag. To that end, we stack the coefficients equation by equation, i.e., $\boldsymbol{\beta}=\left(b_{1}, A_{1,11}, A_{1,12}, b_{2}, A_{1,21}, A_{1,22}\right)^{\prime}$. Equivalent, we can write it using the vec operator that vectorizes a matrix by its columns: $\boldsymbol{\beta}=\operatorname{vec}\left(\left[\mathbf{b}, \mathbf{A}_{1}\right]^{\prime}\right)$. Given our definition of $\boldsymbol{\beta}$, we can easily work out the corresponding regression matrix $\mathbf{X}_{t}$ :
+
+$$\left(\begin{array}{l}
+y_{1 t} \\
+y_{2 t}
+\end{array}\right)=\left(\begin{array}{cccccc}
+1 & y_{1(t-1)} & y_{2(t-1)} & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & y_{1(t-1)} & y_{2(t-1)}
+\end{array}\right)\left(\begin{array}{c}
+b_{1} \\
+A_{1,11} \\
+A_{1,12} \\
+b_{2} \\
+A_{1,21} \\
+A_{1,22}
+\end{array}\right)+\left(\begin{array}{c}
+\varepsilon_{1 t} \\
+\varepsilon_{2 t}
+\end{array}\right)$$
+
+Or
+
+$$\mathbf{y}_{t}=\left(\mathbf{I}_{2} \otimes\left[1, \mathbf{y}_{t-1}^{\prime}\right]\right) \boldsymbol{\beta}+\varepsilon_{t}$$
+
+where $\otimes$ is the Kronecker product. More generally, we can write the $\operatorname{VAR}(p)$ as:
+
+$$\mathbf{y}_{t}=\mathbf{X}_{t} \boldsymbol{\beta}+\varepsilon_{t}$$
+
+where $\mathbf{X}_{t}=\mathbf{I}_{n} \otimes\left[1, \mathbf{y}_{t-1}^{\prime}, \ldots, \mathbf{y}_{t-p}^{\prime}\right]$ and $\boldsymbol{\beta}=\operatorname{vec}\left(\left[\mathbf{b}, \mathbf{A}_{1}, \cdots \mathbf{A}_{p}\right]^{\prime}\right) .$ Then, stack the observations over $t=1, \ldots, T$ to get
+
+$$\mathbf{y}=\mathbf{X} \boldsymbol{\beta}+\varepsilon$$
+
+where $\varepsilon \sim \mathcal{N}\left(\mathbf{0}, \mathbf{I}_{T} \otimes \boldsymbol{\Sigma}\right)$.
+
+Now, since
+
+$$(\mathbf{y} \mid \boldsymbol{\beta}, \mathbf{\Sigma}) \sim \mathcal{N}\left(\mathbf{X} \boldsymbol{\beta}, \mathbf{I}_{T} \otimes \boldsymbol{\Sigma}\right)$$
+
+the likelihood function is given by:
+
+$$\begin{aligned}
+p(\mathbf{y} \mid \boldsymbol{\beta}, \boldsymbol{\Sigma}) &=\left|2 \pi\left(\mathbf{I}_{T} \otimes \boldsymbol{\Sigma}\right)\right|^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{\Sigma}\right)^{-1}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})} \\
+&=(2 \pi)^{-\frac{T n}{2}}|\mathbf{\Sigma}|^{-\frac{T}{2}} \mathrm{e}^{-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}\left(\mathbf{I}_{T} \otimes \Sigma^{-1}\right)(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})}
+\end{aligned}$$
+
+where the second equality holds because $\left|\mathbf{I}_{T} \otimes \boldsymbol{\Sigma}\right|=|\boldsymbol{\Sigma}|^{T}$ and $\left(\mathbf{I}_{T} \otimes \boldsymbol{\Sigma}\right)^{-1}=\mathbf{I}_{T} \otimes \boldsymbol{\Sigma}^{-1}$. Note that the likelihood can also be written as
+
+$$p(\mathbf{y} \mid \boldsymbol{\beta}, \boldsymbol{\Sigma})=(2 \pi)^{-\frac{T n}{2}}|\mathbf{\Sigma}|^{-\frac{T}{2}} \mathrm{e}^{-\frac{1}{2} \sum_{t=1}^{T}\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)^{\prime} \boldsymbol{\Sigma}^{-1}\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)}$$
+
+"""
+
+# ╔═╡ 3efef390-b791-40dd-a950-26dcc84c3485
+md""" ### Independent priors """
+
+# ╔═╡ 349c3025-3b88-4e7e-9e31-574943f31dc6
+md"""
+
+Recall that in the normal linear regression model, we assume independent normal and inverse-gamma priors for the coefficients $\boldsymbol{\beta}$ and the variance $\sigma^{2}$, respectively. Both are conjugate priors and the model can be easily estimated using the Gibbs sampler.
+
+Here a similar result applies. But instead of an inverse-gamma prior, we need a multivariate generalization for the covariance matrix $\boldsymbol{\Sigma}$.
+
+An $m \times m$ random matrix $\mathbf{Z}$ is said to have an inverse-Wishart distribution with shape parameter $\alpha>0$ and scale matrix $\mathbf{W}$ if its density function is given by
+
+$$f(\mathbf{Z} ; \alpha, \mathbf{W})=\frac{|\mathbf{W}|^{\alpha / 2}}{2^{m \alpha / 2} \Gamma_{m}(\alpha / 2)}|\mathbf{Z}|^{-\frac{\alpha+m+1}{2}} \mathrm{e}^{-\frac{1}{2} \operatorname{tr}\left(\mathbf{W} \mathbf{Z}^{-1}\right)}$$
+
+where $\Gamma_{m}$ is the multivariate gamma function and $\operatorname{tr}(\cdot)$ is the trace function. We write $\mathbf{Z} \sim \mathcal{I} W(\alpha, \mathbf{W})$. For $\alpha>m+1, \mathbb{E} \mathbf{Z}=\mathbf{W} /(\alpha-m-1)$.
+
+For the $\operatorname{VAR}(p)$ with parameters $\boldsymbol{\beta}$ and $\boldsymbol{\Sigma}$, we consider the independent priors:
+
+$$\boldsymbol{\beta} \sim \mathcal{N}\left(\boldsymbol{\beta}_{0}, \mathbf{V}_{\boldsymbol{\beta}}\right), \quad \boldsymbol{\Sigma} \sim \mathcal{I} W\left(\nu_{0}, \mathbf{S}_{0}\right)$$
+
+"""
+
+# ╔═╡ 5e825c74-431e-4055-a864-d2b366e8ae11
+md""" ### Gibbs sampler """
+
+# ╔═╡ 6d451af1-2288-4ee1-a37c-432c14888e16
+md"""
+
+Now, we derive a Gibbs sampler for the $\operatorname{VAR}(p)$ with likelihood and priors given in the previous section. Specifically, we derive the two conditional densities $p(\boldsymbol{\beta} \mid \mathbf{y}, \mathbf{\Sigma})$ and $p(\boldsymbol{\Sigma} \mid \mathbf{y}, \boldsymbol{\beta})$.
+
+The first step is easy, as standard linear regression results would apply. In fact, we have
+
+$$(\boldsymbol{\beta} \mid \mathbf{y}, \mathbf{\Sigma}) \sim \mathcal{N}\left(\widehat{\boldsymbol{\beta}}, \mathbf{K}_{\boldsymbol{\beta}}^{-1}\right)$$
+
+where
+
+$$\mathbf{K}_{\boldsymbol{\beta}}=\mathbf{V}_{\boldsymbol{\beta}}^{-1}+\mathbf{X}^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{\Sigma}^{-1}\right) \mathbf{X}, \quad \widehat{\boldsymbol{\beta}}=\mathbf{K}_{\boldsymbol{\beta}}^{-1}\left(\mathbf{V}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}_{0}+\mathbf{X}^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{\Sigma}^{-1}\right) \mathbf{y}\right)$$
+
+and we have used the result $\left(\mathbf{I}_{T} \otimes \mathbf{\Sigma}\right)^{-1}=\mathbf{I}_{T} \otimes \mathbf{\Sigma}^{-1}$.
+
+Next, we derive the conditional density $p(\boldsymbol{\Sigma} \mid \mathbf{y}, \boldsymbol{\beta})$. Recall that for conformable matrices $\mathbf{A}, \mathbf{B}, \mathbf{C}$, we have
+
+$$\operatorname{tr}(\mathbf{A B C})=\operatorname{tr}(\mathbf{B C A})=\operatorname{tr}(\mathbf{C A B})$$
+
+Now, combining the likelihood and the prior, we obtain
+
+$$\begin{aligned}
+p(\boldsymbol{\Sigma} \mid \mathbf{y}, \boldsymbol{\beta}) & \propto p(\mathbf{y} \mid \boldsymbol{\beta}, \boldsymbol{\Sigma}) p(\boldsymbol{\Sigma}) \\
+& \propto|\boldsymbol{\Sigma}|^{-\frac{T}{2}} \mathrm{e}^{-\frac{1}{2} \sum_{t=1}^{T}\left(\mathbf{y} t-\mathbf{X}_{t} \boldsymbol{\beta}\right)^{\prime} \boldsymbol{\Sigma}^{-1}\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)} \times|\boldsymbol{\Sigma}|^{-\frac{\nu_{0}+n+1}{2}} \mathrm{e}^{-\frac{1}{2} \operatorname{tr}\left(\mathbf{S}_{0} \Sigma^{-1}\right)} \\
+& \propto|\boldsymbol{\Sigma}|^{-\frac{\nu_{0}+n+T+1}{2}} \mathrm{e}^{-\frac{1}{2} \operatorname{tr}\left(\mathbf{S}_{0} \Sigma^{-1}\right)} \mathrm{e}^{-\frac{1}{2} \operatorname{tr}\left[\sum_{t=1}^{T}\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)^{\prime} \mathbf{\Sigma}^{-1}\right]} \\
+&\left.\propto|\boldsymbol{\Sigma}|^{-\frac{\nu_{0}+n+T+1}{2}} \mathrm{e}^{-\frac{1}{2} \operatorname{tr}\left[\left(\mathbf{S}_{0}+\sum_{t=1}^{T}\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)^{\prime}\right) \Sigma^{-1}\right.}\right]
+\end{aligned}$$
+
+which is the kernel of an inverse-Wishart density. In fact, we have
+
+$$(\boldsymbol{\Sigma} \mid \mathbf{y}, \boldsymbol{\beta}) \sim \mathcal{I} W\left(\nu_{0}+T, \mathbf{S}_{0}+\sum_{t=1}^{T}\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)\left(\mathbf{y}_{t}-\mathbf{X}_{t} \boldsymbol{\beta}\right)^{\prime}\right)$$
+
+"""
+
+# ╔═╡ 2b30e958-6134-4c8c-8dbf-54cf5babef88
+md""" ### Gibbs Sampler for the $\operatorname{VAR}(p)$ """
+
+# ╔═╡ 1e22e482-c467-4a57-bf19-96361e2896e6
+md"""
+
+We summarize the Gibbs sampler as follows
+
+Pick some initial values $\boldsymbol{\beta}^{(0)}=\mathbf{c}_{0}$ and $\boldsymbol{\Sigma}^{(0)}=\mathbf{C}_{0}>0 .$ Then, repeat the following steps from $r=1$ to $R$
+
+1. Draw $\boldsymbol{\beta}^{(r)} \sim p\left(\boldsymbol{\beta} \mid \mathbf{y}, \boldsymbol{\Sigma}^{(r-1)}\right)$ (multivariate normal).
+
+2. Draw $\boldsymbol{\Sigma}^{(r)} \sim p\left(\boldsymbol{\Sigma} \mid \mathbf{y}, \boldsymbol{\beta}^{(r)}\right)$ (inverse-Wishart).
+
+"""
+
+# ╔═╡ 193f5509-0733-4409-9b88-1d2bc68e3aee
+md""" ### Empirical example: Small model of SA economy """
+
+# ╔═╡ c8e7e82f-415e-4b9d-bd62-47c1c60d0741
+md"""
+
+In this empirical example we estimate a 3-variable VAR(2) using SA quarterly data on CPI inflation rate, unemployment rate and repo rate from $1959 \mathrm{Q} 1$ to $2007 \mathrm{Q} 4$ - the sample ends at $2007 \mathrm{Q} 4$ to avoid the periods when interest rate hits the zero lower bound. These three variables are commonly used in forecasting (e.g., Banbura, Giannone and Reichlin, 2010; Koop and Korobilis, 2010; Koop, 2013) and small DSGE models (e.g., An and Schorfheide, 2007 ).
+
+Following Primiceri $(2005)$, we order the interest rate last and treat it as the monetary policy instrument. The identified monetary policy shocks are interpreted as "non-systematic policy actions" that capture both policy mistakes and interest rate movements that are responses to variables other than inflation and unemployment.
+
+We first implement the Gibbs sampler described in Algorithm 8.1. Then, given the posterior draws of $\boldsymbol{\beta}$ and $\boldsymbol{\Sigma}$, we compute the impulse-response functions of the three variables to a 100-basis-point monetary policy shock.
+
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1142,5 +1357,18 @@ version = "0.9.1+5"
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╟─41221332-0a22-43c7-b1b2-8a8d84e61dd4
+# ╟─77fde8ac-f019-4b4c-9d03-9a9c0d7ca2a0
+# ╟─7e0462d4-a307-465b-ae27-737431ecb565
+# ╟─a34d8b43-152c-42ff-ae2c-1d439c538c8a
+# ╟─01213f94-8dee-4475-b307-e8b18806d453
+# ╟─3efef390-b791-40dd-a950-26dcc84c3485
+# ╟─349c3025-3b88-4e7e-9e31-574943f31dc6
+# ╟─5e825c74-431e-4055-a864-d2b366e8ae11
+# ╟─6d451af1-2288-4ee1-a37c-432c14888e16
+# ╟─2b30e958-6134-4c8c-8dbf-54cf5babef88
+# ╟─1e22e482-c467-4a57-bf19-96361e2896e6
+# ╟─193f5509-0733-4409-9b88-1d2bc68e3aee
+# ╟─c8e7e82f-415e-4b9d-bd62-47c1c60d0741
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

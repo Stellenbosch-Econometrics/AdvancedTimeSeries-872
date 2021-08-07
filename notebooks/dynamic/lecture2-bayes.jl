@@ -60,7 +60,7 @@ overflow-x: hidden;
 html"""
 <style>
   main {
-    max-width: 900px;
+    max-width: 800px;
   }
 </style>
 """
@@ -68,11 +68,8 @@ html"""
 # ╔═╡ aa69729a-0b08-4299-a14c-c9eb2eb65d5c
 md" # Introduction "
 
-# ╔═╡ 5102431d-0360-48e8-93da-6d31e1e26dc5
-md" **NB -- Fix notation!!** Check for inconsistencies with notation in the text."
-
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
+md" In this session we will be looking at the basics of Bayesian econometrics / statistics. We will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. I assume some familiarity with linear algebra, probability and calculus for this module. The section is on probability is simply a high level overview that leads us to our derivation of Bayes' theorem / rule. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 TableOfContents() # Uncomment to see TOC
@@ -84,11 +81,16 @@ md" Packages used for this notebook are given above. Check them out on **Github*
 md" ## Basic probability (preliminaries) "
 
 # ╔═╡ ec9e8512-85fb-4d23-a4ad-7c758cd87b62
-md" The probability of an **event** is a real number between 0 and 1. Here 0 indicates the impossible event and 1 the certain event. We define $A$ as anevent and $P(A)$ as the probability of the event $A$. Therefore, 
+md"
+The probability of an **event** is a real number between $0$ and $1$. Here $0$ indicates the 'impossible event' and $1$ the certain event. 
+
+> **Note:** Probability $0$ does not mean impossible -- see this [cool video](https://www.youtube.com/watch?v=ZA4JkHKZM50) on this topic. Possibility is tied to the idea of probability density, but we won't go into detail on this idea here. If you are interested in this topic you will have to learn a little [measure theory](https://en.wikipedia.org/wiki/Measure_(mathematics)) to fully understand. If you want to learn more about probability theory in a semi-rigorous set of notes, I recommend the following by [Michael Betancourt](https://betanalpha.github.io/writing/). 
+
+We define $A$ as an event and $P(A)$ as the probability of the event $A$. Therefore, 
 
 $\{P(A) \in \mathbb{R}: 0 \leq P(A) \leq 1\}$
 
-This means that the probability of the event to occur is the set of all real numbers between 0 and 1 including 0 and 1. We have three axioms of probability, namely, 
+This means that the probability of the event to occur is the set of all real numbers between $0$ and $1$ including $0$ and $1$. We have three axioms of probability, namely, 
 
 1. **Non-negativity**: For all $A$, $P(A) \geq 0$
 2. **Additivity**: For two mutually exclusive $A$ and $B$, $P(A) = 1 - P(B)$ and $P(B) = 1 - P(A)$
@@ -118,7 +120,7 @@ md" ### Joint probability "
 # ╔═╡ b8a11019-e87e-4ccb-b9dd-f369ba51a182
 md" Join probability is the probability that two events will both occur. Let us extend our card problem to all the kings and aces in the deck. Probability that you will receive an Ace ($A$) and King ($K$) as the two starting cards:
 
-$P(A, K) = P(A) \cdot P(K | A)$ 
+$P(A, K) = P(A) \cdot P(K \mid A)$ 
 
 We can obviously calculate this by using Julia as our calculator... "
 
@@ -133,9 +135,9 @@ end
 # ╔═╡ 3abcd374-cb1b-4aba-bb3d-09e2819bc842
 md" One should note that $P(A, K) = P(K, A)$ and that from that we have 
 
-$P(A) \cdot P(K | A) =  P(K) \cdot P(A | K)$
+$P(A) \cdot P(K \mid A) =  P(K) \cdot P(A \mid K)$
 
-One **NB note** here: Conditional probability is not commutative, which means that $P(A | B) \neq P(B | A)$. In our example above we have some nice symmetry, but this very rarely occurs.  "
+One **NB note** here: Conditional probability is not commutative, which means that $P(A \mid B) \neq P(B \mid A)$. In our example above we have some nice symmetry, but this very rarely occurs.  "
 
 # ╔═╡ 411c06a3-c8f8-4d1d-a247-1f0054701021
 md" ### Bayes' Theorem "
@@ -155,15 +157,19 @@ Bayesian statistics uses this theorem as method to conduct inference on paramete
 md" ## Bayesian thinking "
 
 # ╔═╡ 03288125-5ebd-47d3-9e1a-32e2308dbd51
-md" Consider an economic model that describes an AR(1) process
+md" Consider an economic model that describes an AR($1$) process
 
 $\begin{equation*} y_{t}=\mu+\alpha y_{t-1}+\varepsilon_{t}, \quad \varepsilon_{t} \sim \mathcal{N}\left[0, \sigma^{2}\right] \end{equation*}$ 
 
-where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. 
+where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimte these unkown parameters with methods such as maximum likelihood estimation, as you did in the first part of the course. 
 
-There may be many possible values for $\theta$ from population $\Theta$. Bayesians will test initial assertions regarding $\theta$ using data on $y_t$ and $y_{t-1}$ to investigate probability of assertions. Provides probability distribution over possible values for $\theta \in \Theta$. 
+Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta | y)$: given the data, what do we know about $\theta$? 
 
-Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta | y)$: given the data, what do we know about $\theta$? Big difference between Bayesian and frequentist learning is consideration of prior beliefs about parameters. Read more on this topic [here](https://storopoli.io/Bayesian-Julia/pages/2_bayes_stats/).
+**Notation remark**: You will see that we have switched to a small letter $p$ for probability distribution of a random variable. Previously we have used a capital $P$ to relate probability of events. You will often see probability of events written as $\mathbb{P}$ in textbooks as well. 
+
+The Bayesian view is that may be many possible values for $\theta$ from population $\Theta$, while the frequentist view is that only one such a $\theta$ exists. In other words, $\theta$ is regarded as a random variable in the Bayesian setting.
+
+Bayesians will test initial assertions regarding $\theta$ using data on $y_t$ and $y_{t-1}$ to investigate probability of assertions. This provides probability distribution over possible values for $\theta \in \Theta$. 
 
 For our model we start with a numerical formulation of joint beliefs about $y$ and $\theta$ expressed in terms of probability distributions.
 
@@ -182,7 +188,7 @@ $p(\theta, y) = p(y)p(\theta | y)$
 
 Setting these equations equal and rearranging provides us with Bayes' theorem / rule, as discussed before. 
 
-$p(y)p(\theta | y) = p(\theta)p(y | \theta) \rightarrow p(\theta | y) = \frac{p(\theta)p(y | \theta)}{p(y)}$
+$p(y)p(\theta | y) = p(\theta)p(y | \theta) \rightarrow p(\theta | y) = \frac{p(y | \theta)p(\theta)}{p(y)}$
 "
 
 # ╔═╡ eed2582d-1ba9-48a1-90bc-a6a3bca139ba
@@ -194,37 +200,70 @@ We can safely ignore $p(y)$ in Bayes' rule since it does not involve the paramet
 
 $p(\theta|y)\propto p(\theta)p(y|\theta)$
 
-The **posterior density** $p(\theta|y)$ summarises all we know about $\theta$ after seeing the data, while the **prior density** $p(\theta)$ does not depend on the data (what you know about $\theta$ prior to seeing data). The **likelihood function** $p(y|\theta)$ is the data generating process (density of the data conditional on the parameters in the model). Finally, $p(y \mid \theta) p(\theta)=p(y, \theta)$ is the **econometric model** (joint probability distribution of data and parameters)."
+The **posterior density** $p(\theta \mid y)$ summarises all we know about $\theta$ after seeing the data, while the **prior density** $p(\theta)$ does not depend on the data (what you know about $\theta$ prior to seeing data). The **likelihood function** $p(y \mid \theta)$ is the data generating process (density of the data conditional on the parameters in the model). Finally, $p(y \mid \theta) p(\theta)=p(y, \theta)$ is the **econometric model** (joint probability distribution of data and parameters)."
 
 # ╔═╡ 0c0d89c0-d70d-42ac-a55c-cd1afbc051ed
 md" ### Model vs. likelihood (notational sloppiness) "
 
 # ╔═╡ c6d22671-26e8-4ba3-865f-5cd449a6c9be
-md" The following is important to point out, since it can create some confusion (at least I found it confusing at first). The sampling model is shown as $p_{Y}(Y|\Theta = \theta) = p(y | \theta)$ as a function of $y$ given **fixed** $\theta$ and describes the aleatoric (unknowable) uncertainty.  
+md" The following is important to point out, since it can create some confusion (at least I found it confusing at first). The sampling model is shown as $p_{Y}(Y \mid \Theta = \theta) = p(y \mid \theta)$ as a function of $y$ given **fixed** $\theta$ and describes the aleatoric (unknowable) uncertainty.  
 
-Likelihood: $p_{\Theta}(Y=y | \Theta) = p(y | \theta) =L(\theta|y)$ as a function of $\theta$ given **fixed** $y$ provides information about epistemic (knowable) uncertainty, but is **not a probability distribution** 
+On the other hand, likelihood is given as $p_{\Theta}(Y=y \mid \Theta) = p(y \mid \theta) =L(\theta \mid y)$ which is a function of $\theta$ given **fixed** $y$ and provides information about epistemic (knowable) uncertainty, but is **not a probability distribution** 
 
-Bayes' rule combines the **likelihood** with **prior** uncertainty $p(\theta)$ and transforms them to updated **posterior** uncertainty"
+Bayes' rule combines the **likelihood** with **prior** uncertainty $p(\theta)$ and transforms them to updated **posterior** uncertainty."
 
 # ╔═╡ 699dd91c-1141-4fb6-88fc-f7f05906d923
 md" ## Bernoulli and Binomial "
 
 # ╔═╡ 6e1de0ff-0fef-48b4-ac5b-0279ea8f2d4d
-md" In this section we will be looking at some single parameter models. This will draw on our knowledge from distributions in the last session. We did not spend nearly enough time on these distributions. The reason is that we are going to encounter these distributions multiple times throughout the course and the first lecture provides a nice reference for us. "
+md" In this section we will be looking at some single parameter models. In other words, models where we only have a single parameter of interest. This will draw on our knowledge from random variables and their distributions in the last lecture.  "
 
-# ╔═╡ 15ba050e-a8f7-42e4-b748-b2d841ac0484
-md" ### Binomial with known $\theta$ "
+# ╔═╡ 284d0a23-a329-4ea7-a069-f387e21ba797
+md"""
+
+#### Bernoulli random variable 
+
+"""
+
+# ╔═╡ bb535c41-48cb-44fd-989b-a6d3e310406f
+md"""
+
+Let us give a general description of the Bernoulli and Binomial random variables and their relation to each other. We will start with data that has a Bernoulli distribution. In the section on estimating bias in a coin we will work through a specific example. Here we provide the framework.
+
+Consider an experiment (such as tossing a coin) that is repeated $N$ times. Each time we conduct this experiment / trial we can evaluate the outcome as being a success or failure.
+
+In this case the $y_{i}$'s, for $i = 1, \ldots, N$, are random variables for each repitition of the experiment. A random variable is a function that maps the outcome to a value on the real line. In our example, the realisation of $y_{i}$ can be $0$ or $1$ depending on whether the experiment was a success or failure.  
+
+The probability of success is represented by $\theta$, while the probability of failure is given by $1- \theta$. This is considered an Bernoulli event. Our goal is to gain an estimate for $\theta$.
+
+So far we know that $y_{i} \in \{0, 1\}$, $0 \leq \theta \leq 1$ and the Bernoulli distribution is given by
+
+$p\left(y_{i} \mid \theta\right)=\left\{\begin{array}{cl}\theta & \text { if } y_{i}=1 \\ 1-\theta & \text { if } y_{i}=0\end{array}\right.$
+
+Let $y$ be the number of success in $N$ repititions of the experiment then our likelihood function is
+
+
+$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ &=\theta^{y}(1-\theta)^{N-y} \end{aligned}$
+
+In the case where there is simply one instance of the experiment we have that $p(y \mid \theta) =\theta^{y}(1-\theta)^{1-y}$
+
+
+"""
+
+# ╔═╡ fe8f71b2-4198-4a12-a996-da254d2cc656
+md" #### Binomial random variable "
 
 # ╔═╡ 7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 md"""
-Throughout this section, remember that $\theta$ is known. There are two events in a trial. Probability of event 1 in the trial is $\theta$. Probability of event 2 in the trial is $1-\theta$. 
 
-Probability of several events in independent trials is $\theta \cdot \theta(1-\theta)\cdot\theta(1-\theta)(1-\theta)\ldots$ 
+The Bernoulli distribution represents the success or failure of a **single Bernoulli trial**. The Binomial distribution represents the number of successes and failues in $n$ independent Bernoulli trials for some given value of $n$. 
 
-If there are $n$ trials and we don't care about the order of the events, then the probability that event 1 happens $y$ times is
+The probability of several events in independent trials is $\theta \cdot \theta(1-\theta)\cdot\theta(1-\theta)(1-\theta)\ldots$ 
+
+If there are $n$ trials then the probability that a success occurs $y$ times is
 
 $$\begin{align*}
-      p(y|\theta,n) & = \frac{n!}{y!(n-y)!} \theta^y(1-\theta)^{n-y} \\
+      p(y \mid \theta, n) & = \frac{n!}{y!(n-y)!} \theta^y(1-\theta)^{n-y} \\
       &= \binom{n}{y} \theta^y(1-\theta)^{n-y}
     \end{align*}$$
 
@@ -248,6 +287,9 @@ function binomial_rv(n, p)
     return count
 end
 
+# ╔═╡ 98db344c-2ada-4781-bb4a-f3ec2ea7ccfd
+md" Given a value of $n = 10000$ indepedent trials, how many times will we observe success? "
+
 # ╔═╡ f7b158af-537e-4d9f-9c4c-318281097dce
 binomial_rv(10000, 0.5) # Compare this with the time it takes to run in R. 
 
@@ -259,16 +301,13 @@ md"""
 
 !!! note "Interactive sliders for Binomial random variable"
 
-trials = $(@bind n Slider(1:10:1001, show_value = true, default=1));
-prob = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5));  
-draws = $(@bind iter Slider(1:1000, show_value = true, default=1))
+n = $(@bind n Slider(10:10:1001, show_value = true, default=100));
+p = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5));  
+draws = $(@bind iter Slider(1:2000, show_value = true, default=1))
 
-> Shift these sliders around to see what happens to the graph below. 
+> Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and $n$ and increase the number of draws, what happens to the distribution? What theorem is at play here?
 
 """
-
-# ╔═╡ a5d471d0-7198-4c5e-abf7-7b3e6dab3609
-md" Let us test out some basic examples for the obervational model. Choose from the following set of values $n = \{1, 5, 10 \}$. Also change the value of to see what impact this has on the distribution. What happens when we increase the number of draws?  "
 
 # ╔═╡ d6316b4f-9882-4d25-87d0-31fa3c1f3935
 b = [binomial_rv(n, p) for _ in 1:iter]; # Using an array comprehension
@@ -296,42 +335,44 @@ rand(Binomial(n, p), iter, iter); # What do you think happens if we run this cod
 md" Now we are going to utilise this distribution as a potential model to estimate the bias in a coin. In other words we are going to work with the case where the $\theta$ parameter is unknown. We will see in this section how Bayes' rule is applied.  "
 
 # ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
-md" ### Estimating bias in a 🪙  "
+md" ### Estimating bias in a coin  "
 
 # ╔═╡ 24c4d724-5911-4534-a5c6-3ab86999df43
 md"""
-We use a specific example to get better acquainted with this distribution. We look at estimating bias in a coin. We observe the number of heads that result from flipping a coin and we estimate its underlying probability of coming up heads. Want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. We need underlying probability of heads as value of parameter $\theta$. 
+Now we move on to a specific example that uses the knowledge we gained in the previous sections. 
 
-This can be written as $p(y = 1 | \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. 
+We look at estimating bias in a coin. We observe the number of heads that result from flipping a coin and we estimate its underlying probability of coming up heads. Want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
 
-We also need the probability of tails, which is the complement of probability of heads $p(y = 0 | \theta) = 1 - \theta$. 
+We need underlying probability of heads as value of parameter $\theta$. This can be written as $p(y = 1 \mid \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. 
 
-Combine the equations for the probability of heads and tails
+We also need the probability of tails, which is the complement of probability of heads $p(y = 0 \mid \theta) = 1 - \theta$. 
 
-$$\begin{align*}
-  p(y | \theta)  = \theta^{y}(1-\theta)^{(1-y)}
-\end{align*}$$
-
-This probability distribution is called the Bernoulli distribution (see our previous lecture). This is a distribution over two discrete values of $y$ for a fixed value of $\theta$. The sum of the probabilities is $1$ (which must be the case for a probability distribution).
+Combine the equations for the probability of heads and tails 
 
 $$\begin{align*}
-  \sum_{y} p(y | \theta) = p(y = 1 | \theta) + p(y = 0 | \theta) = \theta + (1-\theta) = 1
+  p(y \mid \theta)  = \theta^{y}(1-\theta)^{1-y}
 \end{align*}$$
 
-If we consider $y$ fixed and the value of $\theta$ as variable, then our equation is a **likelihood function** of $\theta$
+We have established this probability distribution is called the Bernoulli distribution. This is a distribution over two discrete values of $y$ for a fixed value of $\theta$. The sum of the probabilities is $1$ (which must be the case for a probability distribution).
+
+$$\begin{align*}
+  \sum_{y} p(y \mid \theta) = p(y = 1 \mid \theta) + p(y = 0 \mid \theta) = \theta + (1-\theta) = 1
+\end{align*}$$
+
+If we consider $y$ fixed and the value of $\theta$ as variable, then our equation is a **likelihood function** of $\theta$.
 
 This likelihood function is not a probability distribution, suppose that $y = 1$ then $\int_{0}^{1}\theta^{y}(1-\theta)^{1-y}\text{d}\theta = \int_{0}^{1}\theta^{y}\text{d}\theta = 1/2$
 
 Let us take a look at what happens for multiple flips. Outcome of $i$th flip is given by $y_i$ and set of outcomes is $\{y_i\}$. Formula for the probability of the set of outcomes is given by
 
 $$\begin{align*}
-  p(\{y_i\} | \theta)  =& \prod_{i} p(y_i | \theta)  \\
+  p(y_i \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
   =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
   =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
   =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}}
 \end{align*}$$
 
-Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins (normal distribution on prior). Indicate number of heads by $y$ and number of flips by $n$
+Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $y$ and number of flips by $n$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
 
 Suppose that we flip the coin only once and observe heads, then the data consists of $y = 1$ and $n = 1$.
 
@@ -351,7 +392,7 @@ md" There are four basic steps behind the grid method.
 4. Normalize to get posterior, if desired."
 
 # ╔═╡ 11552b20-3407-4d0b-b07d-1488c8e8a759
-md" The first step then in the grid method is to create a grid. The parameter is $\theta$ and we will discretise by selecting grid points between 0 and 1. For our first example let us choose 1001 grid points. "
+md" The first step then in the grid method is to create a grid. The parameter is $\theta$ and we will discretise by selecting grid points between $0$ and $1$. For our first example let us choose $1001$ grid points. "
 
 # ╔═╡ 599c2f09-ad5e-4f39-aa7d-c1ba155725d6
 coins_grid = range(0, 1, length = 1001) |> collect;
@@ -366,7 +407,7 @@ triangle_prior = TriangularDist(0, 1); # From the Distributions.jl package
 plot(triangle_prior, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
 
 # ╔═╡ 8382e073-433b-4e42-a6fa-d5a051586457
-md" Now we introduce the likelihood for a small dataset, 1 success out of 4 trials. Our binomial distribution function will calculate the probability that we want for a given value of $y$, $n$ and $\theta$. We want to do this for each value of $\theta$, bt using same values for $y$ and $n$ each time. This is the hardest part of our computation (for this example, not in general). "
+md" Now we introduce the likelihood for a small dataset, $1$ success out of $4$ trials. Our binomial distribution function will calculate the probability that we want for a given value of $y$, $n$ and $\theta$. We want to do this for each value of $\theta$, bt using same values for $y$ and $n$ each time. This is the hardest part of our computation (for this example, not in general). "
 
 # ╔═╡ 071761f8-a187-47a6-8fee-5fc91e65d04c
 y₁ = 1
@@ -381,15 +422,26 @@ b₁ = Binomial.(n₁, coins_grid);
 likelihood_1 = pdf.(b₁, y₁);
 
 # ╔═╡ c6e9bb86-dc67-4f42-89da-98581a0c3c98
-md" Likelihoods are **NOT** probability mass functions or probability density functions so the total area under the likelihood function is not generally going to be 1. We can normalise the likelihood for the purpose of plotting. We can do this by dividng by the sum of the likelihoods and by the widht of the spaces betwen the grid points. "
+md" Likelihoods are **NOT** probability mass functions or probability density functions so the total area under the likelihood function is not generally going to be $1$.  "
+
+# ╔═╡ 0a1d46ed-0295-4000-9e30-3ad838552a7e
+begin
+	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
+	plot!(coins_grid, likelihood_1, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood")
+end
+
+# ╔═╡ e5aade9a-4593-4903-bc3a-3a37f9f71c98
+md"""
+We can normalise the likelihood for the purpose of plotting. We can do this by dividng by the sum of the likelihoods and by the width of the spaces betwen the grid points.
+"""
 
 # ╔═╡ 87db6122-4d28-45bf-b5b0-41189792199d
-likelihood_norm = likelihood_1 / sum(likelihood_1) / 0.001;
+likelihood_norm = likelihood_1 / sum(likelihood_1) / 0.001; # Normalised
 
 # ╔═╡ b81924b8-73f6-4b28-899c-ec417d538dd4
 begin
 	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
-	plot!(coins_grid, likelihood_norm, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue))
+	plot!(coins_grid, likelihood_norm, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Normalised likelihood")
 end
 
 # ╔═╡ c3d2ba03-e676-4f0f-bafd-feecd0e4e414
@@ -438,16 +490,16 @@ end
 md" Another possible prior distribution that is quite flexible is the Beta distribution "
 
 # ╔═╡ e7a01318-ce31-4169-aaa7-1fb49a4d47be
-md" #### Conjugate priors (Beta) "
+md" #### Getting to know this Beta"
 
 # ╔═╡ 573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 md"""
 In our coin flipping model we have derived the posterior credibilities of parameter values given certain priors. Generally, we need a mathematical description of the **prior probability** for each value of the parameter $\theta$ on interval $[0, 1]$. Any relevant probability density function would work, but there are two desiderata for mathematical tractability.
 
-1. Product of $p(y | \theta)$ and $p(\theta)$ results in same form as $p(\theta)$.
-2. Necesarry for $\int p(y | \theta)p(\theta) \text{d} \theta$ to be solvable analytically
+1. Product of $p(y \mid \theta)$ and $p(\theta)$ results in same form as $p(\theta)$.
+2. Necesarry for $\int p(y \mid \theta)p(\theta) \text{d} \theta$ to be solvable analytically
 
-When the forms of $p(y | \theta)$ and $p(\theta)$ combine so that the posterior has the same form as the prior distribution then $p(\theta)$ is called **conjugate prior** for $p(y | \theta)$. 
+When the forms of $p(y \mid \theta)$ and $p(\theta)$ combine so that the posterior has the same form as the prior distribution then $p(\theta)$ is called **conjugate prior** for $p(y \mid \theta)$. 
 
 Prior is conjugate with respect to particular likelihood function. We are looking for a functional form for a prior density over $\theta$ that is conjugate to the **Bernoulli / Binomial likelihood function**.
 
@@ -460,7 +512,7 @@ $$\begin{align*}
 A probability density of this form is called the Beta distribution. Beta distribution has two parameters, called $a$ and $b$.
 
 $$\begin{align*}
-  p(\theta | a, b) =& \text{Beta}(\theta | a, b) \\
+  p(\theta \mid a, b) =& \text{Beta}(\theta \mid a, b) \\
   =& \frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)}
 \end{align*}$$
 
@@ -480,7 +532,7 @@ The variables $a$ and $b$ are called the shape parameters of the Beta distributi
 
 # ╔═╡ 1ca20976-757f-4e30-94d4-ee1276a614fb
 md"""
-a = $(@bind α Slider(1:0.1:4, show_value = true, default=0.1)); 
+a = $(@bind α Slider(1:0.1:4, show_value = true, default=1)); 
 b = $(@bind β Slider(1:1:4, show_value = true, default=1))
 """
 
@@ -495,14 +547,14 @@ md"""
 Suppose we have set of data with $n$ flips and $y$ heads, then we can calculate the posterior as,
 
 $$\begin{align*}
-  p(\theta | y, n) =& p(y, n | \theta)p(\theta)/p(y, n) \\
+  p(\theta \mid y, n) =& p(y, n \mid \theta)p(\theta)/p(y, n) \\
   =& \theta^{y}(1-\theta)^{(n-y)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(y, n) \\
   =& \theta^{y}(1-\theta)^{(n-y)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(y, n)] \\
   =& \theta^{((y + a) -1)}(1-\theta)^{((n-y + b)-1)}/ [B(a,b)p(y, n)] \\
   =& \theta^{((y + a) -1)}(1-\theta)^{((n-y + b)-1)}/ B(y + a, n-y+b)
 \end{align*}$$
 
-Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta | a,b)$ then the posterior will be $\text{Beta}(\theta | y+ a, n - y + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
+Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta \mid a,b)$ then the posterior will be $\text{Beta}(\theta \mid y+ a, n - y + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
 
 """
 
@@ -511,7 +563,7 @@ md" Using this Beta distribution then as prior will give us the following poster
 
 # ╔═╡ 43d563ae-a435-417f-83c6-19b3b7d6e6ee
 md"""
-a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=0.1));
+a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=1));
 b1 = $(@bind β₁ Slider(1:1:4, show_value = true, default=1))
 """
 
@@ -553,12 +605,41 @@ $$\begin{equation}
 # ╔═╡ 471f5ab0-2601-4d2b-8746-3ffd37a37526
 md" You can read more about the [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) on Wikipedia, which is normally an excellent resource for the properties and discussions on different distributions. "
 
+# ╔═╡ cb53475c-cc56-46b3-94b0-3ded33eb18d4
+md"""
+### Eliciting a prior 
+
+
+
+"""
+
+# ╔═╡ 75ef279d-2c7b-4776-b93f-5b28cbc67f63
+md""" In our discussion on the Beta distribution as prior, we did not mention the idea of prior elicitation. The nice thing about the Beta distribution is its flexibility, for different values fo the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. These hyperparemeters reflect the beliefs of the researcher. One of the things that the researcher might have some information is the expected value of $\theta$. In the case of the Beta distribution the prior mean is given above as 
+
+$\frac{a}{a + b}$
+
+The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
+
+Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
+
+As an example, set $a = b = 2$, then we have 
+
+$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
+
+We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. EVery value for $\theta$ receives the same probability. 
+
+Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
+
+
+
+"""
+
 # ╔═╡ d78fc676-4e17-4eb6-92f4-35dc38ba2624
-md" ### Binomial with unknown $\theta$ "
+md" ### Binomial with unknown $\theta$ (optional)"
 
 # ╔═╡ 8fda9bf2-6680-4187-886c-dab73fcb746f
 md"""
-Now for a more general treatment of the binomial distribution. This type of mathematical treatment is only rarely done, since conjugate priors are quite rare. We will mostly do our calculations with the computer, so the work below is useful to go through once to gain some understanding of the process. 
+This section is optional. It provides a more general treatment of the binomial distribution. This type of mathematical treatment is only rarely done, since conjugate priors are quite rare. We will mostly do our calculations with the computer, so the work below is useful to go through once to gain some understanding of the process. 
 
 Posterior with Bayes rule (function of $\theta$, continuous).
 
@@ -2154,7 +2235,6 @@ version = "0.9.1+5"
 # ╟─09a9d9f9-fa1a-4192-95cc-81314582488b
 # ╟─41eb90d1-9262-42b1-9eb2-d7aa6583da17
 # ╟─aa69729a-0b08-4299-a14c-c9eb2eb65d5c
-# ╟─5102431d-0360-48e8-93da-6d31e1e26dc5
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
@@ -2178,17 +2258,19 @@ version = "0.9.1+5"
 # ╟─c6d22671-26e8-4ba3-865f-5cd449a6c9be
 # ╟─699dd91c-1141-4fb6-88fc-f7f05906d923
 # ╟─6e1de0ff-0fef-48b4-ac5b-0279ea8f2d4d
-# ╟─15ba050e-a8f7-42e4-b748-b2d841ac0484
+# ╟─284d0a23-a329-4ea7-a069-f387e21ba797
+# ╟─bb535c41-48cb-44fd-989b-a6d3e310406f
+# ╟─fe8f71b2-4198-4a12-a996-da254d2cc656
 # ╟─7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 # ╟─f45eb380-7b43-4fd0-af34-89ffd126a63f
 # ╟─4084f646-bce6-4a21-a529-49c7774f5ad1
 # ╠═3c49d3e4-3555-4d18-9445-5347247cf639
+# ╟─98db344c-2ada-4781-bb4a-f3ec2ea7ccfd
 # ╠═f7b158af-537e-4d9f-9c4c-318281097dce
-# ╠═69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
+# ╟─69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
 # ╟─b6da2479-1545-4b1d-8d7f-07d6d1f67635
-# ╟─a5d471d0-7198-4c5e-abf7-7b3e6dab3609
 # ╠═d6316b4f-9882-4d25-87d0-31fa3c1f3935
-# ╠═c4cc482b-815b-4747-9f5a-5779d69086f7
+# ╟─c4cc482b-815b-4747-9f5a-5779d69086f7
 # ╟─9016cba4-58f0-4b7f-91af-66faaf3fe99c
 # ╠═2eb59993-4ace-4acb-9810-ba064ea1eb3e
 # ╠═7c04e47c-eeed-47ec-9c6f-e2b710d0b746
@@ -2209,20 +2291,22 @@ version = "0.9.1+5"
 # ╠═fb793a24-d042-4ed9-927d-906d48c95556
 # ╠═259a8f24-673c-4fa8-ad88-f53ec319806a
 # ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98
+# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
+# ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
 # ╠═87db6122-4d28-45bf-b5b0-41189792199d
-# ╠═b81924b8-73f6-4b28-899c-ec417d538dd4
+# ╟─b81924b8-73f6-4b28-899c-ec417d538dd4
 # ╟─c3d2ba03-e676-4f0f-bafd-feecd0e4e414
 # ╠═97c0c719-fb73-4571-9a6c-629a98cc544d
 # ╠═0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
 # ╟─4b141ffc-4100-47e3-941a-4e72c784ccf0
-# ╠═219aafcb-17b1-4f5f-9c2b-9b713ba78b18
+# ╟─219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 # ╟─2833e081-45d6-4f64-8d1e-b3a5895b7952
 # ╟─4ac622c8-efec-497a-ba68-cc9d5990c075
 # ╟─50d4f741-1cdc-4889-b839-a57b898fbbe0
 # ╟─9e20c4ad-b912-4d9b-8a1e-60f337a958e4
 # ╟─e7a01318-ce31-4169-aaa7-1fb49a4d47be
 # ╟─573b8a38-5a9b-4d5f-a9f6-00a5255914f0
-# ╠═1ca20976-757f-4e30-94d4-ee1276a614fb
+# ╟─1ca20976-757f-4e30-94d4-ee1276a614fb
 # ╠═aa69d0e8-cbbb-436c-b488-5bb113cdf97f
 # ╟─84d7e4dd-23a9-4412-a8de-ab8ee8351770
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
@@ -2232,6 +2316,8 @@ version = "0.9.1+5"
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
 # ╟─2844b7a6-002e-4459-9e37-30e3a16c88f0
 # ╟─471f5ab0-2601-4d2b-8746-3ffd37a37526
+# ╟─cb53475c-cc56-46b3-94b0-3ded33eb18d4
+# ╟─75ef279d-2c7b-4776-b93f-5b28cbc67f63
 # ╟─d78fc676-4e17-4eb6-92f4-35dc38ba2624
 # ╟─8fda9bf2-6680-4187-886c-dab73fcb746f
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5

@@ -60,7 +60,7 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
+md" In this lecture we will be looking at our final Markov chain Monte Carlo method, namely the Hamiltonian Monte Carlo method. We will show how you can code up a rudimentary version of this algorithm. However, you will most likely rely on existing packages to perform this method. There are packages like `AdvancedHMC.jl` which already have different versions of HMC routines implemented. We will also take a look at the `Turing.jl` package in more detail. This pacakage aligns with the probabilistic programming paradigm and is similar in spirit to `Stan`."
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 #TableOfContents() # Uncomment to see TOC
@@ -69,7 +69,14 @@ md" In this session we will be looking at the basics of Bayesian econometrics / 
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Random sampling "
+md" ## Hamiltonian Monte Carlo "
+
+# ╔═╡ b37407fd-8b28-42ce-9fe7-705aee16dfcc
+md"""
+
+The problems of low acceptance rates of proposals for Metropolis techniques and the low performance of the Gibbs algorithm in multidimensional problems (in which the posterior's topology is quite complex) led to the emergence of a new MCMC technique using Hamiltonian dynamics (in honor of the Irish physicist William Rowan Hamilton (1805-1865). The name for this technique is Hamiltonian Monte Carlo (HMC).
+
+""""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1141,6 +1148,7 @@ version = "0.9.1+5"
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
-# ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╠═040c011f-1653-446d-8641-824dc82162eb
+# ╠═b37407fd-8b28-42ce-9fe7-705aee16dfcc
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

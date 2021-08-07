@@ -112,7 +112,7 @@ md" ## Random sampling "
 md" One thing that we will be using quite frequently in Bayesian econometrics is the idea of random sampling. This means sampling from different types of distributions.  "
 
 # ╔═╡ b78745cc-84ef-4bbe-a916-9c87cde47145
-rand(1:6) # Choose random value from 1 to 6
+rand(1:6) # Choose random value from 1 to 6 
 
 # ╔═╡ 08fc15b7-2cc6-4a21-82a6-521f6294ee79
 rand([2, 3, 5, 7, 11]) # Choose random value from this set of values

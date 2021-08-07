@@ -148,10 +148,10 @@ function compute_pi_ifelse(n::Int)
   end
 
 # ╔═╡ 9e6a45a9-07da-4859-861c-db0c6ca30ec1
-#@benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
+@benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
 
 # ╔═╡ 4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
-#@benchmark compute_pi(10000000); # Better code, optimised (not fully though)
+@benchmark compute_pi(10000000); # Better code, optimised (not fully though)
 
 # ╔═╡ 2ca932e0-6c9f-44e3-b02d-6e8731d2ce4e
 #@benchmark compute_pi_ifelse(10000000);

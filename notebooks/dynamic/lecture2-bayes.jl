@@ -163,32 +163,32 @@ $\begin{equation*} y_{t}=\mu+\alpha y_{t-1}+\varepsilon_{t}, \quad \varepsilon_{
 
 where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimte these unkown parameters with methods such as maximum likelihood estimation, as you did in the first part of the course. 
 
-Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta | y)$: given the data, what do we know about $\theta$? 
+Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta \mid y)$: given the data, what do we know about $\theta$? 
 
 **Notation remark**: You will see that we have switched to a small letter $p$ for probability distribution of a random variable. Previously we have used a capital $P$ to relate probability of events. You will often see probability of events written as $\mathbb{P}$ in textbooks as well. 
 
-The Bayesian view is that may be many possible values for $\theta$ from population $\Theta$, while the frequentist view is that only one such a $\theta$ exists. In other words, $\theta$ is regarded as a random variable in the Bayesian setting.
+The Bayesian view is that may be many possible values for $\theta$ from the population of parameter values $\Theta$, while the frequentist view is that only one such a $\theta$ exists. In other words, $\theta$ is regarded as a random variable in the Bayesian setting.
 
-Bayesians will test initial assertions regarding $\theta$ using data on $y_t$ and $y_{t-1}$ to investigate probability of assertions. This provides probability distribution over possible values for $\theta \in \Theta$. 
+Bayesians will test initial assertions regarding $\theta$ using data on $y$ to investigate probability of assertions. This provides probability distribution over possible values for $\theta \in \Theta$. 
 
 For our model we start with a numerical formulation of joint beliefs about $y$ and $\theta$ expressed in terms of probability distributions.
 
 1. For each $\theta \in \Theta$ the prior distribution $p(\theta)$ describes belief about true population characteristics
-2. For each $\theta \in \Theta$ and $y \in \mathcal{Y}$, our sampling model $p(y | \theta)$ describes belief that $y$ would be the outcome of the study if we knew $\theta$ to be true.
+2. For each $\theta \in \Theta$ and $y \in \mathcal{Y}$, our sampling model $p(y \mid \theta)$ describes belief that $y$ would be the outcome of the study if we knew $\theta$ to be true.
 
-Once data is obtained, the last step is to update beliefs about $\theta$. For each $\theta \in \Theta$ our posterior distribution $p(\theta | y)$ describes our belief that $\theta$ is the true value having observed the dataset.
+Once data is obtained, the last step is to update beliefs about $\theta$. For each $\theta \in \Theta$ our posterior distribution $p(\theta \mid y)$ describes our belief that $\theta$ is the true value having observed the dataset.
 
-To make probability statements about $\theta$ given $y$, we begin with a model providing a **joint probability distribution** for $\theta$ and $y$. Joint probability density can be written as product of two densities: the prior $p(\theta)$ and sampling distribution $p(y | \theta)$
+To make probability statements about $\theta$ given $y$, we begin with a model providing a **joint probability distribution** for $\theta$ and $y$. Joint probability density can be written as product of two densities: the prior $p(\theta)$ and sampling distribution $p(y \mid \theta)$
 
-$p(\theta, y) = p(\theta)p(y | \theta)$
+$p(\theta, y) = p(\theta)p(y \mid \theta)$
 
 However, using the properties of conditional probability we can also write the joint probability density as
 
-$p(\theta, y) = p(y)p(\theta | y)$
+$p(\theta, y) = p(y)p(\theta \mid y)$
 
 Setting these equations equal and rearranging provides us with Bayes' theorem / rule, as discussed before. 
 
-$p(y)p(\theta | y) = p(\theta)p(y | \theta) \rightarrow p(\theta | y) = \frac{p(y | \theta)p(\theta)}{p(y)}$
+$p(y)p(\theta \mid y) = p(\theta)p(y \mid \theta) \rightarrow p(\theta \mid y) = \frac{p(y \mid \theta)p(\theta)}{p(y)}$
 "
 
 # ╔═╡ eed2582d-1ba9-48a1-90bc-a6a3bca139ba
@@ -200,7 +200,7 @@ We can safely ignore $p(y)$ in Bayes' rule since it does not involve the paramet
 
 $p(\theta|y)\propto p(\theta)p(y|\theta)$
 
-The **posterior density** $p(\theta \mid y)$ summarises all we know about $\theta$ after seeing the data, while the **prior density** $p(\theta)$ does not depend on the data (what you know about $\theta$ prior to seeing data). The **likelihood function** $p(y \mid \theta)$ is the data generating process (density of the data conditional on the parameters in the model). Finally, $p(y \mid \theta) p(\theta)=p(y, \theta)$ is the **econometric model** (joint probability distribution of data and parameters)."
+The **posterior density** $p(\theta \mid y)$ summarises all we know about $\theta$ after seeing the data, while the **prior density** $p(\theta)$ does not depend on the data (what you know about $\theta$ prior to seeing data). The **likelihood function** $p(y \mid \theta)$ is the data generating process (density of the data conditional on the parameters in the model). "
 
 # ╔═╡ 0c0d89c0-d70d-42ac-a55c-cd1afbc051ed
 md" ### Model vs. likelihood (notational sloppiness) "
@@ -232,23 +232,24 @@ Let us give a general description of the Bernoulli and Binomial random variables
 
 Consider an experiment (such as tossing a coin) that is repeated $N$ times. Each time we conduct this experiment / trial we can evaluate the outcome as being a success or failure.
 
-In this case the $y_{i}$'s, for $i = 1, \ldots, N$, are random variables for each repitition of the experiment. A random variable is a function that maps the outcome to a value on the real line. In our example, the realisation of $y_{i}$ can be $0$ or $1$ depending on whether the experiment was a success or failure.  
+In this case the $y_{i}$'s, for $i = 1, \ldots, N$, are random variables for each repetition of the experiment. A random variable is a function that maps the outcome to a value on the real line. In our example, the realisation of $y_{i}$ can be $0$ or $1$ depending on whether the experiment was a success or failure.  
 
 The probability of success is represented by $\theta$, while the probability of failure is given by $1- \theta$. This is considered an Bernoulli event. Our goal is to gain an estimate for $\theta$.
 
-So far we know that $y_{i} \in \{0, 1\}$, $0 \leq \theta \leq 1$ and the Bernoulli distribution is given by
+A binary random variable  $y_{i} \in \{0, 1\}$, $0 \leq \theta \leq 1$ follows a Bernoulli distribution if
 
 $p\left(y_{i} \mid \theta\right)=\left\{\begin{array}{cl}\theta & \text { if } y_{i}=1 \\ 1-\theta & \text { if } y_{i}=0\end{array}\right.$
 
-Let $y$ be the number of success in $N$ repititions of the experiment then our likelihood function is
+Let $m$ be the number of success in $N$ repetitions of the experiment then our likelihood function is
 
 
-$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ &=\theta^{y}(1-\theta)^{N-y} \end{aligned}$
-
-In the case where there is simply one instance of the experiment we have that $p(y \mid \theta) =\theta^{y}(1-\theta)^{1-y}$
+$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ &=\theta^{m}(1-\theta)^{N-m} \end{aligned}$
 
 
 """
+
+# ╔═╡ 9e7a673e-7cb6-454d-9c57-b6b4f9181b06
+md" Later we will write some code that takes a look a the likelihood for the binomial random variable. We should have some sort of mental model of what this function looks like when thining about statistical modelling. "
 
 # ╔═╡ fe8f71b2-4198-4a12-a996-da254d2cc656
 md" #### Binomial random variable "
@@ -380,7 +381,7 @@ This likelihood function is not a probability distribution, suppose that $y = 1$
 Let us take a look at what happens for multiple flips. Outcome of $i$th flip is given by $y_i$ and set of outcomes is $\{y_i\}$. Formula for the probability of the set of outcomes is given by
 
 $$\begin{align*}
-  p(y_i \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
+  p(y \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
   =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
   =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
   =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}}
@@ -628,7 +629,9 @@ md"""
 """
 
 # ╔═╡ 75ef279d-2c7b-4776-b93f-5b28cbc67f63
-md""" In our discussion on the Beta distribution as prior, we did not mention the idea of prior elicitation. The nice thing about the Beta distribution is its flexibility, for different values fo the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. These hyperparemeters reflect the beliefs of the researcher. One of the things that the researcher might have some information is the expected value of $\theta$. In the case of the Beta distribution the prior mean is given above as 
+md""" In our discussion on the Beta distribution as prior, we did not mention the idea of prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. 
+
+The Beta distribution is nice because of its flexibility, for different values fo the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. These hyperparemeters reflect the beliefs of the researcher / expert. One of the things that the researcher might have some information is the expected value of $\theta$. In the case of the Beta distribution the prior mean is given above as 
 
 $\frac{a}{a + b}$
 
@@ -640,7 +643,7 @@ As an example, set $a = b = 2$, then we have
 
 $\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
 
-We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. EVery value for $\theta$ receives the same probability. 
+We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
 
 Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
 
@@ -2274,6 +2277,7 @@ version = "0.9.1+5"
 # ╟─6e1de0ff-0fef-48b4-ac5b-0279ea8f2d4d
 # ╟─284d0a23-a329-4ea7-a069-f387e21ba797
 # ╟─bb535c41-48cb-44fd-989b-a6d3e310406f
+# ╟─9e7a673e-7cb6-454d-9c57-b6b4f9181b06
 # ╟─fe8f71b2-4198-4a12-a996-da254d2cc656
 # ╟─7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 # ╟─f45eb380-7b43-4fd0-af34-89ffd126a63f
@@ -2309,7 +2313,7 @@ version = "0.9.1+5"
 # ╠═fb793a24-d042-4ed9-927d-906d48c95556
 # ╠═259a8f24-673c-4fa8-ad88-f53ec319806a
 # ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98
-# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
+# ╠═0a1d46ed-0295-4000-9e30-3ad838552a7e
 # ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
 # ╠═87db6122-4d28-45bf-b5b0-41189792199d
 # ╟─b81924b8-73f6-4b28-899c-ec417d538dd4

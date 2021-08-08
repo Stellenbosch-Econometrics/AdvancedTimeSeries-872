@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, Random, StatsBase, Statistics, StatsPlots, Turing
+using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, QuadGK, Random, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -212,6 +212,61 @@ On the other hand, likelihood is given as $p_{\Theta}(Y=y \mid \Theta) = p(y \mi
 
 Bayes' rule combines the **likelihood** with **prior** uncertainty $p(\theta)$ and transforms them to updated **posterior** uncertainty."
 
+# ╔═╡ 34b792cf-65cf-447e-a30e-40ebca992427
+md"""
+
+#### What is a likelihood? 
+
+"""
+
+# ╔═╡ b7c5cbe9-a27c-4311-9642-8e0ed80b3d51
+md"""
+
+This is a question that has bother me a fair bit since I got started with econometrics. So I will try and give an explanation with some code integrated to give a better idea. This has been mostly inspired by the blog post of [Jim Savage](https://khakieconomics.github.io/2018/07/14/What-is-a-likelihood-anyway.html).
+
+In order to properly fit our Bayesian models we need to construction some type of function that lets us know whether the values of the unknown components of the model are good or not. Imagine that we have some realised values and we can form a histogram of those values. Let us quickly construct a dataset. 
+
+"""
+
+# ╔═╡ f364cb91-99c6-4b64-87d0-2cd6e8043142
+data_realised = 3.5 .+ 3.5 .* randn(100) # This is a normally distributed dataset that represents our true data. 
+
+# ╔═╡ 6087f997-bcb7-4482-a343-4c7830967e49
+histogram(data_realised, color = :black, legend = false, lw = 1.5,  fill = (0, 0.3, :black), bins  = 20)
+
+# ╔═╡ bf5240e8-59fc-4b1f-8b0d-c65c196ab402
+md"""
+
+We would like to fit a density function on this histogram so that we can make probabilistic statements about observations that we have not yet observed. Our proposed density should try and match model unknowns (like to location and scale). Let us observe to potential proposed densities. One is bad guess and the other quite good. 
+
+"""
+
+# ╔═╡ 8165a49f-bd0c-4ad6-8631-cae7425ca4a6
+begin
+	Random.seed!(1234) 
+	bad_guess = -1 .+ 1 .* randn(100);
+	good_guess = 3 .+ 3 .* randn(100);
+end
+
+# ╔═╡ 5439c858-6ff3-4faa-9145-895390240d76
+begin
+	density(bad_guess, color = :red,lw = 1.5,  fill = (0, 0.3, :red), title = "Bad Guess")
+	histogram!(data_realised, color = :black, legend = false, lw = 1.5,  fill = (0, 0.3, :black), norm = true, bins = 20)
+end
+
+# ╔═╡ 0504929d-207c-4fb7-a8b9-14e21aa0f74b
+begin
+	density(good_guess, color = :steelblue,lw = 1.5,  fill = (0, 0.3, :steelblue), title = "Good Guess")
+	histogram!(data_realised, color = :black, legend = false, lw = 1.5,  fill = (0, 0.3, :black), norm = true, bins = 20)
+end
+
+# ╔═╡ 169fbcea-4e82-4756-9b4f-870bcb92cb93
+md"""
+
+A likelihood function would return a higher value for the proposed density in the case of the good guess. There are many functions that we could use to determine wheter proposed model unknowns result in a better fit. Likelihood functions are one particular approach. Like we mentioned before, these likelihood functions represent a data generating process. The assumption is that the proposed generative distribution gave rise to the data in question. We will continue this discussion on the likelihood function in our next section.  
+
+"""
+
 # ╔═╡ 699dd91c-1141-4fb6-88fc-f7f05906d923
 md" ## Bernoulli and Binomial "
 
@@ -240,16 +295,88 @@ A binary random variable  $y_{i} \in \{0, 1\}$, $0 \leq \theta \leq 1$ follows a
 
 $p\left(y_{i} \mid \theta\right)=\left\{\begin{array}{cl}\theta & \text { if } y_{i}=1 \\ 1-\theta & \text { if } y_{i}=0\end{array}\right.$
 
-Let $m$ be the number of success in $N$ repetitions of the experiment then our likelihood function is
+Let $y$ be the number of successes in $N$ repetitions of the experiment then our likelihood function is
 
 
-$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ &=\theta^{m}(1-\theta)^{N-m} \end{aligned}$
+$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ &=\theta^{y_{i}}(1-\theta)^{N-y_{i}} \end{aligned}$
 
 
 """
 
 # ╔═╡ 9e7a673e-7cb6-454d-9c57-b6b4f9181b06
-md" Later we will write some code that takes a look a the likelihood for the binomial random variable. We should have some sort of mental model of what this function looks like when thining about statistical modelling. "
+md" We can write some code for the likelihood for the binomial random variable. We should have some sort of mental model of what this function looks like when thining about statistical modelling. Consider coin tossing for this Bernoulli distribution. The likelihood function tells us what the probability is of observing a particular sequence of heads and tails if the probability of heads is $\theta$."
+
+# ╔═╡ 5046166d-b6d8-4473-8823-5209aac59c84
+begin
+	Random.seed!(1244)
+	coin_seq = Int.(rand(Bernoulli(0.4), 5))
+end
+
+# ╔═╡ 82d0539f-575c-4b98-8679-aefbd11f268e
+md"""
+
+Let us say that we think the probability of heads is $0.3$, then our likelihood will be 
+
+$p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}}$
+
+Do we think that the proposed probability of heads is a good one? We can use the likelihood function to perhaps determine this. We plot the values of the likelihood function for this data eveluated over the possible values that $\theta$ can take. 
+"""
+
+# ╔═╡ c0bba3aa-d52c-4192-8eda-32d5d9f49a28
+md"""
+
+!!! note "Coin flippling with Bernoulli likelihood"
+
+success = $(@bind m Slider(1:50, show_value = true, default=3));
+repetitions = $(@bind N Slider(1:50, show_value = true, default=5)); 
+
+> Default value for slider shows the likelihood function for three successes in five flips. 
+
+"""
+
+# ╔═╡ 74013e0d-d856-4f6a-9460-f142f78726ee
+md"""
+
+Don't worry too much about the code for now. This is supposed to give a graphical understanding of what the likelihood function looks like. 
+
+"""
+
+# ╔═╡ 00cb5973-3047-4c57-9213-beae8f116113
+begin
+	grid_θ = range(0, 1, length = 1001) |> collect;
+	bernoulli(grid_θ, m, N) = (grid_θ .^ m) .* ((1 .- grid_θ) .^ (N - m))
+end
+
+# ╔═╡ 9e3c0e01-8eb6-4078-bc0f-019466afba5e
+bern  = bernoulli(grid_θ, m, N);
+
+# ╔═╡ 5d6a485d-90c4-4f76-a27e-497e8e12afd8
+plot(grid_θ, bern, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood", legend = false)
+
+# ╔═╡ cacd6b2f-5af2-4113-ad63-170f70b77441
+sum(bernoulli(grid_θ, m, N)) # Does not sum to one, so not a probability
+
+# ╔═╡ ab9195d6-792d-4603-8605-228d479226c6
+max_index = argmax(bernoulli(grid_θ, m, N)) # Get argument that maximises this function 
+
+# ╔═╡ e42c5e18-a647-4281-8a87-1b3c6c2abd33
+likelihood_max = grid_θ[max_index] # Value at which the likelihood function is maximised. Makes sense, since we have 3 successes in 5 repetitions. 
+
+# ╔═╡ 9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
+md"""
+
+What do we notice about the likelihood function? 
+
+1. It is **NOT** a probability distribution, since it doesn't integrate to one (we check this with some code above)
+2. We notice that in our particular example the function is maximised at $likelihood_max. This maximum point of the likelihood function is known as the maximum likelihood estimate of our parameter given our data. You have dealt with this quantity before. Formally it is, 
+
+$\hat{\theta}_{M L E}=\operatorname{argmax}_{\theta}(p(y \mid \theta))$
+
+This example shows that it can be dangerous to use maximum likelihood with small samples. The true success rate is $0.4$ but our estimate provided a value of $0.6$.
+
+In this case, our prior information (subjective belief) was that the probability of heads should be $0.3$. This could have helped is in this case get to a better estimate, but unfortunately maximimum likelihood does not reflect this prior belief. This means that we are left with a success rate equal to the frequency of occurence. 
+
+"""
 
 # ╔═╡ fe8f71b2-4198-4a12-a996-da254d2cc656
 md" #### Binomial random variable "
@@ -742,6 +869,7 @@ KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -754,6 +882,7 @@ Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
+QuadGK = "~2.4.1"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
 Turing = "~0.16.6"
@@ -2273,11 +2402,31 @@ version = "0.9.1+5"
 # ╟─eed2582d-1ba9-48a1-90bc-a6a3bca139ba
 # ╟─0c0d89c0-d70d-42ac-a55c-cd1afbc051ed
 # ╟─c6d22671-26e8-4ba3-865f-5cd449a6c9be
+# ╟─34b792cf-65cf-447e-a30e-40ebca992427
+# ╟─b7c5cbe9-a27c-4311-9642-8e0ed80b3d51
+# ╠═f364cb91-99c6-4b64-87d0-2cd6e8043142
+# ╟─6087f997-bcb7-4482-a343-4c7830967e49
+# ╟─bf5240e8-59fc-4b1f-8b0d-c65c196ab402
+# ╟─8165a49f-bd0c-4ad6-8631-cae7425ca4a6
+# ╟─5439c858-6ff3-4faa-9145-895390240d76
+# ╟─0504929d-207c-4fb7-a8b9-14e21aa0f74b
+# ╟─169fbcea-4e82-4756-9b4f-870bcb92cb93
 # ╟─699dd91c-1141-4fb6-88fc-f7f05906d923
 # ╟─6e1de0ff-0fef-48b4-ac5b-0279ea8f2d4d
 # ╟─284d0a23-a329-4ea7-a069-f387e21ba797
 # ╟─bb535c41-48cb-44fd-989b-a6d3e310406f
 # ╟─9e7a673e-7cb6-454d-9c57-b6b4f9181b06
+# ╠═5046166d-b6d8-4473-8823-5209aac59c84
+# ╟─82d0539f-575c-4b98-8679-aefbd11f268e
+# ╟─c0bba3aa-d52c-4192-8eda-32d5d9f49a28
+# ╟─74013e0d-d856-4f6a-9460-f142f78726ee
+# ╠═00cb5973-3047-4c57-9213-beae8f116113
+# ╠═9e3c0e01-8eb6-4078-bc0f-019466afba5e
+# ╟─5d6a485d-90c4-4f76-a27e-497e8e12afd8
+# ╠═cacd6b2f-5af2-4113-ad63-170f70b77441
+# ╠═ab9195d6-792d-4603-8605-228d479226c6
+# ╠═e42c5e18-a647-4281-8a87-1b3c6c2abd33
+# ╟─9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
 # ╟─fe8f71b2-4198-4a12-a996-da254d2cc656
 # ╟─7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 # ╟─f45eb380-7b43-4fd0-af34-89ffd126a63f
@@ -2306,14 +2455,14 @@ version = "0.9.1+5"
 # ╠═599c2f09-ad5e-4f39-aa7d-c1ba155725d6
 # ╟─09ec10d9-a604-480d-8e82-59e84a843749
 # ╠═9a2d5bdf-9597-40c7-ac18-bb27f187912d
-# ╠═f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
+# ╟─f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
 # ╟─8382e073-433b-4e42-a6fa-d5a051586457
 # ╠═071761f8-a187-47a6-8fee-5fc91e65d04c
 # ╠═f001b040-2ae7-4e97-b229-eebaabb537b0
 # ╠═fb793a24-d042-4ed9-927d-906d48c95556
 # ╠═259a8f24-673c-4fa8-ad88-f53ec319806a
 # ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98
-# ╠═0a1d46ed-0295-4000-9e30-3ad838552a7e
+# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
 # ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
 # ╠═87db6122-4d28-45bf-b5b0-41189792199d
 # ╟─b81924b8-73f6-4b28-899c-ec417d538dd4

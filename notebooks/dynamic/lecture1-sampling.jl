@@ -99,11 +99,12 @@ md"""
 !!! note "Some cool links 😎"
 
 1. MIT (2021). [Computational Thinking](https://computationalthinking.mit.edu). -- NB resource! Most of the lecture based on this. 
-2. QuantEcon (2021). [Quantitative Economics with Julia](https://julia.quantecon.org/). -- Important for Julia and computational work.
-3. Aki Vehtari (2020). [Bayesian Data Analysis](https://avehtari.github.io/BDA_course_Aalto/index.html). -- Important for lectures 2, 3, 4
-4. José Eduardo Storopoli (2021). [Bayesian Statistics with Julia and Turing.](https://storopoli.io/Bayesian-Julia/) -- Important for lectures 2, 3, 4, 5
-5. Gary Koop (2021). [Bayesian Econometrics](https://sites.google.com/site/garykoop/teaching/sgpe-bayesian-econometrics). -- Important for lectures 6, 7, 8
-6. Joshua Chan (2017). [Notes on Bayesian Econometrics](https://joshuachan.org/notes_BayesMacro.html). -- Important for lectures 6, 7, 8
+2. QuantEcon (2021). [Quantitative Economics with Julia](https://julia.quantecon.org/). -- Lectures 0, 4, 8.
+3. Aki Vehtari (2020). [Bayesian Data Analysis](https://avehtari.github.io/BDA_course_Aalto/index.html). -- Lectures 2, 3, 4, 5
+5. Mattias Villani (2021). [Bayesian Learning](https://github.com/mattiasvillani/BayesianLearningBook) -- Lectures 2, 3, 4, 5
+4. José Eduardo Storopoli (2021). [Bayesian Statistics with Julia and Turing.](https://storopoli.io/Bayesian-Julia/) -- Lectures 2, 3, 4, 9
+5. Gary Koop (2021). [Bayesian Econometrics](https://sites.google.com/site/garykoop/teaching/sgpe-bayesian-econometrics). -- Lectures 5, 6, 7
+6. Joshua Chan (2017). [Notes on Bayesian Econometrics](https://joshuachan.org/notes_BayesMacro.html). -- Lectures 5, 6, 7
 
 """
 

@@ -14,8 +14,8 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 5. Bayesian linear regression
 6. Bayesian Vector Autoregression (BVAR)
 7. State space modelling and TVP-VARs 
-8. Kalman filter (**time permitting**)
-9. Hamiltonian Monte Carlo (**time permitting**)
+8. Kalman filter (**optional**)
+9. Hamiltonian Monte Carlo and `Turing.jl` (**optional**)
 
 `R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 
 

@@ -348,6 +348,7 @@ md" Let us see what this looks like when we plot it... "
 
 # ╔═╡ 3335094d-a67b-471c-834d-e22089933104
 begin
+	gr()
 	const N₁ = 100_000
 	const μ₁ = [post_gibbs[1], post_gibbs[1]]
 	const Σ = [1 post_gibbs[2]; post_gibbs[2] 1]
@@ -1776,7 +1777,7 @@ version = "0.9.1+5"
 # ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
 # ╠═343202b3-23b5-4600-b912-7db4ab58deaf
 # ╟─3aeab073-c98a-4213-a835-3098233ba90c
-# ╠═3335094d-a67b-471c-834d-e22089933104
+# ╟─3335094d-a67b-471c-834d-e22089933104
 # ╠═80e6619b-ac42-453b-8f38-850b2b99d000
 # ╠═952f022e-002f-4982-b03c-c79c72c69366
 # ╟─82b96729-33c2-49b0-b908-562faf903a1e

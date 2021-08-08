@@ -301,7 +301,7 @@ md"""
 
 !!! note "Interactive sliders for Binomial random variable"
 
-n = $(@bind n Slider(1:1:100, show_value = true, default=100));
+n = $(@bind n Slider(1:1:100, show_value = true, default=1));
 p = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5)); 
 
 > Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and increase the number of $n$, what happens to the distribution? What theorem is at play here?
@@ -321,14 +321,29 @@ end
 # ╔═╡ 9016cba4-58f0-4b7f-91af-66faaf3fe99c
 md" Naturally, one would want to use a pre-packaged solution to sampling with a binomial random variable. The `Distributions.jl` package contains optimised routines that work faster than our code, but is still a good idea to code some things yourself to fully understand the mechanisms. " 
 
+# ╔═╡ 6b1e8fc3-48ee-471b-9c04-7c75cfef156c
+# @benchmark (rand(Binomial(n, p), 1000)  # Will generally give the same result as above, but likely much faster. 
+
 # ╔═╡ 2eb59993-4ace-4acb-9810-ba064ea1eb3e
-#@benchmark rand(Binomial(n, p), 1000) # Will generally give the same result as above, but likely much faster. 
+# @benchmark [(rand(Binomial(n, p))) for _ in 1:1000] # What is different with this?
 
 # ╔═╡ 7c04e47c-eeed-47ec-9c6f-e2b710d0b746
-#@benchmark [binomial_rv(n, p) for _ in 1:1000] # We can see from our benchmarking that this is much slower. 
+# @benchmark [binomial_rv(n, p) for _ in 1:1000] # We can see from our benchmarking that this is much slower. 
 
-# ╔═╡ a99b65bd-b39d-4d78-8ba1-d3a662592bce
-rand(Binomial(n, p), 1000, 1000); # What do you think happens if we run this code? Think about it first. 
+# ╔═╡ 2cb86d77-edf3-4446-8be0-8617ad839563
+md" We could also use a type constructor, as discussed in the previous lecture. Will this make a difference to the speed of calculation? If it does, why would this be the case? "
+
+# ╔═╡ db6afee0-2551-4406-b07e-4779c4e5b179
+struct Binomial_New
+	n::Int64
+	p::Float64
+end
+
+# ╔═╡ 491a2395-b57e-4804-8498-e3fec8446de1
+Base.rand(X::Binomial_New) = sum(rand(Bernoulli(X.p)) for _ in 1:X.n)
+
+# ╔═╡ ed0e1926-d248-4423-9bf8-f3fd25196dae
+# @benchmark [Binomial_New(n, p) for _ in 1:1000]   
 
 # ╔═╡ ee9336ea-816b-42ef-b6bf-3c3d2dfc0e0a
 md" Now we are going to utilise this distribution as a potential model to estimate the bias in a coin. In other words we are going to work with the case where the $\theta$ parameter is unknown. We will see in this section how Bayes' rule is applied.  "
@@ -2271,9 +2286,13 @@ version = "0.9.1+5"
 # ╠═d6316b4f-9882-4d25-87d0-31fa3c1f3935
 # ╟─c4cc482b-815b-4747-9f5a-5779d69086f7
 # ╟─9016cba4-58f0-4b7f-91af-66faaf3fe99c
+# ╠═6b1e8fc3-48ee-471b-9c04-7c75cfef156c
 # ╠═2eb59993-4ace-4acb-9810-ba064ea1eb3e
 # ╠═7c04e47c-eeed-47ec-9c6f-e2b710d0b746
-# ╠═a99b65bd-b39d-4d78-8ba1-d3a662592bce
+# ╟─2cb86d77-edf3-4446-8be0-8617ad839563
+# ╠═db6afee0-2551-4406-b07e-4779c4e5b179
+# ╠═491a2395-b57e-4804-8498-e3fec8446de1
+# ╠═ed0e1926-d248-4423-9bf8-f3fd25196dae
 # ╟─ee9336ea-816b-42ef-b6bf-3c3d2dfc0e0a
 # ╟─828166f7-1a69-4952-9e3b-50a99a99789f
 # ╟─24c4d724-5911-4534-a5c6-3ab86999df43

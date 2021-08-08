@@ -79,6 +79,9 @@ md" In our introductory session (Lecture 0) we had a brief introduction to Julia
 # ╔═╡ 49033e09-fd64-4707-916c-9435d3f0a9d2
 md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. "
 
+# ╔═╡ 9fb73dd3-2033-468b-9969-bc1835f256ba
+md" Setting up the Makie plotting structure. "
+
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 TableOfContents() # Uncomment for TOC
 
@@ -209,7 +212,7 @@ bernoulli(p) = rand() < p # Takes in a value p between 0 and 1 to compare agains
 
 # ╔═╡ 7f8b5d7b-25cf-4464-b01a-e9649001b1a1
 md"""
-p = $(@bind p₁ Slider(0.0:0.01:1.0, show_value=true, default=0.7))
+p = $(@bind p₁ PlutoUI.Slider(0.0:0.01:1.0, show_value=true, default=0.7))
 """
 
 # ╔═╡ 3d1e1190-2ba6-42ad-9c5b-3c3316fd75a0
@@ -246,12 +249,12 @@ md" As we have stated, the Bernoulli distribution describes a binary event of a 
 
 # ╔═╡ c61504df-808a-46f0-b8cc-dcc7197ffb3e
 md"""
-p = $(@bind p₂ Slider(0.0:0.01:1.0, show_value=true, default=0.7))
+p = $(@bind p₂ PlutoUI.Slider(0.0:0.01:1.0, show_value=true, default=0.7))
 """
 
 # ╔═╡ ed8b654f-f964-4d8f-a998-1032c197f014
 begin
-	plot(Distributions.Bernoulli(p₂),
+	Plots.plot(Distributions.Bernoulli(p₂),
 	        markershape=:circle,
 	        alpha=0.7,
 	        xlabel=L"\theta",
@@ -331,12 +334,12 @@ md" The binomial distribution has two parameters and its notation is $\text{Bin}
 
 # ╔═╡ b061d6f2-bcd1-410e-a005-d2e993616b3a
 md"""
-p = $(@bind p₃ Slider(0.0:0.01:1.0, show_value=true, default=0.7))
+p = $(@bind p₃ PlutoUI.Slider(0.0:0.01:1.0, show_value=true, default=0.7))
 """
 
 # ╔═╡ 1c20116c-339c-453c-b6d1-4ed1477fcf12
 begin
-	plot(Binomial(5, p₃),
+	Plots.plot(Binomial(5, p₃),
 	        markershape=:circle,
 	        alpha=0.7,
 	        xlabel=L"\theta",
@@ -369,8 +372,8 @@ rand(Binomial_New(10, 0.25))
 
 # ╔═╡ d34b5710-2f37-4bb1-9e02-6e95996f7242
 md"""
-n = $(@bind binomial_n Slider(1:100, show_value=true, default=1)); 
-p = $(@bind binomial_p Slider(0.0:0.01:1, show_value=true, default=0))
+n = $(@bind binomial_n PlutoUI.Slider(1:100, show_value=true, default=1)); 
+p = $(@bind binomial_p PlutoUI.Slider(0.0:0.01:1, show_value=true, default=0))
 
 """
 
@@ -436,8 +439,8 @@ We can shift and scale the Gaussian distribution in the following manner.
 
 # ╔═╡ b153e5e7-95ba-4425-91aa-ce9986a64392
 md"""
-μ = $(@bind μ Slider(-3:0.01:3, show_value=true, default=0.0))
-σ = $(@bind σ Slider(0.01:0.01:3, show_value=true, default=1))
+μ = $(@bind μ PlutoUI.Slider(-3:0.01:3, show_value=true, default=0.0))
+σ = $(@bind σ PlutoUI.Slider(0.01:0.01:3, show_value=true, default=1))
 """
 
 # ╔═╡ 0f7184f5-a03f-482e-8339-fd12c7391e01
@@ -1104,21 +1107,21 @@ version = "3.3.5+0"
 
 [[GR]]
 deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "Serialization", "Sockets", "Test", "UUIDs"]
-git-tree-sha1 = "9f473cdf6e2eb360c576f9822e7c765dd9d26dbc"
+git-tree-sha1 = "182da592436e287758ded5be6e32c406de3a2e47"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.58.0"
+version = "0.58.1"
 
 [[GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Pkg", "Qt5Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "eaf96e05a880f3db5ded5a5a8a7817ecba3c7392"
+git-tree-sha1 = "d59e8320c2747553788e4fc42231489cc602fa50"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.58.0+0"
+version = "0.58.1+0"
 
 [[GeometryBasics]]
 deps = ["EarCut_jll", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
-git-tree-sha1 = "58bcdf5ebc057b085e58d95c138725628dd7453c"
+git-tree-sha1 = "15ff9a14b9e1218958d3530cc288cf31465d9ae2"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.4.1"
+version = "0.3.13"
 
 [[Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -1139,9 +1142,9 @@ version = "1.0.2"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "Logging", "MbedTLS", "NetworkOptions", "Sockets", "URIs"]
-git-tree-sha1 = "c6a1fff2fd4b1da29d3dccaffb1e1001244d844e"
+git-tree-sha1 = "44e3b40da000eab4ccb1aecdc4801c040026aeb5"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.9.12"
+version = "0.9.13"
 
 [[IniFile]]
 deps = ["Test"]
@@ -1183,9 +1186,9 @@ version = "1.3.0"
 
 [[JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
-git-tree-sha1 = "81690084b6198a2e1da36fcfda16eeca9f9f24e4"
+git-tree-sha1 = "8076680b162ada2a031f707ac7b4953e30667a37"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "0.21.1"
+version = "0.21.2"
 
 [[JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1320,9 +1323,9 @@ version = "2021.1.1+1"
 
 [[MacroTools]]
 deps = ["Markdown", "Random"]
-git-tree-sha1 = "6a8a2a625ab0dea913aba95c11370589e0239ff0"
+git-tree-sha1 = "0fb723cd8c45858c22169b2e42269e53271a6df7"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
-version = "0.5.6"
+version = "0.5.7"
 
 [[Markdown]]
 deps = ["Base64"]
@@ -1382,9 +1385,9 @@ version = "0.4.0"
 
 [[OffsetArrays]]
 deps = ["Adapt"]
-git-tree-sha1 = "4f825c6da64aebaa22cc058ecfceed1ab9af1c7e"
+git-tree-sha1 = "c0f4a4836e5f3e0763243b8324200af6d0e0f90c"
 uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "1.10.3"
+version = "1.10.5"
 
 [[Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1433,9 +1436,9 @@ version = "0.11.1"
 
 [[Parsers]]
 deps = ["Dates"]
-git-tree-sha1 = "94bf17e83a0e4b20c8d77f6af8ffe8cc3b386c0a"
+git-tree-sha1 = "477bf42b4d1496b454c10cce46645bb5b8a0cf2c"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "1.1.1"
+version = "2.0.2"
 
 [[Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1551,9 +1554,9 @@ version = "1.1.0"
 
 [[SentinelArrays]]
 deps = ["Dates", "Random"]
-git-tree-sha1 = "35927c2c11da0a86bcd482464b93dadd09ce420f"
+git-tree-sha1 = "a3a337914a035b2d59c9cbe7f1a38aaba1265b02"
 uuid = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
-version = "1.3.5"
+version = "1.3.6"
 
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
@@ -1589,9 +1592,9 @@ version = "1.6.0"
 
 [[StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
-git-tree-sha1 = "885838778bb6f0136f8317757d7803e0d81201e4"
+git-tree-sha1 = "3240808c6d463ac46f1c1cd7638375cd22abbccb"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.2.9"
+version = "1.2.12"
 
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -1653,9 +1656,9 @@ version = "1.0.1"
 
 [[Tables]]
 deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "TableTraits", "Test"]
-git-tree-sha1 = "8ed4a3ea724dac32670b062be3ef1c1de6773ae8"
+git-tree-sha1 = "d0c690d37c73aeb5ca063056283fde5585a41710"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "1.4.4"
+version = "1.5.0"
 
 [[Tar]]
 deps = ["ArgTools", "SHA"]
@@ -1908,6 +1911,7 @@ version = "0.9.1+5"
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╟─49033e09-fd64-4707-916c-9435d3f0a9d2
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
+# ╠═9fb73dd3-2033-468b-9969-bc1835f256ba
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─da871a80-a6d8-4be2-92bb-c3f10e51efe3
@@ -1978,7 +1982,7 @@ version = "0.9.1+5"
 # ╟─b6fc9ad1-5f44-4697-be2e-407e2b9308c0
 # ╟─71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
 # ╟─b061d6f2-bcd1-410e-a005-d2e993616b3a
-# ╟─1c20116c-339c-453c-b6d1-4ed1477fcf12
+# ╠═1c20116c-339c-453c-b6d1-4ed1477fcf12
 # ╟─0a5ed3ea-12d9-46f9-aab8-472eae8a971d
 # ╠═1056e659-b358-451f-85b3-a7ec9a6dac92
 # ╟─86d8016f-9179-4bb2-be71-3708896ba216
@@ -2079,7 +2083,7 @@ version = "0.9.1+5"
 # ╟─c9cd7943-7b2a-4387-a4fb-766d9ee00594
 # ╠═d2a12c25-4277-4f19-9811-9d371d91022c
 # ╟─3f3b7906-7bd0-4a9f-8a49-14b8a8924218
-# ╟─25e39a6b-5d8e-419f-9a44-8d72a8fde502
+# ╠═25e39a6b-5d8e-419f-9a44-8d72a8fde502
 # ╠═6560fe42-daa9-47ce-8a88-dbddcc2d3a1c
 # ╠═ea7b83b9-2e95-43da-b089-cdf4d6d5247d
 # ╠═3245d573-ffe6-44b2-9734-753a011ab10c

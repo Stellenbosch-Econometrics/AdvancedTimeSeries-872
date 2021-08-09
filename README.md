@@ -10,8 +10,8 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 1. Sampling, random variables and distributions -- **Draft** ✔️
 2. Bayesian thinking (Bernoulli / Binomial) -- **Draft** ✔️ [R code available]
 3. Gauss is everywhere (Normal) -- **Draft** ✔️ [R code available]
-4. Markov chain Monte Carlo -- **Incomplete** ❌
-5. Bayesian linear regression -- **Incomplete** ❌
+4. Markov chain Monte Carlo -- **Draft** ✔️
+5. Bayesian linear regression -- **Draft** ✔️
 6. Bayesian Vector Autoregression (BVAR) -- **Incomplete** ❌
 7. State space modelling and TVP-VARs -- **Empty** ❌
 8. Kalman filter -- **Empty** ❌

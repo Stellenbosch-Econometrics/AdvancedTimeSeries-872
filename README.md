@@ -6,16 +6,16 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 
 # Rough course outline
 
-0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html) (First draft ✔️)
-1. Sampling, random variables and distributions (First draft ✔️)
-2. Bayesian thinking (Bernoulli / Binomial) (First draft ✔️)
-3. Gauss is everywhere (Normal) 
-4. Markov chain Monte Carlo
-5. Bayesian linear regression
-6. Bayesian Vector Autoregression (BVAR)
-7. State space modelling and TVP-VARs 
-8. Kalman filter (**optional**)
-9. Hamiltonian Monte Carlo and `Turing.jl` (**optional**)
+0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html) -- Draft ✔️
+1. Sampling, random variables and distributions -- Draft ✔️
+2. Bayesian thinking (Bernoulli / Binomial) -- Draft ✔️
+3. Gauss is everywhere (Normal) -- Draft ✔️
+4. Markov chain Monte Carlo -- Incomplete ❌
+5. Bayesian linear regression -- Incomplete ❌
+6. Bayesian Vector Autoregression (BVAR) -- Incomplete ❌
+7. State space modelling and TVP-VARs -- Not started ❌
+8. Kalman filter (**optional**) -- Not started ❌
+9. Hamiltonian Monte Carlo and `Turing.jl` (**optional**) -- Not started ❌
 
 `R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 
 

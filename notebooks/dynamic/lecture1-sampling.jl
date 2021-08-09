@@ -79,9 +79,6 @@ md" In our introductory session (Lecture 0) we had a brief introduction to Julia
 # ╔═╡ 49033e09-fd64-4707-916c-9435d3f0a9d2
 md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. "
 
-# ╔═╡ 9fb73dd3-2033-468b-9969-bc1835f256ba
-md" Setting up the Makie plotting structure. "
-
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 TableOfContents() # Uncomment for TOC
 
@@ -374,7 +371,7 @@ rand(Binomial_New(10, 0.25))
 # ╔═╡ d34b5710-2f37-4bb1-9e02-6e95996f7242
 md"""
 n = $(@bind binomial_n PlutoUI.Slider(1:100, show_value=true, default=1)); 
-p = $(@bind binomial_p PlutoUI.Slider(0.0:0.01:1, show_value=true, default=0))
+p = $(@bind binomial_p PlutoUI.Slider(0.0:0.01:1, show_value=true, default=0.5))
 
 """
 
@@ -411,7 +408,10 @@ A Gaussian random variable is a **continuous** random variable, i.e. it has a co
 md"""
 One way to specify a continous random variable $X$ is via its **probability density function**, or **PDF**, $f_X$. The probability that $X$ lies in the interval $[a, b]$ is given by an area under the curve $f_X(x)$ from $a$ to $b$:
 
-$$\mathbb{P}(X \in [a, b]) = \int_{a}^b f_X(x) \, dx.$$
+$$\mathbb{P}(X \in [a, b]) = \int_{a}^b f_X(y) \, dx.$$
+
+**Notation remark**: The tradition in statistics is to use capital letters for random variables and then lowe case letters for realisation of that random variable. Our notation will change from the second lecture onward. Please make a note of this so that you do not get confused by notation. I will mention this again in another lecture. 
+
 """
 
 # ╔═╡ 7550ccac-ca63-4f96-b576-595888071c34
@@ -1912,7 +1912,6 @@ version = "0.9.1+5"
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╟─49033e09-fd64-4707-916c-9435d3f0a9d2
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-# ╠═9fb73dd3-2033-468b-9969-bc1835f256ba
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─da871a80-a6d8-4be2-92bb-c3f10e51efe3
@@ -1983,7 +1982,7 @@ version = "0.9.1+5"
 # ╟─b6fc9ad1-5f44-4697-be2e-407e2b9308c0
 # ╟─71f12fb3-901d-4feb-9fbc-a5fc6e0f4750
 # ╟─b061d6f2-bcd1-410e-a005-d2e993616b3a
-# ╠═1c20116c-339c-453c-b6d1-4ed1477fcf12
+# ╟─1c20116c-339c-453c-b6d1-4ed1477fcf12
 # ╟─0a5ed3ea-12d9-46f9-aab8-472eae8a971d
 # ╠═1056e659-b358-451f-85b3-a7ec9a6dac92
 # ╟─86d8016f-9179-4bb2-be71-3708896ba216
@@ -2007,7 +2006,7 @@ version = "0.9.1+5"
 # ╟─62c3c7f1-2839-4c7e-bba7-1741649b3620
 # ╟─b153e5e7-95ba-4425-91aa-ce9986a64392
 # ╠═0f7184f5-a03f-482e-8339-fd12c7391e01
-# ╟─ff9355dc-3e5f-4558-9027-668bd17a7a30
+# ╠═ff9355dc-3e5f-4558-9027-668bd17a7a30
 # ╟─a825e358-1fdc-42cb-87cf-ab0dbd092cb0
 # ╠═2279f195-a9fa-46ee-925b-f54222d61d9a
 # ╟─677da773-6130-41b2-8188-209a8d751f99

@@ -319,26 +319,7 @@ Let us say that we think the probability of heads is $0.3$, then our likelihood 
 
 $p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}}$
 
-Do we think that the proposed probability of heads is a good one? We can use the likelihood function to perhaps determine this. We plot the values of the likelihood function for this data eveluated over the possible values that $\theta$ can take. 
-"""
-
-# ╔═╡ c0bba3aa-d52c-4192-8eda-32d5d9f49a28
-md"""
-
-!!! note "Coin flippling with Bernoulli likelihood"
-
-success = $(@bind m Slider(1:50, show_value = true, default=3));
-repetitions = $(@bind N Slider(1:50, show_value = true, default=5)); 
-
-> Default value for slider shows the likelihood function for three successes in five flips. 
-
-"""
-
-# ╔═╡ 74013e0d-d856-4f6a-9460-f142f78726ee
-md"""
-
-Don't worry too much about the code for now. This is supposed to give a graphical understanding of what the likelihood function looks like. 
-
+Do we think that the proposed probability of heads is a good one? We can use the likelihood function to perhaps determine this. We plot the values of the likelihood function for this data evaluated over the possible values that $\theta$ can take. 
 """
 
 # ╔═╡ 00cb5973-3047-4c57-9213-beae8f116113
@@ -347,20 +328,33 @@ begin
 	bernoulli(grid_θ, m, N) = (grid_θ .^ m) .* ((1 .- grid_θ) .^ (N - m))
 end
 
+# ╔═╡ c0bba3aa-d52c-4192-8eda-32d5d9f49a28
+md"""
+
+!!! note "Coin flippling with Bernoulli likelihood"
+
+heads = $(@bind m Slider(1:50, show_value = true, default=3));
+flips = $(@bind N Slider(1:50, show_value = true, default=5)); 
+
+"""
+
 # ╔═╡ 9e3c0e01-8eb6-4078-bc0f-019466afba5e
 bern  = bernoulli(grid_θ, m, N);
 
-# ╔═╡ 5d6a485d-90c4-4f76-a27e-497e8e12afd8
-plot(grid_θ, bern, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood", legend = false)
+# ╔═╡ ab9195d6-792d-4603-8605-228d479226c6
+max_index = argmax(bernoulli(grid_θ, m, N)); # Get argument that maximises this function 
 
 # ╔═╡ cacd6b2f-5af2-4113-ad63-170f70b77441
-sum(bernoulli(grid_θ, m, N)) # Does not sum to one, so not a probability
-
-# ╔═╡ ab9195d6-792d-4603-8605-228d479226c6
-max_index = argmax(bernoulli(grid_θ, m, N)) # Get argument that maximises this function 
+total_area = round(sum(bernoulli(grid_θ, m, N)), digits = 2) # Does not sum to one, so not a probability
 
 # ╔═╡ e42c5e18-a647-4281-8a87-1b3c6c2abd33
 likelihood_max = grid_θ[max_index] # Value at which the likelihood function is maximised. Makes sense, since we have 3 successes in 5 repetitions. 
+
+# ╔═╡ 5d6a485d-90c4-4f76-a27e-497e8e12afd8
+begin
+	plot(grid_θ, bern, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood", legend = false)
+	plot!([likelihood_max], seriestype = :vline, lw = 2, color = :black, ls = :dash, alpha =0.5, xticks = [likelihood_max])
+end
 
 # ╔═╡ 9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
 md"""
@@ -2418,14 +2412,13 @@ version = "0.9.1+5"
 # ╟─9e7a673e-7cb6-454d-9c57-b6b4f9181b06
 # ╠═5046166d-b6d8-4473-8823-5209aac59c84
 # ╟─82d0539f-575c-4b98-8679-aefbd11f268e
+# ╟─00cb5973-3047-4c57-9213-beae8f116113
+# ╟─9e3c0e01-8eb6-4078-bc0f-019466afba5e
 # ╟─c0bba3aa-d52c-4192-8eda-32d5d9f49a28
-# ╟─74013e0d-d856-4f6a-9460-f142f78726ee
-# ╠═00cb5973-3047-4c57-9213-beae8f116113
-# ╠═9e3c0e01-8eb6-4078-bc0f-019466afba5e
+# ╟─ab9195d6-792d-4603-8605-228d479226c6
+# ╟─cacd6b2f-5af2-4113-ad63-170f70b77441
+# ╟─e42c5e18-a647-4281-8a87-1b3c6c2abd33
 # ╟─5d6a485d-90c4-4f76-a27e-497e8e12afd8
-# ╠═cacd6b2f-5af2-4113-ad63-170f70b77441
-# ╠═ab9195d6-792d-4603-8605-228d479226c6
-# ╠═e42c5e18-a647-4281-8a87-1b3c6c2abd33
 # ╟─9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
 # ╟─fe8f71b2-4198-4a12-a996-da254d2cc656
 # ╟─7e89eee0-dd19-4fec-b7c0-7783a9ffb83c

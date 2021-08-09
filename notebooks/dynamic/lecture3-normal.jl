@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, SpecialFunctions, StatsBase, Statistics, StatsPlots, Turing
+using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI,Random,  SpecialFunctions, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -47,7 +47,7 @@ font-size: 1.5rem;
 opacity: 0.8;
 ">ATS 872: Lecture 3</p>
 <p style="text-align: center; font-size: 1.8rem;">
- Gauss all the things
+ The Normal Distribution
 </p>
 
 <style>
@@ -131,30 +131,11 @@ function compute_pi(n::Int)
     return n_landed_in_circle / n * 4.0    
   end
 
-# ╔═╡ 791140fa-1ab7-4d52-818a-baf747bd604f
-function compute_pi_ifelse(n::Int)
-  
-    n_landed_in_circle = 0  
-  
-    for i = 1:n
-        x = rand()   
-        y = rand()   
-  
-        r2 = x*x + y*y  
-        n_landed_in_circle += ifelse(r2<1.0,1,0)        
-    end
-  
-    return n_landed_in_circle / n * 4.0    
-  end
-
 # ╔═╡ 9e6a45a9-07da-4859-861c-db0c6ca30ec1
 @benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
 
 # ╔═╡ 4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
 @benchmark compute_pi(10000000); # Better code, optimised (not fully though)
-
-# ╔═╡ 2ca932e0-6c9f-44e3-b02d-6e8731d2ce4e
-#@benchmark compute_pi_ifelse(10000000);
 
 # ╔═╡ 9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
 md" So we have managed to find an approximation for $\pi$. Let us look at some other methods and also draw some nice graphs in the process to better explain what is going on. Our code above is optimised to a certain extent. However, when writing code, do not worry too much about optimisation. You can always go back to code to optimise. Try and write code that makes sense to you before you expirment with optimisation.  "
@@ -180,26 +161,23 @@ md" ### Plotting 🥧 "
 md" Let us try to plot the estimate for $\pi$ "
 
 # ╔═╡ 924ea0e4-0133-4711-9e19-662b4d753e37
-N = @bind N Slider(100:10:5000, default=100)
+N = @bind N₁ Slider(100:100:5000, default=100)
 
-# ╔═╡ 73ddfc2a-ac78-45b1-97fd-ec56ce3b5b00
+# ╔═╡ 3ef808e6-c49a-4c25-befe-d7bfd502ff64
 begin
-	R = 1
-	x = rand(Uniform(-R, R), N)
-	y = rand(Uniform(-R, R), N)
-	is_inside = (x.^2 .+ y.^2) .<= R.^2
-	pi_estimate = 4 * sum(is_inside) / N
-	pi_estimate
+	#N₁ = 10^5
+	data     = [[rand(),rand()] for _ in 1:N₁]
+	indata   = filter((x)-> (norm(x) <= 1), data)
+	outdata  = filter((x)-> (norm(x) > 1), data)
+	piApprox = 4*length(indata)/N₁
+	
+	scatter(first.(indata),last.(indata), c=:blue, ms=2.5, msw=0, alpha = 0.7)
+	scatter!(first.(outdata),last.(outdata), c=:red, ms=2.5, msw=0,
+		xlims=(0,1), ylims=(0,1), legend=:none, ratio=:equal, alpha = 0.8)
 end
 
-# ╔═╡ d5c65420-6910-4857-982d-604402968fe0
-begin
-	scatter(x[is_inside], y[is_inside], color = :dodgerblue)
-	scatter!(x[.!is_inside], y[.!is_inside], color = :firebrick3, legend = false)
-end
-
-# ╔═╡ 63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
-md" I will also show a simple animation for this in the lecture using the `Makie.jl` package. "
+# ╔═╡ ceaaccf2-ae65-4731-afc9-f6763bc2b3a1
+piApprox
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
 md" ## Gaussian (Normal) "
@@ -214,18 +192,17 @@ There are some problems
 
 1. It does not hold for all distributions, e.g., Cauchy
 2. This may require very large values of $n$. See the case of Binomial, when $\theta$ close to $0$ or $1$
-3. Does not hold if one the variables has much larger scale
+
+The first thing that we will do is derive the posterior distribution for the mean in the Gaussian model. We will start with the single parameter case, so we will assume that the variance $\sigma^{2}$ is known. This is rarely true in practice, so we will then move on to a discussion where both parameters are unknown. 
 """
 
 # ╔═╡ f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
 md" ### Gaussian model with known $\sigma^2$ "
 
 # ╔═╡ 8ffaa0dc-36f8-49da-9742-74db90c6d5a8
-md"""
+md""" 
 
-In this first part we provide some context to the problem, then we move to the derivation. 
-
-**Note**: The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
+**Note**: As we have mentioned, we start with a single parameter model. The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
 
 To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$. 
 
@@ -241,7 +218,7 @@ Since the scale of the study is small, there is uncertainty around the estimate.
 
 $$\theta \sim \mathcal{N}\left(\mu_{0}, \tau_{0}^{2}\right)$$
 
-where both $\mu_{0}$ and $\sigma_{0}^{2}$ are known. **Note**, this is a distribution around our unknown parameter $\theta$. Our prior distribution is normal with these specific parameters. 
+where both $\mu_{0}$ and $\sigma_{0}^{2}$ are known. **Note**: this is a distribution around our unknown parameter $\theta$. Our prior distribution is normal with these specific parameters. 
 
 Relevant information about $\theta$ is summarized by posterior distribution, which can be obtained by Bayes' theorem:
 
@@ -261,9 +238,9 @@ md"""
 # ╔═╡ 39d705ff-4540-4103-ae10-694d5b64e82b
 md"""
 
-In the first step, we write out the likelihood function $p(y \mid {\theta})$. Recall from our first lecture that we say a random variable $X$ follows a normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, if its density is given by
+We need a prior and likelihood function to produce the posterior distribution. We start with the form of the likelihood function $p(y \mid {\theta})$. Recall from our first lecture that we say a random variable $X$ follows a normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, its density is given by
 
-$$f\left(x ; a, b^{2}\right)=\left(2 \pi b^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 b^{2}}(x-a)^{2}}$$
+$$f_{X}\left(X = x ; a, b^{2}\right)=\left(2 \pi b^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 b^{2}}(x-a)^{2}}$$
 
 The likelihood function is a product of $N$ normal densities, so we can write
 
@@ -316,6 +293,11 @@ $$\begin{aligned}
 &=\frac{\frac{1}{\tau_{0}^{2}}}{\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}} \mu_{0}+\frac{\frac{N}{\sigma^{2}}}{\frac{1}{\tau_{0}^{2}}+\frac{N}{\sigma^{2}}} \bar{y}
 \end{aligned}$$
 
+If we write the posterior mean as $\omega \bar{y} + (1-\omega) \mu_{0}$ where 
+
+$\omega = \frac{N/\sigma^{2}}{N/\sigma^{2} + 1/\tau_{0}^{2}}$
+
+then we can say that the posterior mean is a weighted average of the data mean and the prior mean. Posterior therefore puts more emphasis on the data when the value of $N$ is large. This is something that we also found in our previous lecture with the Bernoulli distribution. 
 """
 
 # ╔═╡ 7644cfa5-c296-475d-bd8b-b78911ff98f3
@@ -467,15 +449,45 @@ end
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
 md" ### Gaussian with unknown $\mu$ and $\sigma^{2}$ "
 
-# ╔═╡ b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+# ╔═╡ 9781d63d-23ed-4d43-8446-9a495c31e85d
 md"""
-In our models thus far we have mostly dealth with one unknown parameter. Consider the case where there is more than one unknown parameter, but we are only interested in one of them. Please go through this section slowly and make sure you understand everything. I have tried to type out as many of the steps as I could, but perhaps I have skipped some without knowing it.  
 
-The joint distribution of parameters is given by the following proportional relationship
+In our models thus far we have mostly dealth with one unknown parameter. However, most models deal with more than one parameter. Many models have a rich selection of parameters. With the increasing size of datasets, we are estimating increasingly more complex models and this will increase the parameter space. 
+
+In order to look at a simple multiparameter model we look at the multivariate normal distribution. Below is a 3d representation of the mulitivariate normal. 
+
+"""
+
+# ╔═╡ 0c5f78a2-7fbd-4455-a7dd-24766bf78d90
+begin
+	gr()
+	Random.seed!(123)
+	
+	mvnorm = fit(MvNormal, [rand(0.0:100.0, 100) rand(0.0:100.0, 100)]')
+	x₁ = 0:100
+	y₁ = 0:(1/length(x₁))+1:101 # because x and y are of different lengths
+	z = [pdf(mvnorm, [i, j]) for i in x₁, j in y₁]
+	
+	plot(x₁, y₁, z, linetype=:wireframe, legend=false, color=:blues, width=0.4)
+	plot!(x₁, y₁, z, linetype=:surface, legend=false, color=:ice, alpha = 0.8)
+	
+end
+
+# ╔═╡ a793de54-cb93-4127-944b-30d23dbd8ff5
+md""" #### Marginalisation """
+
+# ╔═╡ b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+md""" 
+
+Please go through this section slowly and make sure you understand everything. I have tried to type out as many of the steps as I could, but perhaps I have skipped some without knowing it.  
+
+Seeing as we now have multiple parameters of interest, we are going to interested in a joint distribution. The joint posterior distribution is given by the following proportional relationship
 
 $$\begin{align*}
       p(\theta_1,\theta_2 \mid y) \propto p(y \mid \theta_1,\theta_2)p(\theta_1,\theta_2)
 \end{align*}$$
+
+This joint posterior distribution contains the posterior information about $\mathbf{\theta} = \{\theta_1, \theta_2\}$. Obviously it is going to be difficult to visualise this is we did for the single parameter model. In many instances we are interested in a subset of the parameters, and the other parameters of no real interest to our analysis. These parameters are often referred to as nuisance parameters. The Bayesian solution to this problem is quite natural. We have already established that the posterior is a joint probability distribution, therefore we can simply marginalise out the nuisance parameter through integration. 
 
 Marginalisation entails averaging over the parameter $\theta_2$ to gain access to $\theta_1$, 
 
@@ -496,6 +508,20 @@ $$\begin{align*}
 \end{align*}$$
 
 We would like to draw from the joint posterior, in other words, we are going to use Monte Carlo methods to draw $\mu^{(s)}, \sigma^{(s)} \sim p(\mu, \sigma  \mid  y)$, where the last part is the joint posterior. We assume that we have a noninformative prior so that $p(\mu,\sigma^2)  \propto \sigma^{-2}$. Note that $p(\mu,\sigma^2)$ is the joint prior here. Now let us get ready for some math to show what the posterior will look like given our prior choice and the likelihood function provided.  
+
+
+
+"""
+
+# ╔═╡ 4074ea94-617c-44de-9f88-0f62826acca4
+md"""
+
+#### Derivation contd.
+
+"""
+
+# ╔═╡ 9ca2715b-c6a3-48e5-80b5-131f2eeb0840
+md"""
 
 $$\begin{align*}
     & p(\mu,\sigma^2 \mid y) \propto  \sigma^{-2}\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
@@ -732,6 +758,7 @@ KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -2267,10 +2294,8 @@ version = "0.9.1+5"
 # ╟─961747f8-c884-43bf-941d-4545fb4510e6
 # ╠═e3f722c1-739f-45b4-8fbf-db07e9483d92
 # ╠═16b216ff-81ed-481a-896b-4ddf2cd139f6
-# ╠═791140fa-1ab7-4d52-818a-baf747bd604f
 # ╠═9e6a45a9-07da-4859-861c-db0c6ca30ec1
 # ╠═4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
-# ╠═2ca932e0-6c9f-44e3-b02d-6e8731d2ce4e
 # ╟─9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
 # ╟─880792b2-02b7-444e-a787-d02ee685ee72
 # ╟─309c4a9b-cd46-43ed-8a59-001057549fc4
@@ -2278,10 +2303,9 @@ version = "0.9.1+5"
 # ╟─94dc15cd-31ea-46a0-8401-aff7f2a74e5e
 # ╟─11a1cec2-2e95-4ebd-a7ce-bbe77f3c9a1d
 # ╟─a0981303-008c-4e4a-b96e-581b52ab15f2
-# ╟─924ea0e4-0133-4711-9e19-662b4d753e37
-# ╠═73ddfc2a-ac78-45b1-97fd-ec56ce3b5b00
-# ╟─d5c65420-6910-4857-982d-604402968fe0
-# ╟─63a63bb5-21d3-4506-bbe5-ff885dfd3e8a
+# ╠═924ea0e4-0133-4711-9e19-662b4d753e37
+# ╟─3ef808e6-c49a-4c25-befe-d7bfd502ff64
+# ╠═ceaaccf2-ae65-4731-afc9-f6763bc2b3a1
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─e4730930-c3cd-4a01-a4d9-420bd15004ad
 # ╟─f82ce58d-f292-4ecd-86ae-06d4fa79bcd4
@@ -2316,7 +2340,12 @@ version = "0.9.1+5"
 # ╠═3db81fbb-31c3-416e-92d0-258f2d4d8cd5
 # ╟─8973afa7-2325-42f4-8e14-28aa090448d6
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
+# ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
+# ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90
+# ╟─a793de54-cb93-4127-944b-30d23dbd8ff5
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+# ╟─4074ea94-617c-44de-9f88-0f62826acca4
+# ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
 # ╟─7453b184-2256-4626-8802-0521e72414c2
 # ╟─23185d7e-14be-443e-9acc-b35120b66fba
 # ╠═ac095ff8-bcab-466c-b71f-4b738b38010a

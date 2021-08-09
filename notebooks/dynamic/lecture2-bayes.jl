@@ -291,14 +291,19 @@ In this case the $y_{i}$'s, for $i = 1, \ldots, N$, are random variables for eac
 
 The probability of success is represented by $\theta$, while the probability of failure is given by $1- \theta$. This is considered an Bernoulli event. Our goal is to gain an estimate for $\theta$.
 
-A binary random variable  $y_{i} \in \{0, 1\}$, $0 \leq \theta \leq 1$ follows a Bernoulli distribution if
+A binary random variable  $y \in \{0, 1\}$, $0 \leq \theta \leq 1$ follows a Bernoulli distribution if
 
-$p\left(y_{i} \mid \theta\right)=\left\{\begin{array}{cl}\theta & \text { if } y_{i}=1 \\ 1-\theta & \text { if } y_{i}=0\end{array}\right.$
+$p\left(y \mid \theta\right)=\left\{\begin{array}{cl}\theta & \text { if } y=1 \\ 1-\theta & \text { if } y=0\end{array}\right.$
 
-Let $y$ be the number of successes in $N$ repetitions of the experiment then our likelihood function is
+We combine the equations for the probabilities of success and failure into a single expression 
 
+$p(y \mid \theta) = \theta^{y} (1 - \theta)^{1-y}$
 
-$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ &=\theta^{y_{i}}(1-\theta)^{N-y_{i}} \end{aligned}$
+We can also figure out the formula for the likelihood of a whole set of outcomes from **multiple flips**. Denote the outcome fo the $i$th flip as $y_{i}$ and denote the set of outcomes as $\{y_{i}\}$. If we assume outcomes are independent of each other then we can derive the following formula for the probability of set of outcomes
+
+$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ 
+  =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
+  =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \end{aligned}$
 
 
 """
@@ -306,16 +311,57 @@ $\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\rig
 # ╔═╡ 9e7a673e-7cb6-454d-9c57-b6b4f9181b06
 md" We can write some code for the likelihood for the binomial random variable. We should have some sort of mental model of what this function looks like when thining about statistical modelling. Consider coin tossing for this Bernoulli distribution. The likelihood function tells us what the probability is of observing a particular sequence of heads and tails if the probability of heads is $\theta$."
 
+# ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
+md" #### Estimating bias in a coin (Bernoulli)  "
+
+# ╔═╡ 24c4d724-5911-4534-a5c6-3ab86999df43
+md"""
+For an example lets look at estimating bias in a coin. We observe the number of heads that result from flipping a coin and we estimate its underlying probability of coming up heads. We want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
+
+We need underlying probability of heads as value of parameter $\theta$. This can be written as $p(y = 1 \mid \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. We also need the probability of tails, which is the complement of probability of heads $p(y = 0 \mid \theta) = 1 - \theta$. 
+
+Combine the equations for the probability of heads and tails, we have the same as before,  
+
+$$\begin{align*}
+  p(y \mid \theta)  = \theta^{y}(1-\theta)^{1-y}
+\end{align*}$$
+
+We have established this probability distribution is called the Bernoulli distribution. This is a distribution over two discrete values of $y$ for a fixed value of $\theta$. The sum of the probabilities is $1$ (which must be the case for a probability distribution).
+
+$$\begin{align*}
+  \sum_{y} p(y \mid \theta) = p(y = 1 \mid \theta) + p(y = 0 \mid \theta) = \theta + (1-\theta) = 1
+\end{align*}$$
+
+If we consider $y$ fixed and the value of $\theta$ as variable, then our equation is a **likelihood function** of $\theta$.
+
+This likelihood function is **NOT** a probability distribution! 
+
+Suppose that $y = 1$ then $\int_{0}^{1}\theta^{y}(1-\theta)^{1-y}\text{d}\theta = \int_{0}^{1}\theta^{y}\text{d}\theta = 1/2$
+
+ormula for the probability of the set of outcomes is given by
+
+$$\begin{align*}
+  p(y \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
+  =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
+  =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
+  =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}} \\
+	=& \theta^m(1-\theta)^{N - m}
+\end{align*}$$
+
+Let us quickly talk about this likelihood, so that we have clear vision of what it looks like. We start with an example where there are $5$ coin flips and $1$ of them is heads (as can be seen below). 
+
+"""
+
 # ╔═╡ 5046166d-b6d8-4473-8823-5209aac59c84
 begin
-	Random.seed!(1244)
+	Random.seed!(1237)
 	coin_seq = Int.(rand(Bernoulli(0.4), 5))
 end
 
 # ╔═╡ 82d0539f-575c-4b98-8679-aefbd11f268e
 md"""
 
-Let us say that we think the probability of heads is $0.3$, then our likelihood will be 
+Let us say that we think the probability of heads is $0.3$. Our likelihood can be represented as
 
 $p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}} = \theta ^ m (1- \theta) ^{N - m}$
 
@@ -350,7 +396,7 @@ likelihood_max = grid_θ[max_index]; # Value at which the likelihood function is
 # ╔═╡ 5d6a485d-90c4-4f76-a27e-497e8e12afd8
 begin
 	plot(grid_θ, bern, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood", legend = false)
-	plot!([likelihood_max], seriestype = :vline, lw = 2, color = :black, ls = :dash, alpha =0.5, xticks = [likelihood_max])
+	plot!([likelihood_max], seriestype = :vline, lw = 2, color = :black, ls = :dash, alpha =0.7, xticks = [likelihood_max])
 end
 
 # ╔═╡ 9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
@@ -363,54 +409,18 @@ What do we notice about the likelihood function?
 
 $\hat{\theta}_{M L E}=\operatorname{argmax}_{\theta}(p(y \mid \theta))$
 
-This example shows that it can be dangerous to use maximum likelihood with small samples. The true success rate is $0.4$ but our estimate provided a value of $0.6$.
+This example shows that it can be dangerous to use maximum likelihood with small samples. The true success rate is $0.4$ but our estimate provided a value of $0.2$.
 
 In this case, our prior information (subjective belief) was that the probability of heads should be $0.3$. This could have helped is in this case get to a better estimate, but unfortunately maximimum likelihood does not reflect this prior belief. This means that we are left with a success rate equal to the frequency of occurence. 
 
 """
 
-# ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
-md" #### Estimating bias in a coin (Bernoulli)  "
-
-# ╔═╡ 24c4d724-5911-4534-a5c6-3ab86999df43
+# ╔═╡ 36e6f838-8277-480b-b48d-f70e8fe011eb
 md"""
-Now we move on to a specific example that uses the knowledge we gained in the previous sections. 
 
-We look at estimating bias in a coin. We observe the number of heads that result from flipping a coin and we estimate its underlying probability of coming up heads. Want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
+The next step then is to establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $m$ and number of flips by $N$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
 
-We need underlying probability of heads as value of parameter $\theta$. This can be written as $p(y = 1 \mid \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. 
-
-We also need the probability of tails, which is the complement of probability of heads $p(y = 0 \mid \theta) = 1 - \theta$. 
-
-Combine the equations for the probability of heads and tails 
-
-$$\begin{align*}
-  p(y \mid \theta)  = \theta^{y}(1-\theta)^{1-y}
-\end{align*}$$
-
-We have established this probability distribution is called the Bernoulli distribution. This is a distribution over two discrete values of $y$ for a fixed value of $\theta$. The sum of the probabilities is $1$ (which must be the case for a probability distribution).
-
-$$\begin{align*}
-  \sum_{y} p(y \mid \theta) = p(y = 1 \mid \theta) + p(y = 0 \mid \theta) = \theta + (1-\theta) = 1
-\end{align*}$$
-
-If we consider $y$ fixed and the value of $\theta$ as variable, then our equation is a **likelihood function** of $\theta$.
-
-This likelihood function is not a probability distribution, suppose that $y = 1$ then $\int_{0}^{1}\theta^{y}(1-\theta)^{1-y}\text{d}\theta = \int_{0}^{1}\theta^{y}\text{d}\theta = 1/2$
-
-Let us take a look at what happens for multiple flips. Outcome of $i$th flip is given by $y_i$ and set of outcomes is $\{y_i\}$. Formula for the probability of the set of outcomes is given by
-
-$$\begin{align*}
-  p(y \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
-  =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
-  =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
-  =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}} \\
-	=& \theta^m(1-\theta)^{N - m}
-\end{align*}$$
-
-Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $m$ and number of flips by $N$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
-
-Let us code up the likelihood, prior and updated posterior for this example. In order to do this let us implement the grid method. There are many other ways to do this. However, this method is easy to do and gives us some good coding practice.  
+Let us code up the likelihood, prior and updated posterior for this example. In order to do this let us implement the grid method. There are many other ways to do this. However, this method is easy to do and gives us some good coding practice.
 
 """
 
@@ -438,7 +448,7 @@ md" Now we will add a triangular prior across the grid points with a peak at $\t
 m₁ = 1 # Number of heads
 
 # ╔═╡ f001b040-2ae7-4e97-b229-eebaabb537b0
-N₁ = 4 # Number of flips
+N₁ = 5 # Number of flips
 
 # ╔═╡ 9a2d5bdf-9597-40c7-ac18-bb27f187912d
 triangle_prior = TriangularDist(0, 1); # From the Distributions.jl package
@@ -447,7 +457,7 @@ triangle_prior = TriangularDist(0, 1); # From the Distributions.jl package
 plot(triangle_prior, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
 
 # ╔═╡ 8382e073-433b-4e42-a6fa-d5a051586457
-md" In this small dataset we have $1$ success out of $4$ attempts. Our distribution function will calculate the probability that we want for a given value of $\theta$. We want to do this for each value of $\theta$, but using same values for $y$ each time. This is the hardest part of our computation (for this example, not in general). "
+md" In this small dataset we have $1$ success out of $4$ attempts. Our distribution function will calculate the probability that we want for a given value of $\theta$. We want to do this for each value of $\theta$, but using same values for $m$ and $N$ each time.  "
 
 # ╔═╡ 9678396b-d42c-4c7c-821c-08126895efd3
 bern₁ = bernoulli(grid_θ, m₁, N₁);
@@ -492,12 +502,12 @@ begin
 end
 
 # ╔═╡ 4b141ffc-4100-47e3-941a-4e72c784ccf0
-md" Play around with the sliders here so that you can see what happens to the posterior once it gets updated with new information from the data. "
+md" Play around with the sliders here so that you can see what happens to the posterior once it gets updated with new information from the data. In addition, what happens once the size of the dataset increases? What role does the prior play?"
 
 # ╔═╡ 219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 md"""
-heads = $(@bind y₂ Slider(1:10, show_value = true, default=1));
-flips = $(@bind n₂ Slider(1:10, show_value = true, default=4))
+heads = $(@bind y₂ Slider(1:100, show_value = true, default=3));
+flips = $(@bind n₂ Slider(1:100, show_value = true, default=5))
 """
 
 # ╔═╡ 2833e081-45d6-4f64-8d1e-b3a5895b7952
@@ -505,7 +515,7 @@ begin
 	b₂ = Binomial.(n₂, coins_grid)
 	likelihood_2 = pdf.(b₂, y₂)
 	likelihood_norm_2 = likelihood_2 / sum(likelihood_2) / 0.001
-	posterior_2 = prior .* likelihood_norm;
+	posterior_2 = prior .* likelihood_norm_2;
 	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
 	plot!(coins_grid, likelihood_norm_2, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
 	plot!(coins_grid, posterior_2, color = :black,lw = 2,  fill = (0, 0.4, :green))
@@ -722,8 +732,13 @@ The variables $a$ and $b$ are called the shape parameters of the Beta distributi
 
 # ╔═╡ 1ca20976-757f-4e30-94d4-ee1276a614fb
 md"""
+
+!!! note "Parameters (a, b) of Beta distribution"
+
 a = $(@bind α Slider(1:0.1:4, show_value = true, default=1)); 
 b = $(@bind β Slider(1:1:4, show_value = true, default=1))
+
+> Changing these sliders will illustrate how flexible the Beta distribution really is!
 """
 
 # ╔═╡ aa69d0e8-cbbb-436c-b488-5bb113cdf97f
@@ -734,18 +749,20 @@ plot(prior_beta, coins_grid, xlab = "theta", ylab = "prior", color = :black, leg
 
 # ╔═╡ 43d563ae-a435-417f-83c6-19b3b7d6e6ee
 md"""
+
+!!! note "Beta priors with Binomial likelihood"
+
 a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=1));
 b1 = $(@bind β₁ Slider(1:1:4, show_value = true, default=1))
-"""
 
-# ╔═╡ 448b4ddf-5be2-4843-8e8e-4afb60aa8843
-md" Using this Beta distribution then as prior will give us the following posterior " 
+> Using different parameterisations of Beta will provide different posteriors.
+"""
 
 # ╔═╡ 11a5614b-c195-45a8-8be0-b99fda6c60fd
 begin
 	prior_beta₁ = Beta(α₁, β₁)
 	prior_beta_pdf = pdf(prior_beta₁, coins_grid); # Beta distribution
-	posterior_beta = prior_beta_pdf .* likelihood_norm;
+	posterior_beta = prior_beta_pdf .* likelihood_norm_2;
 	plot(prior_beta₁, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
 	plot!(coins_grid, likelihood_norm_2, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
 	plot!(coins_grid, posterior_beta, color = :black,lw = 2,  fill = (0, 0.4, :green))
@@ -803,8 +820,10 @@ md" First, we need to construct our model. We specify the prior and then the lik
 begin
 	Random.seed!(1)
 	
+	# This is the same as 5 indepdent Bernoulli coin tosses
+	
 	y₃ = 1
-	n₃ = 4
+	n₃ = 5
 	
 	@model function coin_toss(n, y)
 	    θ ~ Beta(1, 1) # Prior 
@@ -816,7 +835,7 @@ begin
 end
 
 # ╔═╡ 54f47150-282e-434c-a588-c7c530c438b9
-StatsPlots.plot(chns)
+StatsPlots.plot(chns, lw = 1.75, color = :steelblue, alpha = 0.8)
 
 # ╔═╡ bf1a74e4-cf55-470e-843d-a8e6b90517e9
 md" We will take a look at a more involved coin toss example later in the course, but this should be easy enough to understand. "
@@ -2377,6 +2396,8 @@ version = "0.9.1+5"
 # ╟─284d0a23-a329-4ea7-a069-f387e21ba797
 # ╟─bb535c41-48cb-44fd-989b-a6d3e310406f
 # ╟─9e7a673e-7cb6-454d-9c57-b6b4f9181b06
+# ╟─828166f7-1a69-4952-9e3b-50a99a99789f
+# ╟─24c4d724-5911-4534-a5c6-3ab86999df43
 # ╠═5046166d-b6d8-4473-8823-5209aac59c84
 # ╟─82d0539f-575c-4b98-8679-aefbd11f268e
 # ╠═00cb5973-3047-4c57-9213-beae8f116113
@@ -2386,8 +2407,7 @@ version = "0.9.1+5"
 # ╟─e42c5e18-a647-4281-8a87-1b3c6c2abd33
 # ╟─5d6a485d-90c4-4f76-a27e-497e8e12afd8
 # ╟─9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
-# ╟─828166f7-1a69-4952-9e3b-50a99a99789f
-# ╟─24c4d724-5911-4534-a5c6-3ab86999df43
+# ╟─36e6f838-8277-480b-b48d-f70e8fe011eb
 # ╟─11b8b262-32d2-4620-bc6b-afca4a5ce977
 # ╟─89f7f633-4f75-4ef5-aa5b-80e318d14ee5
 # ╟─11552b20-3407-4d0b-b07d-1488c8e8a759
@@ -2399,7 +2419,7 @@ version = "0.9.1+5"
 # ╟─f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
 # ╟─8382e073-433b-4e42-a6fa-d5a051586457
 # ╠═9678396b-d42c-4c7c-821c-08126895efd3
-# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
+# ╠═0a1d46ed-0295-4000-9e30-3ad838552a7e
 # ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
 # ╠═87db6122-4d28-45bf-b5b0-41189792199d
 # ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98
@@ -2407,7 +2427,7 @@ version = "0.9.1+5"
 # ╟─c3d2ba03-e676-4f0f-bafd-feecd0e4e414
 # ╠═97c0c719-fb73-4571-9a6c-629a98cc544d
 # ╠═0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
-# ╟─4e790ffa-554d-4c46-af68-22ecb461fb7b
+# ╠═4e790ffa-554d-4c46-af68-22ecb461fb7b
 # ╟─4b141ffc-4100-47e3-941a-4e72c784ccf0
 # ╟─219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 # ╟─2833e081-45d6-4f64-8d1e-b3a5895b7952
@@ -2435,10 +2455,9 @@ version = "0.9.1+5"
 # ╟─5c714d3b-ac72-40dc-ba98-bb2b24435d4c
 # ╟─573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 # ╟─1ca20976-757f-4e30-94d4-ee1276a614fb
-# ╠═aa69d0e8-cbbb-436c-b488-5bb113cdf97f
+# ╟─aa69d0e8-cbbb-436c-b488-5bb113cdf97f
 # ╟─84d7e4dd-23a9-4412-a8de-ab8ee8351770
 # ╟─43d563ae-a435-417f-83c6-19b3b7d6e6ee
-# ╟─448b4ddf-5be2-4843-8e8e-4afb60aa8843
 # ╟─11a5614b-c195-45a8-8be0-b99fda6c60fd
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
 # ╟─e7669fea-5aff-4522-81bf-3356ce126b1f

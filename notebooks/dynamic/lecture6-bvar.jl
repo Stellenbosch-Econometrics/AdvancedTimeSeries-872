@@ -36,7 +36,7 @@ font-feature-settings: 'lnum', 'pnum';
 "> <p style="
 font-size: 1.5rem;
 opacity: 0.8;
-">ATS 872: Lecture 7</p>
+">ATS 872: Lecture 6</p>
 <p style="text-align: center; font-size: 1.8rem;">
  Bayesian vector autoregression (BVAR)
 </p>
@@ -1349,7 +1349,7 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╟─09a9d9f9-fa1a-4192-95cc-81314582488b
+# ╠═09a9d9f9-fa1a-4192-95cc-81314582488b
 # ╟─41eb90d1-9262-42b1-9eb2-d7aa6583da17
 # ╟─aa69729a-0b08-4299-a14c-c9eb2eb65d5c
 # ╟─000021af-87ce-4d6d-a315-153cecce5091

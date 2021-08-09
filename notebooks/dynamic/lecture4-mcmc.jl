@@ -564,15 +564,88 @@ md" ### Metropolis algorithm "
 # ╔═╡ 9e9af560-3898-4bb2-8aa7-0e660f738a72
 md" The Metropolis algorithm is one of the most celebrated algorithms of the 20th century and has been influential in many disciplines. From our previous example we know everything we need to know to understand the Metropolis algorithm more formally. In this section we will write out the algorithm in full and also provide the code to show how we can explore the posterior probability distribution space using this method. "
 
-# ╔═╡ 1970bc03-ff14-4819-86a6-0a8b802a9f8e
+# ╔═╡ c3046dbc-e894-4194-aa54-4f4f28f1066b
 md"""
 
-Below is a more advanced representation of the Metropolis algorithm. It incorporates some good programming principles, so it is worthwhile going through it in more detail.
+The general Metropolis algorithm can be written as follows,
+
+1. Choose a starting point $\theta^0$
+2. For $t=1,2,\ldots$ pick a proposal $\theta^{*}$ from the proposal distribution
+          $J_t(\theta^{*} \mid \theta^{t-1})$. The proposal distribution has to be symmetric, i.e.
+          $J_t(\theta_a \mid \theta_b)=J_t(\theta_b \mid \theta_a)$, for all $\theta_a,\theta_b$
+3. Calculate the acceptance ratio
+
+$\begin{equation*}
+            r=\frac{p(\theta^{*} \mid y)}{p(\theta^{t-1} \mid y)}
+\end{equation*}$
+4. Set 
+
+$\theta^{t}= \begin{cases}\theta^{*} & \text { with probability } \min (r, 1) \\ \theta^{t-1} & \text { otherwise }\end{cases}$ 
+
+i.e. if $p(\theta^{*} \mid y)>p(\theta^{t-1})$ accept the proposal always and otherwise reject the proposal with probability $r$.
+
+Rejection of a proposal increments the time $t$ also by one, so the new state is the same as previous.
+
+Step 4 is executed by generating a random number from $\mathcal{U}(0,1)$. 
+
+**Note**: $p(\theta^* \mid y)$ and $p(\theta^{t-1} \mid y)$ have the same normalization terms, and thus instead of $p(\cdot \mid y)$, unnormalized $q(\cdot \mid y)$ can be used, as the normalization terms cancel out!
+
 
 """
 
-# ╔═╡ 96a96529-c50f-4885-bc14-a53ebe693101
 
+# ╔═╡ aad23932-c61e-4308-956b-c2d64d85ac93
+md"""
+
+#### Why does this algorithm work? 
+
+"""
+
+# ╔═╡ 32b7f7aa-0a56-4cee-87a7-339826fa5c1e
+md"""
+
+Intuitively more draws from the higher density areas as jumps to higher density are always accepted and only some of the jumps to the lower density are accepted. 
+
+Theoretically, we need to prove that the simulated series is a Markov chain which has unique stationary distribution. We also need to prove that this stationary distribution is the desired target distribution. 
+
+In order to prove this series is a Markov chain with unique stationary distribution, we have to show that it is irreducible, aperiodic and recurrent. We have mentioned these conditions in the previous section of the Markov chain discussion. 
+
+In short, irreducibilitiy refers to the fact that there is a positive probability of eventually reaching any state from any other state. Aperiodic refers to the fact that return times are not periodic and recurrent reflects the fact that probability to return to certain state is $1$.
+
+Proving that this is the desired target is also relatively straightforward. 
+
+We consider starting algorithm at time $t-1$ with a draw $\theta^{t-1} \sim p(\theta|y)$. Consider any two such points $\theta_a$ and $\theta_b$ drawn from $p(\theta|y)$ and labeled so that $p(\theta_b|y)\geq p(\theta_a|y)$. The unconditional probability density of a transition from $\theta_a$ to $\theta_b$ is
+
+$\begin{equation*}
+        p(\theta^{t-1}=\theta_a,\theta^{t}=\theta_b)=
+        p(\theta_a|y)J_t(\theta_b|\theta_a),
+\end{equation*}$
+
+The unconditional probability density of a transition from $\theta_b$ to $\theta_a$ is
+
+$\begin{align*}
+       &p(\theta^{t}=\theta_a,\theta^{t-1}=\theta_b) \\
+       & = p(\theta_b|y)J_t(\theta_a|\theta_b)\left(\frac{p(\theta_a|y)}{p(\theta_b|y)}\right)\\
+       &  =   p(\theta_a|y)J_t(\theta_a|\theta_b),
+\end{align*}$
+
+which is the same as the probability of transition from $\theta_a$ to $\theta_b$, since we have required that $J_t(\cdot|\cdot)$ is symmetric. Since their joint distribution is symmetric, $\theta^t$ and $\theta^{t-1}$ have the same marginal distributions, and so $p(\theta|y)$ is the stationary distribution of the Markov chain of $\theta$.
+
+"""
+
+# ╔═╡ 3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
+md"""
+
+#### Practical implementation
+
+"""
+
+# ╔═╡ 1970bc03-ff14-4819-86a6-0a8b802a9f8e
+md"""
+
+We will rarely code up our own Metropolis algorithm for this course, it is more likely that we will be using Gibbs sampling. However, we provide a representation of the Metropolis algorithm. It incorporates some good programming principles, so it is worthwhile going through it in more detail.
+
+"""
 
 # ╔═╡ 6b4b1e00-c2cf-4c06-8598-7a16965e73e3
 function metropolis_adv(S::Int64, width::Float64, ρ::Float64;
@@ -580,6 +653,7 @@ function metropolis_adv(S::Int64, width::Float64, ρ::Float64;
                     σ_x::Float64=1.0, σ_y::Float64=1.0,
                     start_x=-2.5, start_y=2.5,
                     seed=123)
+	
     rgn = MersenneTwister(seed)
     binormal = MvNormal([μ_x; μ_y], [σ_x ρ; ρ σ_y])
     draws = Matrix{Float64}(undef, S, 2)
@@ -598,7 +672,6 @@ function metropolis_adv(S::Int64, width::Float64, ρ::Float64;
         end
         @inbounds draws[s, :] = [x y]
     end
-    println("Acceptance rate is: $(accepted / S)")
     return draws
 end
 
@@ -679,6 +752,20 @@ begin
 	    c=:steelblue,
 	    label="90% HPD")
 end
+
+# ╔═╡ a4f22ac0-db21-4e0d-8540-8e56761d42dc
+md"""
+
+### Metropolis-Hastings algorithm
+
+"""
+
+# ╔═╡ fb9c25ae-8e95-43d5-a731-d32a6833941b
+md"""
+
+The **Metropolis-Hastings** algorithm is a extension of the Metropolis algorithm that incorporates a non-symmertic proposal distribution. This makes the math a bit more tricky, but the ideas essentially stay the same. 
+
+"""
 
 # ╔═╡ 1fde9a98-0ca0-43ed-a290-f19cfb02af6e
 md" ### Gibbs sampling "
@@ -784,7 +871,7 @@ md"""
 """
 
 # ╔═╡ 676bed44-b4f0-4117-aa4e-649dae752bad
-md" In the next lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. This is more in the domain of statistics and computer science. We will also be talking about `Turing.jl`, which is a probabilistic programming language implemented in Julia. It incoporates many of the advanced MCMC methods under the hood, so you don't have to worry about coding them up. You just need to be able to specify your model and the posterior will be found for you! "
+md" In the last lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2306,8 +2393,11 @@ version = "0.9.1+5"
 # ╟─ec1270ca-5943-4fe7-8017-6904c72673f0
 # ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 # ╟─9e9af560-3898-4bb2-8aa7-0e660f738a72
+# ╟─c3046dbc-e894-4194-aa54-4f4f28f1066b
+# ╟─aad23932-c61e-4308-956b-c2d64d85ac93
+# ╟─32b7f7aa-0a56-4cee-87a7-339826fa5c1e
+# ╟─3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
 # ╟─1970bc03-ff14-4819-86a6-0a8b802a9f8e
-# ╠═96a96529-c50f-4885-bc14-a53ebe693101
 # ╠═6b4b1e00-c2cf-4c06-8598-7a16965e73e3
 # ╠═3453a862-d9ce-4802-ace7-8b825641b4e2
 # ╠═dbaa28bc-021f-4805-b265-19b9257bbd02
@@ -2316,9 +2406,11 @@ version = "0.9.1+5"
 # ╠═47063329-5039-4e7f-b8d0-73e991cb3772
 # ╠═a19a4458-b167-46ad-97a1-156b789be81a
 # ╟─29298f63-a7d7-4aaa-b888-3e955841f7f5
-# ╟─364377f1-3528-4e4a-99d1-91b96c546346
+# ╠═364377f1-3528-4e4a-99d1-91b96c546346
 # ╟─492d4b83-e736-4ca4-92d0-2bdb7973b85f
 # ╟─b1bc647a-32f1-4ec8-a60e-f8e43e95be2d
+# ╟─a4f22ac0-db21-4e0d-8540-8e56761d42dc
+# ╟─fb9c25ae-8e95-43d5-a731-d32a6833941b
 # ╟─1fde9a98-0ca0-43ed-a290-f19cfb02af6e
 # ╠═8bef5267-2077-43a2-b825-67655b6310c4
 # ╠═a901d5d4-81e4-4ded-8d58-f671f4ae4929

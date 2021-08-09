@@ -36,7 +36,7 @@ font-feature-settings: 'lnum', 'pnum';
 "> <p style="
 font-size: 1.5rem;
 opacity: 0.8;
-">ATS 872: Lecture 6</p>
+">ATS 872: Lecture 5</p>
 <p style="text-align: center; font-size: 1.8rem;">
  Bayesian basics and regression
 </p>

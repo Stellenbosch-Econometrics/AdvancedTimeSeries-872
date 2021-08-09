@@ -276,7 +276,7 @@ md" In this section we will be looking at some single parameter models. In other
 # ╔═╡ 284d0a23-a329-4ea7-a069-f387e21ba797
 md"""
 
-#### Bernoulli random variable 
+### Bernoulli random variable 
 
 """
 
@@ -344,11 +344,8 @@ bern  = bernoulli(grid_θ, m, N);
 # ╔═╡ ab9195d6-792d-4603-8605-228d479226c6
 max_index = argmax(bernoulli(grid_θ, m, N)); # Get argument that maximises this function 
 
-# ╔═╡ cacd6b2f-5af2-4113-ad63-170f70b77441
-total_area = round(sum(bernoulli(grid_θ, m, N)), digits = 2) # Does not sum to one, so not a probability
-
 # ╔═╡ e42c5e18-a647-4281-8a87-1b3c6c2abd33
-likelihood_max = grid_θ[max_index] # Value at which the likelihood function is maximised. Makes sense, since we have 3 successes in 5 repetitions. 
+likelihood_max = grid_θ[max_index]; # Value at which the likelihood function is maximised. Makes sense, since we have 3 successes in 5 repetitions. 
 
 # ╔═╡ 5d6a485d-90c4-4f76-a27e-497e8e12afd8
 begin
@@ -372,13 +369,159 @@ In this case, our prior information (subjective belief) was that the probability
 
 """
 
+# ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
+md" #### Estimating bias in a coin (Bernoulli)  "
+
+# ╔═╡ 24c4d724-5911-4534-a5c6-3ab86999df43
+md"""
+Now we move on to a specific example that uses the knowledge we gained in the previous sections. 
+
+We look at estimating bias in a coin. We observe the number of heads that result from flipping a coin and we estimate its underlying probability of coming up heads. Want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
+
+We need underlying probability of heads as value of parameter $\theta$. This can be written as $p(y = 1 \mid \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. 
+
+We also need the probability of tails, which is the complement of probability of heads $p(y = 0 \mid \theta) = 1 - \theta$. 
+
+Combine the equations for the probability of heads and tails 
+
+$$\begin{align*}
+  p(y \mid \theta)  = \theta^{y}(1-\theta)^{1-y}
+\end{align*}$$
+
+We have established this probability distribution is called the Bernoulli distribution. This is a distribution over two discrete values of $y$ for a fixed value of $\theta$. The sum of the probabilities is $1$ (which must be the case for a probability distribution).
+
+$$\begin{align*}
+  \sum_{y} p(y \mid \theta) = p(y = 1 \mid \theta) + p(y = 0 \mid \theta) = \theta + (1-\theta) = 1
+\end{align*}$$
+
+If we consider $y$ fixed and the value of $\theta$ as variable, then our equation is a **likelihood function** of $\theta$.
+
+This likelihood function is not a probability distribution, suppose that $y = 1$ then $\int_{0}^{1}\theta^{y}(1-\theta)^{1-y}\text{d}\theta = \int_{0}^{1}\theta^{y}\text{d}\theta = 1/2$
+
+Let us take a look at what happens for multiple flips. Outcome of $i$th flip is given by $y_i$ and set of outcomes is $\{y_i\}$. Formula for the probability of the set of outcomes is given by
+
+$$\begin{align*}
+  p(y \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
+  =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
+  =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
+  =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}}
+\end{align*}$$
+
+Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $m$ and number of flips by $N$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
+
+Let us code up the likelihood, prior and updated posterior for this example. In order to do this let us implement the grid method. There are many other ways to do this. However, this method is easy to do and gives us some good coding practice.  
+
+"""
+
+# ╔═╡ 11b8b262-32d2-4620-bc6b-afca4a5ce977
+md" #### The grid method "
+
+# ╔═╡ 89f7f633-4f75-4ef5-aa5b-80e318d14ee5
+md" There are four basic steps behind the grid method.
+
+1. Discretize the parameter space if it is not already discrete.
+2. Compute prior and likelihood at each “grid point” in the (discretized) parameter space.
+3. Compute (kernel of) posterior as 'prior $\times$ likelihood' at each “grid point”.
+4. Normalize to get posterior, if desired."
+
+# ╔═╡ 11552b20-3407-4d0b-b07d-1488c8e8a759
+md" The first step then in the grid method is to create a grid. The parameter is $\theta$ and we will discretise by selecting grid points between $0$ and $1$. For our first example let us choose $1001$ grid points. "
+
+# ╔═╡ 599c2f09-ad5e-4f39-aa7d-c1ba155725d6
+coins_grid = range(0, 1, length = 1001) |> collect;
+
+# ╔═╡ 09ec10d9-a604-480d-8e82-59e84a843749
+md" Now we will add a triangular prior across the grid points with a peak at $\theta = 0.5$ and plot the resulting graph."
+
+# ╔═╡ 071761f8-a187-47a6-8fee-5fc91e65d04c
+m₁ = 1 # Number of heads
+
+# ╔═╡ f001b040-2ae7-4e97-b229-eebaabb537b0
+N₁ = 4 # Number of flips
+
+# ╔═╡ 9a2d5bdf-9597-40c7-ac18-bb27f187912d
+triangle_prior = TriangularDist(0, 1); # From the Distributions.jl package
+
+# ╔═╡ f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
+plot(triangle_prior, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
+
+# ╔═╡ 8382e073-433b-4e42-a6fa-d5a051586457
+md" In this small dataset we have $1$ success out of $4$ attempts. Our distribution function will calculate the probability that we want for a given value of $\theta$. We want to do this for each value of $\theta$, but using same values for $y$ each time. This is the hardest part of our computation (for this example, not in general). "
+
+# ╔═╡ 9678396b-d42c-4c7c-821c-08126895efd3
+bern₁ = bernoulli(grid_θ, m₁, N₁);
+
+# ╔═╡ 0a1d46ed-0295-4000-9e30-3ad838552a7e
+begin
+	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
+	plot!(coins_grid, bern₁, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood")
+end
+
+# ╔═╡ e5aade9a-4593-4903-bc3a-3a37f9f71c98
+md"""
+We can normalise the likelihood for the purpose of plotting. We can do this by dividng by the sum of the likelihoods and by the width of the spaces betwen the grid points.
+"""
+
+# ╔═╡ 87db6122-4d28-45bf-b5b0-41189792199d
+likelihood_norm = bern₁ / sum(bern₁) / 0.001; # Normalised
+
+# ╔═╡ c6e9bb86-dc67-4f42-89da-98581a0c3c98
+md" Likelihoods are **NOT** probability mass functions or probability density functions so the total area under the likelihood function is not generally going to be $1$.  "
+
+# ╔═╡ b81924b8-73f6-4b28-899c-ec417d538dd4
+begin
+	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
+	plot!(coins_grid, likelihood_norm, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Normalised likelihood")
+end
+
+# ╔═╡ c3d2ba03-e676-4f0f-bafd-feecd0e4e414
+md" The hardest part is done, now we only need to multiply by the prior and likelihood to get the posterior. "
+
+# ╔═╡ 97c0c719-fb73-4571-9a6c-629a98cc544d
+prior = pdf(triangle_prior, coins_grid); # Extract the values for the prior at the grid points
+
+# ╔═╡ 0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
+posterior = prior .* likelihood_norm; # Calculate the posterior
+
+# ╔═╡ 4e790ffa-554d-4c46-af68-22ecb461fb7b
+begin
+	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
+	plot!(coins_grid, likelihood_norm, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
+	plot!(coins_grid, posterior, color = :black,lw = 2,  fill = (0, 0.4, :green))
+end
+
+# ╔═╡ 4b141ffc-4100-47e3-941a-4e72c784ccf0
+md" Play around with the sliders here so that you can see what happens to the posterior once it gets updated with new information from the data. "
+
+# ╔═╡ 219aafcb-17b1-4f5f-9c2b-9b713ba78b18
+md"""
+m = $(@bind y₂ Slider(1:10, show_value = true, default=1));
+N = $(@bind n₂ Slider(1:10, show_value = true, default=4))
+"""
+
+# ╔═╡ 2833e081-45d6-4f64-8d1e-b3a5895b7952
+begin
+	b₂ = Binomial.(n₂, coins_grid)
+	likelihood_2 = pdf.(b₂, y₂)
+	likelihood_norm_2 = likelihood_2 / sum(likelihood_2) / 0.001
+	posterior_2 = prior .* likelihood_norm;
+	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
+	plot!(coins_grid, likelihood_norm_2, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
+	plot!(coins_grid, posterior_2, color = :black,lw = 2,  fill = (0, 0.4, :green))
+end
+
+# ╔═╡ e6a32850-6656-4482-b57b-61f774896514
+md"""
+
+We will think about some other potential priors and how they affect the posterior soon. However, we will first look at the Binomial random variable and its relation to the Bernoulli random variable. """
+
 # ╔═╡ fe8f71b2-4198-4a12-a996-da254d2cc656
-md" #### Binomial random variable "
+md" ### Binomial random variable "
 
 # ╔═╡ 7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 md"""
 
-The Bernoulli distribution represents the success or failure of a **single Bernoulli trial**. The Binomial distribution represents the number of successes and failues in $n$ independent Bernoulli trials for some given value of $n$. 
+It is worthwhile mentioning the Binomial distribution at this stage. The Bernoulli distribution represents the success or failure of a **single Bernoulli trial**. The Binomial distribution represents the number of successes and failues in $n$ independent Bernoulli trials for some given value of $n$. 
 
 The probability of several events in independent trials is $\theta \cdot \theta(1-\theta)\cdot\theta(1-\theta)(1-\theta)\ldots$ 
 
@@ -452,181 +595,91 @@ md" Naturally, one would want to use a pre-packaged solution to sampling with a 
 # ╔═╡ 7c04e47c-eeed-47ec-9c6f-e2b710d0b746
 # @benchmark [binomial_rv(n, p) for _ in 1:1000] # We can see from our benchmarking that this is much slower. 
 
-# ╔═╡ 2cb86d77-edf3-4446-8be0-8617ad839563
-md" We could also use a type constructor, as discussed in the previous lecture. Will this make a difference to the speed of calculation? If it does, why would this be the case? "
-
-# ╔═╡ db6afee0-2551-4406-b07e-4779c4e5b179
-struct Binomial_New
-	n::Int64
-	p::Float64
-end
-
-# ╔═╡ 491a2395-b57e-4804-8498-e3fec8446de1
-Base.rand(X::Binomial_New) = sum(rand(Bernoulli(X.p)) for _ in 1:X.n)
-
-# ╔═╡ ed0e1926-d248-4423-9bf8-f3fd25196dae
-# @benchmark [Binomial_New(n, p) for _ in 1:1000]   
-
-# ╔═╡ ee9336ea-816b-42ef-b6bf-3c3d2dfc0e0a
-md" Now we are going to utilise this distribution as a potential model to estimate the bias in a coin. In other words we are going to work with the case where the $\theta$ parameter is unknown. We will see in this section how Bayes' rule is applied.  "
-
-# ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
-md" ### Estimating bias in a coin  "
-
-# ╔═╡ 24c4d724-5911-4534-a5c6-3ab86999df43
+# ╔═╡ 79b45389-fa2a-46df-9869-1992c8afb397
 md"""
-Now we move on to a specific example that uses the knowledge we gained in the previous sections. 
 
-We look at estimating bias in a coin. We observe the number of heads that result from flipping a coin and we estimate its underlying probability of coming up heads. Want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
-
-We need underlying probability of heads as value of parameter $\theta$. This can be written as $p(y = 1 \mid \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. 
-
-We also need the probability of tails, which is the complement of probability of heads $p(y = 0 \mid \theta) = 1 - \theta$. 
-
-Combine the equations for the probability of heads and tails 
-
-$$\begin{align*}
-  p(y \mid \theta)  = \theta^{y}(1-\theta)^{1-y}
-\end{align*}$$
-
-We have established this probability distribution is called the Bernoulli distribution. This is a distribution over two discrete values of $y$ for a fixed value of $\theta$. The sum of the probabilities is $1$ (which must be the case for a probability distribution).
-
-$$\begin{align*}
-  \sum_{y} p(y \mid \theta) = p(y = 1 \mid \theta) + p(y = 0 \mid \theta) = \theta + (1-\theta) = 1
-\end{align*}$$
-
-If we consider $y$ fixed and the value of $\theta$ as variable, then our equation is a **likelihood function** of $\theta$.
-
-This likelihood function is not a probability distribution, suppose that $y = 1$ then $\int_{0}^{1}\theta^{y}(1-\theta)^{1-y}\text{d}\theta = \int_{0}^{1}\theta^{y}\text{d}\theta = 1/2$
-
-Let us take a look at what happens for multiple flips. Outcome of $i$th flip is given by $y_i$ and set of outcomes is $\{y_i\}$. Formula for the probability of the set of outcomes is given by
-
-$$\begin{align*}
-  p(y \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
-  =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
-  =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
-  =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}}
-\end{align*}$$
-
-Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $y$ and number of flips by $n$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
-
-Suppose that we flip the coin only once and observe heads, then the data consists of $y = 1$ and $n = 1$.
-
-Let us code up the likelihood, prior and updated posterior for this example. In order to do this let us implement the grid method. There are many other ways to do this. However, this method is easy to do and gives us some good coding practice.  
+Now that we know more about the Binomial random variable, let us get back to our discussion on priors. 
 
 """
 
-# ╔═╡ 11b8b262-32d2-4620-bc6b-afca4a5ce977
-md" #### The grid method "
-
-# ╔═╡ 89f7f633-4f75-4ef5-aa5b-80e318d14ee5
-md" There are four basic steps behind the grid method.
-
-1. Discretize the parameter space if it is not already discrete.
-2. Compute prior and likelihood at each “grid point” in the (discretized) parameter space.
-3. Compute (kernel of) posterior as 'prior $\times$ likelihood' at each “grid point”.
-4. Normalize to get posterior, if desired."
-
-# ╔═╡ 11552b20-3407-4d0b-b07d-1488c8e8a759
-md" The first step then in the grid method is to create a grid. The parameter is $\theta$ and we will discretise by selecting grid points between $0$ and $1$. For our first example let us choose $1001$ grid points. "
-
-# ╔═╡ 599c2f09-ad5e-4f39-aa7d-c1ba155725d6
-coins_grid = range(0, 1, length = 1001) |> collect;
-
-# ╔═╡ 09ec10d9-a604-480d-8e82-59e84a843749
-md" Now we will add a triangular prior across the grid points with a peak at $\theta = 0.5$ and plot the resulting graph."
-
-# ╔═╡ 9a2d5bdf-9597-40c7-ac18-bb27f187912d
-triangle_prior = TriangularDist(0, 1); # From the Distributions.jl package
-
-# ╔═╡ f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
-plot(triangle_prior, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
-
-# ╔═╡ 8382e073-433b-4e42-a6fa-d5a051586457
-md" Now we introduce the likelihood for a small dataset, $1$ success out of $4$ trials. Our binomial distribution function will calculate the probability that we want for a given value of $y$, $n$ and $\theta$. We want to do this for each value of $\theta$, bt using same values for $y$ and $n$ each time. This is the hardest part of our computation (for this example, not in general). "
-
-# ╔═╡ 071761f8-a187-47a6-8fee-5fc91e65d04c
-y₁ = 1
-
-# ╔═╡ f001b040-2ae7-4e97-b229-eebaabb537b0
-n₁ = 4
-
-# ╔═╡ fb793a24-d042-4ed9-927d-906d48c95556
-b₁ = Binomial.(n₁, coins_grid);
-
-# ╔═╡ 259a8f24-673c-4fa8-ad88-f53ec319806a
-likelihood_1 = pdf.(b₁, y₁);
-
-# ╔═╡ c6e9bb86-dc67-4f42-89da-98581a0c3c98
-md" Likelihoods are **NOT** probability mass functions or probability density functions so the total area under the likelihood function is not generally going to be $1$.  "
-
-# ╔═╡ 0a1d46ed-0295-4000-9e30-3ad838552a7e
-begin
-	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
-	plot!(coins_grid, likelihood_1, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Unnormalised likelihood")
-end
-
-# ╔═╡ e5aade9a-4593-4903-bc3a-3a37f9f71c98
+# ╔═╡ cb53475c-cc56-46b3-94b0-3ded33eb18d4
 md"""
-We can normalise the likelihood for the purpose of plotting. We can do this by dividng by the sum of the likelihoods and by the width of the spaces betwen the grid points.
+### Eliciting a prior 
+
+
+
 """
 
-# ╔═╡ 87db6122-4d28-45bf-b5b0-41189792199d
-likelihood_norm = likelihood_1 / sum(likelihood_1) / 0.001; # Normalised
+# ╔═╡ 75ef279d-2c7b-4776-b93f-5b28cbc67f63
+md""" We start our discussion with the idea of prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. Common practice is to settle on a distributional family and then elicit **hyperparameters** within the family.
 
-# ╔═╡ b81924b8-73f6-4b28-899c-ec417d538dd4
-begin
-	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
-	plot!(coins_grid, likelihood_norm, color = :steelblue,lw = 1.5,  fill = (0, 0.2, :steelblue), title = "Normalised likelihood")
-end
+The Beta distribution, for example, is a two parameter family with great flexibility. For different values of the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. One of the things that the researcher might have some information is the expected value of $\theta$.
 
-# ╔═╡ c3d2ba03-e676-4f0f-bafd-feecd0e4e414
-md" The hardest part of the coding is done, now we only need to multiply by the prior and likelihood to get the posterior. "
-
-# ╔═╡ 97c0c719-fb73-4571-9a6c-629a98cc544d
-prior = pdf(triangle_prior, coins_grid); # Extract the values for the prior at the grid points
-
-# ╔═╡ 0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
-posterior = prior .* likelihood_norm; # Calculate the posterior
-
-# ╔═╡ 4b141ffc-4100-47e3-941a-4e72c784ccf0
-md" I will put new sliders here so that you can play around with the graph and see what happens to the posterior once it gets updated with new information from the data. "
-
-# ╔═╡ 219aafcb-17b1-4f5f-9c2b-9b713ba78b18
-md"""
-y = $(@bind y₂ Slider(1:100, show_value = true, default=1));
-n = $(@bind n₂ Slider(1:100, show_value = true, default=4))
 """
 
-# ╔═╡ 2833e081-45d6-4f64-8d1e-b3a5895b7952
-begin
-	b₂ = Binomial.(n₂, coins_grid)
-	likelihood_2 = pdf.(b₂, y₂)
-	likelihood_norm_2 = likelihood_2 / sum(likelihood_2) / 0.001
-	posterior_2 = prior .* likelihood_norm;
-	plot(triangle_prior, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
-	plot!(coins_grid, likelihood_norm_2, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
-	plot!(coins_grid, posterior_2, color = :black,lw = 2,  fill = (0, 0.4, :green))
-end
+# ╔═╡ 2844b7a6-002e-4459-9e37-30e3a16c88f0
+md" Here are some nice facts about the Beta distribution, you don't need to memorise these. 
 
-# ╔═╡ 4ac622c8-efec-497a-ba68-cc9d5990c075
-md" One interesting thing to consider with our example is how different priors will affect the posterior. Let us look at two or three examples to get an idea. The first example uses a uniform distribution. "
+$$\begin{equation}
+\begin{array}{ll}
+\text { Notation } & \operatorname{Beta}(a, b) \\
+\hline \text { Parameters } & \begin{array}{l}
+a>0 \text { shape (real) } \\
+b>0 \text { shape (real) }
+\end{array} \\
+\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
+\text { PDF } & \frac{x^{a-1}(1-x)^{b-1}}{\mathrm{~B}(a, b)} \\
+\hline \text { Mean } & \frac{a}{a+b} \\
+\hline \text { Mode } & \frac{a-1}{a+b-2} \text { for } a, b>1 \\
+& 0 \text { for } a=1, b>1 \\
+& 1 \text { for } a>1, b=1 \\
+\hline \text { Variance } & \frac{a b}{(a+b)^{2}(a+b+1)} \\
+\text { Concentration } & \kappa=a+b
+\end{array}
+\end{equation}$$
+"
 
-# ╔═╡ 50d4f741-1cdc-4889-b839-a57b898fbbe0
-begin
-	prior_uni = Uniform(0, 1)
-	prior_uni_new = pdf(prior_uni, coins_grid); # Uniform distribution
-	posterior_uni = prior_uni_new .* likelihood_norm;
-	plot(prior_uni, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
-	plot!(coins_grid, likelihood_norm_2, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
-	plot!(coins_grid, posterior_uni, color = :black,lw = 2,  fill = (0, 0.4, :green))
-end
+# ╔═╡ 68bb2bfb-6643-4f59-9d2b-c59fd1dc3273
+md"""
+In the case of the Beta distribution the prior mean is given above as 
 
-# ╔═╡ 9e20c4ad-b912-4d9b-8a1e-60f337a958e4
-md" Another possible prior distribution that is quite flexible is the Beta distribution "
+$\frac{a}{a + b}$
 
-# ╔═╡ e7a01318-ce31-4169-aaa7-1fb49a4d47be
-md" #### Getting to know this Beta"
+The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
+
+Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
+
+As an example, set $a = b = 2$, then we have 
+
+$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
+
+We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
+
+Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
+In the case of the Beta distribution the prior mean is given above as 
+
+$\frac{a}{a + b}$
+
+The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
+
+Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
+
+As an example, set $a = b = 2$, then we have 
+
+$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
+
+We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
+
+Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
+
+"""
+
+# ╔═╡ 5c714d3b-ac72-40dc-ba98-bb2b24435d4c
+md"""
+
+#### Coin flipping contd. 
+
+"""
 
 # ╔═╡ 573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 md"""
@@ -678,30 +731,14 @@ prior_beta = Beta(α, β);
 # ╔═╡ 84d7e4dd-23a9-4412-a8de-ab8ee8351770
 plot(prior_beta, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.4, :black))
 
-# ╔═╡ a32faf6c-a5bb-4005-ad42-188af732fba5
-md"""
-Suppose we have set of data with $n$ flips and $y$ heads, then we can calculate the posterior as,
-
-$$\begin{align*}
-  p(\theta \mid y, n) =& p(y, n \mid \theta)p(\theta)/p(y, n) \\
-  =& \theta^{y}(1-\theta)^{(n-y)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(y, n) \\
-  =& \theta^{y}(1-\theta)^{(n-y)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(y, n)] \\
-  =& \theta^{((y + a) -1)}(1-\theta)^{((n-y + b)-1)}/ [B(a,b)p(y, n)] \\
-  =& \theta^{((y + a) -1)}(1-\theta)^{((n-y + b)-1)}/ B(y + a, n-y+b)
-\end{align*}$$
-
-Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta \mid a,b)$ then the posterior will be $\text{Beta}(\theta \mid y+ a, n - y + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
-
-"""
-
-# ╔═╡ 448b4ddf-5be2-4843-8e8e-4afb60aa8843
-md" Using this Beta distribution then as prior will give us the following posterior " 
-
 # ╔═╡ 43d563ae-a435-417f-83c6-19b3b7d6e6ee
 md"""
 a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=1));
 b1 = $(@bind β₁ Slider(1:1:4, show_value = true, default=1))
 """
+
+# ╔═╡ 448b4ddf-5be2-4843-8e8e-4afb60aa8843
+md" Using this Beta distribution then as prior will give us the following posterior " 
 
 # ╔═╡ 11a5614b-c195-45a8-8be0-b99fda6c60fd
 begin
@@ -716,126 +753,21 @@ end
 # ╔═╡ f004ec01-1e27-4e30-9a53-23a299208846
 md" Initially, with $a = 1$ and $b = 1$ this will be the same as the uniform prior. However, play around with the values on the slider to see how it changes for a different parameterisation of the Beta distribution. "
 
-# ╔═╡ 2844b7a6-002e-4459-9e37-30e3a16c88f0
-md" Here are some nice facts about the Beta distribution, you don't need to memorise these, just good to have as a reference. 
-
-$$\begin{equation}
-\begin{array}{ll}
-\text { Notation } & \operatorname{Beta}(\alpha, \beta) \\
-\hline \text { Parameters } & \begin{array}{l}
-\alpha>0 \text { shape (real) } \\
-\beta>0 \text { shape (real) }
-\end{array} \\
-\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
-\text { PDF } & \frac{x^{\alpha-1}(1-x)^{\beta-1}}{\mathrm{~B}(\alpha, \beta)} \\
-\hline \text { Mean } & \frac{\alpha}{\alpha+\beta} \\
-\hline \text { Mode } & \frac{\alpha-1}{\alpha+\beta-2} \text { for } \alpha, \beta>1 \\
-& 0 \text { for } \alpha=1, \beta>1 \\
-& 1 \text { for } \alpha>1, \beta=1 \\
-\hline \text { Variance } & \frac{\alpha \beta}{(\alpha+\beta)^{2}(\alpha+\beta+1)} \\
-\text { Concentration } & \kappa=\alpha+\beta
-\end{array}
-\end{equation}$$
-"
-
-# ╔═╡ 471f5ab0-2601-4d2b-8746-3ffd37a37526
-md" You can read more about the [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) on Wikipedia, which is normally an excellent resource for the properties and discussions on different distributions. "
-
-# ╔═╡ cb53475c-cc56-46b3-94b0-3ded33eb18d4
-md"""
-### Eliciting a prior 
-
-
-
-"""
-
-# ╔═╡ 75ef279d-2c7b-4776-b93f-5b28cbc67f63
-md""" In our discussion on the Beta distribution as prior, we did not mention the idea of prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. 
-
-The Beta distribution is nice because of its flexibility, for different values fo the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. These hyperparemeters reflect the beliefs of the researcher / expert. One of the things that the researcher might have some information is the expected value of $\theta$. In the case of the Beta distribution the prior mean is given above as 
-
-$\frac{a}{a + b}$
-
-The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
-
-Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
-
-As an example, set $a = b = 2$, then we have 
-
-$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
-
-We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
-
-Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
-
-
-
-"""
-
-# ╔═╡ d78fc676-4e17-4eb6-92f4-35dc38ba2624
-md" ### Binomial with unknown $\theta$ (optional)"
-
-# ╔═╡ 8fda9bf2-6680-4187-886c-dab73fcb746f
-md"""
-This section is optional. It provides a more general treatment of the binomial distribution. This type of mathematical treatment is only rarely done, since conjugate priors are quite rare. We will mostly do our calculations with the computer, so the work below is useful to go through once to gain some understanding of the process. 
-
-Posterior with Bayes rule (function of $\theta$, continuous).
-
-$$\begin{equation*}
-      p(\theta|y,n,M)=\frac{p(y|\theta,n,M)p(\theta|n,M)}{p(y|n,M)}
-\end{equation*}$$
-
-where $p(y|n,M)=\int p(y|\theta,n,M)p(\theta|n,M) d\theta$. Start with uniform prior
-
-$$\begin{align*}
-      p(\theta|n,M)=p(\theta|M)=1,\, \text{with}\,\, 0\leq\theta\leq 1
-\end{align*}$$
-
-Then we have that 
-
-$$\begin{align*}
-      p(\theta|y,n,M)&=\frac{p(y|\theta,n,M)}{p(y|n,M)}
-      =\frac{\binom{n}{y} \theta^y(1-\theta)^{n-y}}{\int_0^1
-        \binom{n}{y} \theta^y(1-\theta)^{n-y} d\theta} \\
-        &=\frac{1}{Z}\theta^y(1-\theta)^{n-y}
-\end{align*}$$
-
-Normalization term $Z$ (constant given $y$)
-
-$$\begin{equation*}
-      Z=p(y|n,M)= \int_0^1 \theta^y(1-\theta)^{n-y} d\theta = \frac{\Gamma(y+1)\Gamma(n-y+1)}{\Gamma(n+2)}
-\end{equation*}$$
-
-Normalisation term has Beta function form. When integrated over $(0,1)$ the result can presented with Gamma functions. With integers $\Gamma(n)=(n-1)!$. 
-
-The posterior is 
-
-$$\begin{align*}
-      p(\theta|y,n,M) = \frac{\Gamma(n+2)}{\Gamma(y+1)\Gamma(n-y+1)}\theta^y(1-\theta)^{n-y},
-\end{align*}$$
-
-which is called Beta distribution.
-
-$$\begin{align*}
-      \theta|y,n \sim \text{Beta}(y+1,n-y+1)
-\end{align*}$$
-
-"""
-
 # ╔═╡ 92a4aa17-2e2d-45c2-a9a2-803d389077d5
 md" ## Coin toss with `Turing.jl` 🤓"
 
 # ╔═╡ 0a3ed179-b60b-4740-ab73-b176bba08d84
-md" In this section I will construct a coin tossing model in `Turing.jl`. You don't need to worry for now what this package is, we will devote an entire session to it later in the course. However, let us just run the example and I will explain what is going on in class. "
+md" In this section I will construct a coin tossing model in `Turing.jl`. You don't need to worry for now what this package is, we will devote an entire session to it later in the course. However, let us just run the example and I will explain what is going on in class. 
+
+Important to note that in this example we are utilising the Binomial distribution, since we are working with multiple independent instances of the coin tossing experiment. "
 
 # ╔═╡ 0259f04b-6739-4803-a3eb-4641a6af8361
 md" First, we need to construct our model. We specify the prior and then the likelihood function. " 
 
-# ╔═╡ 0a82ead9-65d5-4863-98e4-b50f25dde930
+# ╔═╡ eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
 begin
 	Random.seed!(1)
 	
-	# Similar to default values that we started with.
 	y₃ = 1
 	n₃ = 4
 	
@@ -848,11 +780,34 @@ begin
 	chns = sample(coin_toss(n₃, y₃), NUTS(), 1000) # Using the No U Turn Sampler
 end
 
-# ╔═╡ 56cc7e32-02ff-4276-be72-76c02c5efe4c
+# ╔═╡ 54f47150-282e-434c-a588-c7c530c438b9
 StatsPlots.plot(chns)
 
 # ╔═╡ bf1a74e4-cf55-470e-843d-a8e6b90517e9
 md" We will take a look at a more involved coin toss example later in the course, but this should be easy enough to understand. "
+
+# ╔═╡ e7669fea-5aff-4522-81bf-3356ce126b1f
+md"""
+
+## Analytical derivation (Bernoulli)
+
+"""
+
+# ╔═╡ a32faf6c-a5bb-4005-ad42-188af732fba5
+md"""
+Suppose we have set of data with $N$ flips and $m$ heads, then we can calculate the posterior as,
+
+$$\begin{align*}
+  p(\theta \mid m, N) =& p(m, N \mid \theta)p(\theta)/p(m, N) \\
+  =& \theta^{m}(1-\theta)^{(N-m)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(m, N) \\
+  =& \theta^{m}(1-\theta)^{(N-m)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(m, N)] \\
+  =& \theta^{((N + a) -1)}(1-\theta)^{((N-m + b)-1)}/ [B(a,b)p(m, N)] \\
+  =& \theta^{((m + a) -1)}(1-\theta)^{((N-m + b)-1)}/ B(m + a, N-m+b)
+\end{align*}$$
+
+Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta \mid a,b)$ then the posterior will be $\text{Beta}(\theta \mid m + a, N - m + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
+
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2412,14 +2367,39 @@ version = "0.9.1+5"
 # ╟─9e7a673e-7cb6-454d-9c57-b6b4f9181b06
 # ╠═5046166d-b6d8-4473-8823-5209aac59c84
 # ╟─82d0539f-575c-4b98-8679-aefbd11f268e
-# ╟─00cb5973-3047-4c57-9213-beae8f116113
+# ╠═00cb5973-3047-4c57-9213-beae8f116113
 # ╟─9e3c0e01-8eb6-4078-bc0f-019466afba5e
 # ╟─c0bba3aa-d52c-4192-8eda-32d5d9f49a28
 # ╟─ab9195d6-792d-4603-8605-228d479226c6
-# ╟─cacd6b2f-5af2-4113-ad63-170f70b77441
 # ╟─e42c5e18-a647-4281-8a87-1b3c6c2abd33
 # ╟─5d6a485d-90c4-4f76-a27e-497e8e12afd8
 # ╟─9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
+# ╟─828166f7-1a69-4952-9e3b-50a99a99789f
+# ╟─24c4d724-5911-4534-a5c6-3ab86999df43
+# ╟─11b8b262-32d2-4620-bc6b-afca4a5ce977
+# ╟─89f7f633-4f75-4ef5-aa5b-80e318d14ee5
+# ╟─11552b20-3407-4d0b-b07d-1488c8e8a759
+# ╠═599c2f09-ad5e-4f39-aa7d-c1ba155725d6
+# ╟─09ec10d9-a604-480d-8e82-59e84a843749
+# ╠═071761f8-a187-47a6-8fee-5fc91e65d04c
+# ╠═f001b040-2ae7-4e97-b229-eebaabb537b0
+# ╠═9a2d5bdf-9597-40c7-ac18-bb27f187912d
+# ╟─f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
+# ╟─8382e073-433b-4e42-a6fa-d5a051586457
+# ╠═9678396b-d42c-4c7c-821c-08126895efd3
+# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
+# ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
+# ╠═87db6122-4d28-45bf-b5b0-41189792199d
+# ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98
+# ╟─b81924b8-73f6-4b28-899c-ec417d538dd4
+# ╟─c3d2ba03-e676-4f0f-bafd-feecd0e4e414
+# ╠═97c0c719-fb73-4571-9a6c-629a98cc544d
+# ╠═0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
+# ╟─4e790ffa-554d-4c46-af68-22ecb461fb7b
+# ╟─4b141ffc-4100-47e3-941a-4e72c784ccf0
+# ╟─219aafcb-17b1-4f5f-9c2b-9b713ba78b18
+# ╟─2833e081-45d6-4f64-8d1e-b3a5895b7952
+# ╟─e6a32850-6656-4482-b57b-61f774896514
 # ╟─fe8f71b2-4198-4a12-a996-da254d2cc656
 # ╟─7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 # ╟─f45eb380-7b43-4fd0-af34-89ffd126a63f
@@ -2435,60 +2415,27 @@ version = "0.9.1+5"
 # ╠═6b1e8fc3-48ee-471b-9c04-7c75cfef156c
 # ╠═2eb59993-4ace-4acb-9810-ba064ea1eb3e
 # ╠═7c04e47c-eeed-47ec-9c6f-e2b710d0b746
-# ╟─2cb86d77-edf3-4446-8be0-8617ad839563
-# ╠═db6afee0-2551-4406-b07e-4779c4e5b179
-# ╠═491a2395-b57e-4804-8498-e3fec8446de1
-# ╠═ed0e1926-d248-4423-9bf8-f3fd25196dae
-# ╟─ee9336ea-816b-42ef-b6bf-3c3d2dfc0e0a
-# ╟─828166f7-1a69-4952-9e3b-50a99a99789f
-# ╟─24c4d724-5911-4534-a5c6-3ab86999df43
-# ╟─11b8b262-32d2-4620-bc6b-afca4a5ce977
-# ╟─89f7f633-4f75-4ef5-aa5b-80e318d14ee5
-# ╟─11552b20-3407-4d0b-b07d-1488c8e8a759
-# ╠═599c2f09-ad5e-4f39-aa7d-c1ba155725d6
-# ╟─09ec10d9-a604-480d-8e82-59e84a843749
-# ╠═9a2d5bdf-9597-40c7-ac18-bb27f187912d
-# ╟─f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
-# ╟─8382e073-433b-4e42-a6fa-d5a051586457
-# ╠═071761f8-a187-47a6-8fee-5fc91e65d04c
-# ╠═f001b040-2ae7-4e97-b229-eebaabb537b0
-# ╠═fb793a24-d042-4ed9-927d-906d48c95556
-# ╠═259a8f24-673c-4fa8-ad88-f53ec319806a
-# ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98
-# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
-# ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
-# ╠═87db6122-4d28-45bf-b5b0-41189792199d
-# ╟─b81924b8-73f6-4b28-899c-ec417d538dd4
-# ╟─c3d2ba03-e676-4f0f-bafd-feecd0e4e414
-# ╠═97c0c719-fb73-4571-9a6c-629a98cc544d
-# ╠═0b3945a8-0ae3-4c18-a9b7-a249eb530bcb
-# ╟─4b141ffc-4100-47e3-941a-4e72c784ccf0
-# ╟─219aafcb-17b1-4f5f-9c2b-9b713ba78b18
-# ╟─2833e081-45d6-4f64-8d1e-b3a5895b7952
-# ╟─4ac622c8-efec-497a-ba68-cc9d5990c075
-# ╟─50d4f741-1cdc-4889-b839-a57b898fbbe0
-# ╟─9e20c4ad-b912-4d9b-8a1e-60f337a958e4
-# ╟─e7a01318-ce31-4169-aaa7-1fb49a4d47be
+# ╟─79b45389-fa2a-46df-9869-1992c8afb397
+# ╟─cb53475c-cc56-46b3-94b0-3ded33eb18d4
+# ╟─75ef279d-2c7b-4776-b93f-5b28cbc67f63
+# ╟─2844b7a6-002e-4459-9e37-30e3a16c88f0
+# ╟─68bb2bfb-6643-4f59-9d2b-c59fd1dc3273
+# ╟─5c714d3b-ac72-40dc-ba98-bb2b24435d4c
 # ╟─573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 # ╟─1ca20976-757f-4e30-94d4-ee1276a614fb
 # ╠═aa69d0e8-cbbb-436c-b488-5bb113cdf97f
 # ╟─84d7e4dd-23a9-4412-a8de-ab8ee8351770
-# ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
-# ╟─448b4ddf-5be2-4843-8e8e-4afb60aa8843
 # ╟─43d563ae-a435-417f-83c6-19b3b7d6e6ee
+# ╟─448b4ddf-5be2-4843-8e8e-4afb60aa8843
 # ╟─11a5614b-c195-45a8-8be0-b99fda6c60fd
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
-# ╟─2844b7a6-002e-4459-9e37-30e3a16c88f0
-# ╟─471f5ab0-2601-4d2b-8746-3ffd37a37526
-# ╟─cb53475c-cc56-46b3-94b0-3ded33eb18d4
-# ╟─75ef279d-2c7b-4776-b93f-5b28cbc67f63
-# ╟─d78fc676-4e17-4eb6-92f4-35dc38ba2624
-# ╟─8fda9bf2-6680-4187-886c-dab73fcb746f
+# ╟─e7669fea-5aff-4522-81bf-3356ce126b1f
+# ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5
 # ╟─0a3ed179-b60b-4740-ab73-b176bba08d84
 # ╟─0259f04b-6739-4803-a3eb-4641a6af8361
-# ╠═0a82ead9-65d5-4863-98e4-b50f25dde930
-# ╠═56cc7e32-02ff-4276-be72-76c02c5efe4c
+# ╠═eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
+# ╠═54f47150-282e-434c-a588-c7c530c438b9
 # ╟─bf1a74e4-cf55-470e-843d-a8e6b90517e9
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

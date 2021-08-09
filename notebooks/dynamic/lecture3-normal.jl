@@ -171,8 +171,8 @@ begin
 	outdata  = filter((x)-> (norm(x) > 1), data)
 	piApprox = 4*length(indata)/N₁
 	
-	scatter(first.(indata),last.(indata), c=:blue, ms=2.5, msw=0, alpha = 0.7)
-	scatter!(first.(outdata),last.(outdata), c=:red, ms=2.5, msw=0,
+	scatter(first.(indata),last.(indata), c=:blue, ms=2.9, msw=0, alpha = 0.7)
+	scatter!(first.(outdata),last.(outdata), c=:red, ms=2.9, msw=0,
 		xlims=(0,1), ylims=(0,1), legend=:none, ratio=:equal, alpha = 0.8)
 end
 
@@ -343,7 +343,7 @@ $\begin{equation*}
 """
 
 # ╔═╡ 9741e08b-3f54-49d7-8db0-3125f4f90d3c
-md" #### Practical implementation "
+md" ### Practical implementation "
 
 # ╔═╡ e99e1925-6219-4bf2-b743-bb2ea725dfcd
 md" Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
@@ -513,11 +513,18 @@ $$\begin{align*}
     p({y} \mid  \mu, \sigma) = \frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}({ y}-\mu)^2 \right)
 \end{align*}$$
 
-We would like to draw from the joint posterior, in other words, we are going to use Monte Carlo methods to draw $\mu^{(s)}, \sigma^{(s)} \sim p(\mu, \sigma  \mid  y)$, where the last part is the joint posterior. We assume that we have a noninformative prior so that $p(\mu,\sigma^2)  \propto \sigma^{-2}$. Note that $p(\mu,\sigma^2)$ is the joint prior here. Now let us get ready for some math to show what the posterior will look like given our prior choice and the likelihood function provided.  
+We would like to draw from the joint posterior, in other words, we are going to use Monte Carlo methods to draw $\mu^{(s)}, \sigma^{(s)} \sim p(\mu, \sigma  \mid  y)$, where the last part is the joint posterior. We assume that we have a noninformative prior so that $p(\mu,\sigma^2)  \propto \sigma^{-2}$. Note that $p(\mu,\sigma^2)$ is the joint prior here. 
 
-
+The idea behind the marginalisation concept is depicted in the graph below. Marginal distributions from gained from the multivariate normal joint density are depicted below. 
 
 """
+
+# ╔═╡ 679c11cf-97fd-4cab-b12d-52a2b1166402
+begin
+	Random.seed!(123)
+	x₂ = randn(2000)
+	marginalkde(x₂, x₂, levels = 15, color = :ice, fill = (0, 0.8, :steelblue3),  lw = 1.1, clip=((-2.5, 2.5), (-2.5, 2.5)))
+end
 
 # ╔═╡ 4074ea94-617c-44de-9f88-0f62826acca4
 md"""
@@ -528,6 +535,8 @@ md"""
 
 # ╔═╡ 9ca2715b-c6a3-48e5-80b5-131f2eeb0840
 md"""
+
+Now let us get ready for some math to show what the posterior will look like given our prior choice and the likelihood function provided.  
 
 $$\begin{align*}
     & p(\mu,\sigma^2 \mid y) \propto  \sigma^{-2}\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
@@ -630,6 +639,13 @@ md"""
 
 """
 
+# ╔═╡ 2e125ab3-136f-44ef-a51b-475aacda96b5
+md"""
+
+Inputting the direct functional forms is labour intensive and it is much easier to simply run our model using a PPL like Turing or Stan. Below is the code to replicate our model with two unknown parameters. We see that the results coincide with out expectation of the mean and variance. 
+
+"""
+
 # ╔═╡ 75215065-16a5-4c54-8966-f4bdc8b15054
 begin
 	ScaledInverseChiSq(ν,τ²) = InverseGamma(ν/2,ν*τ²/2) # Inv-χ² distribution
@@ -657,13 +673,11 @@ begin
 	       
 	# Sample the posterior using HMC
 	postdraws = sample(iidnormal(x_data, μ₀, κ₀, ν₀, σ²₀), NUTS(α), niter, discard_initial = nburn)
-	
-	# Print an plot results
-	#display(postdraws)
+
 end
 
 # ╔═╡ a9052ded-2181-47b0-b9d7-1faa985e7b3a
-plot(postdraws)
+plot(postdraws, line = 1.7, color = :steelblue, alpha = 0.8)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2222,7 +2236,7 @@ version = "0.9.1+5"
 # ╟─94dc15cd-31ea-46a0-8401-aff7f2a74e5e
 # ╟─11a1cec2-2e95-4ebd-a7ce-bbe77f3c9a1d
 # ╟─a0981303-008c-4e4a-b96e-581b52ab15f2
-# ╠═924ea0e4-0133-4711-9e19-662b4d753e37
+# ╟─924ea0e4-0133-4711-9e19-662b4d753e37
 # ╟─3ef808e6-c49a-4c25-befe-d7bfd502ff64
 # ╠═ceaaccf2-ae65-4731-afc9-f6763bc2b3a1
 # ╟─040c011f-1653-446d-8641-824dc82162eb
@@ -2240,7 +2254,7 @@ version = "0.9.1+5"
 # ╠═aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
 # ╠═ef4ccb39-cb95-43a5-a2d8-39efb1a66197
 # ╠═2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
-# ╠═1316fbc2-700d-4106-99f0-0b9243a99aba
+# ╟─1316fbc2-700d-4106-99f0-0b9243a99aba
 # ╟─3c409c93-545a-4d10-a972-509dff7c0120
 # ╟─79f77683-faa5-4a25-a78a-1d7d585bc94c
 # ╠═cef4da14-ee03-44b8-bd86-c11c263b26b3
@@ -2263,9 +2277,11 @@ version = "0.9.1+5"
 # ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90
 # ╟─a793de54-cb93-4127-944b-30d23dbd8ff5
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
+# ╠═679c11cf-97fd-4cab-b12d-52a2b1166402
 # ╟─4074ea94-617c-44de-9f88-0f62826acca4
 # ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
 # ╟─0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
+# ╟─2e125ab3-136f-44ef-a51b-475aacda96b5
 # ╠═75215065-16a5-4c54-8966-f4bdc8b15054
 # ╠═a9052ded-2181-47b0-b9d7-1faa985e7b3a
 # ╟─00000000-0000-0000-0000-000000000001

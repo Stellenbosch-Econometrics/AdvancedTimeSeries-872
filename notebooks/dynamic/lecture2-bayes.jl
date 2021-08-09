@@ -317,7 +317,7 @@ md"""
 
 Let us say that we think the probability of heads is $0.3$, then our likelihood will be 
 
-$p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}}$
+$p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}} = \theta ^ m (1- \theta) ^{N - m}$
 
 Do we think that the proposed probability of heads is a good one? We can use the likelihood function to perhaps determine this. We plot the values of the likelihood function for this data evaluated over the possible values that $\theta$ can take. 
 """
@@ -404,7 +404,8 @@ $$\begin{align*}
   p(y \mid \theta)  =& \prod_{i} p(y_i \mid \theta)  \\
   =& \prod_{i} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
   =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
-  =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}}
+  =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}} \\
+	=& \theta^m(1-\theta)^{N - m}
 \end{align*}$$
 
 Next we establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $m$ and number of flips by $N$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
@@ -495,8 +496,8 @@ md" Play around with the sliders here so that you can see what happens to the po
 
 # ╔═╡ 219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 md"""
-m = $(@bind y₂ Slider(1:10, show_value = true, default=1));
-N = $(@bind n₂ Slider(1:10, show_value = true, default=4))
+heads = $(@bind y₂ Slider(1:10, show_value = true, default=1));
+flips = $(@bind n₂ Slider(1:10, show_value = true, default=4))
 """
 
 # ╔═╡ 2833e081-45d6-4f64-8d1e-b3a5895b7952
@@ -753,6 +754,40 @@ end
 # ╔═╡ f004ec01-1e27-4e30-9a53-23a299208846
 md" Initially, with $a = 1$ and $b = 1$ this will be the same as the uniform prior. However, play around with the values on the slider to see how it changes for a different parameterisation of the Beta distribution. "
 
+# ╔═╡ e7669fea-5aff-4522-81bf-3356ce126b1f
+md"""
+
+## Analytical derivation (Bernoulli)
+
+"""
+
+# ╔═╡ a32faf6c-a5bb-4005-ad42-188af732fba5
+md"""
+We have established the Beta distribution as a convenient prior for the Bernoulli likelikood function. Now we can figure out, mathematically, what the posterior would look like when we apply Bayes' rule. Suppose we have set of data with $N$ flips and $m$ heads, then we can calculate the posterior as,
+
+$$\begin{align*}
+  p(\theta \mid m, N) =& p(m, N \mid \theta)p(\theta)/p(m, N) \\
+  =& \theta^{m}(1-\theta)^{(N-m)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(m, N) \\
+  =& \theta^{m}(1-\theta)^{(N-m)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(m, N)] \\
+  =& \theta^{((N + a) -1)}(1-\theta)^{((N-m + b)-1)}/ [B(a,b)p(m, N)] \\
+  =& \theta^{((m + a) -1)}(1-\theta)^{((N-m + b)-1)}/ B(m + a, N-m+b)
+\end{align*}$$
+
+Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta \mid a,b)$ then the posterior will be $\text{Beta}(\theta \mid m + a, N - m + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
+
+From this we can see that posterior is a compromise between the prior and likelihood. We illustrated this with graphs in the previous sections, but now we can see it analytically. For a $\text{Beta}(\theta \mid a, b)$ prior distribution, the prior mean of $\theta$ is $\frac{a}{a+b}$. If we observe $m$ heads in $N$ flips, this results in a proportion of $m/N$ heads in the data.  The posterior mean is 
+
+$\frac{(m + a)}{m + a + N - m + b} = \frac{m+a}{N+a+b}$
+
+This can then be rearranged algebraically into a weighted average of the prior mean and data proportion, 
+
+$\underbrace{\frac{m+a}{N+a+b}}_{\text {posterior }}=\underbrace{\frac{m}{N}}_{\text {data }} \underbrace{\frac{N}{N+a+b}}_{\text {weight }}+\underbrace{\frac{a}{a+b}}_{\text {prior }} \underbrace{\frac{a+b}{N+a+b}}_{\text {weight }}$
+
+This indicates that the posterior mean is somewhere between the prior mean and the proportion in the data. The more data we have, the less influence of the prior. 
+
+
+"""
+
 # ╔═╡ 92a4aa17-2e2d-45c2-a9a2-803d389077d5
 md" ## Coin toss with `Turing.jl` 🤓"
 
@@ -785,29 +820,6 @@ StatsPlots.plot(chns)
 
 # ╔═╡ bf1a74e4-cf55-470e-843d-a8e6b90517e9
 md" We will take a look at a more involved coin toss example later in the course, but this should be easy enough to understand. "
-
-# ╔═╡ e7669fea-5aff-4522-81bf-3356ce126b1f
-md"""
-
-## Analytical derivation (Bernoulli)
-
-"""
-
-# ╔═╡ a32faf6c-a5bb-4005-ad42-188af732fba5
-md"""
-Suppose we have set of data with $N$ flips and $m$ heads, then we can calculate the posterior as,
-
-$$\begin{align*}
-  p(\theta \mid m, N) =& p(m, N \mid \theta)p(\theta)/p(m, N) \\
-  =& \theta^{m}(1-\theta)^{(N-m)}\frac{\theta^{a-1}(1-\theta)^{(b-1)}}{B(a,b)} /p(m, N) \\
-  =& \theta^{m}(1-\theta)^{(N-m)}{\theta^{a-1}(1-\theta)^{(b-1)}} / [B(a,b)p(m, N)] \\
-  =& \theta^{((N + a) -1)}(1-\theta)^{((N-m + b)-1)}/ [B(a,b)p(m, N)] \\
-  =& \theta^{((m + a) -1)}(1-\theta)^{((N-m + b)-1)}/ B(m + a, N-m+b)
-\end{align*}$$
-
-Last step was made by considering what the normalising factor should be for the numerator of the Beta distribution. From this we see that if prior is $\text{Beta}(\theta \mid a,b)$ then the posterior will be $\text{Beta}(\theta \mid m + a, N - m + b)$. Multiplying the likelihood and prior leads to a posterior with the same form as the prior. We refer to this as a **conjugate prior** (for a particular likelihood function). Beta priors are conjugate priors for the Bernoulli likelihood. If we use the Beta prior, we will in turn receive a Beta posterior. 
-
-"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """

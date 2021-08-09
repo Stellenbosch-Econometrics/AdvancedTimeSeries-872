@@ -495,6 +495,12 @@ $$\begin{align*}
         p(\theta_1 \mid y) = \int p(\theta_1,\theta_2 \mid y) d\theta_2
 \end{align*}$$
 
+Using the decomposition $p\left(\theta_{1}, \theta_{2} \mid y\right)=p\left(\theta_{1} \mid \theta_{2}, y\right) p\left(\theta_{2}\right)$ we can also express this as 
+
+$p\left(\theta_{1} \mid y\right)=\int p\left(\theta_{1} \mid \theta_{2}, y\right) p\left(\theta_{2} \mid y\right) d \theta_{2}$
+
+
+
 where $p(\theta_1 \mid y)$ is a marginal distribution. The goal is to find marginal posterior of parameter of interest. We can do this using Monte Carlo approximation.
 
 $$\begin{align*}
@@ -617,134 +623,47 @@ We will encounter this idea of marginalisation in many of our Markov chain Monte
 
 """
 
-# ╔═╡ 7453b184-2256-4626-8802-0521e72414c2
-md" #### Practical implementation (WIP) "
-
-# ╔═╡ 23185d7e-14be-443e-9acc-b35120b66fba
-md" This part is still a work in progress, trying out some code here. Will be difficult to follow along, notes are mostly for myself, working through the problem. Code is partially translated from `R`. "
-
-# ╔═╡ ac095ff8-bcab-466c-b71f-4b738b38010a
-fake = [93, 112, 122, 135, 122, 150, 118, 90, 124, 114]
-
-# ╔═╡ e2c97257-0c41-44ad-85c3-10fa4b7ffc80
-n = length(fake)
-
-# ╔═╡ ec4e4af3-bac9-45e2-942a-0df6de5540ba
-s2 = var(fake)
-
-# ╔═╡ 9aeff475-a51c-4d2e-8b76-f38eb548bd57
-m_fake = mean(fake)
-
-# ╔═╡ 57742df7-86bf-46ad-b0f7-986cffee0599
-md" We can factorise the join posterior and sample from the joint posterior using this factorisation. Two components in this factorisation. $\nu$ is the degrees of freedom while $s^{2}$ is the scaling parameter. In our construction we are ignoring the normalising constant, which means this is not a probability distribution -- see the [wikipedia entry](https://en.wikipedia.org/wiki/Scaled_inverse_chi-squared_distribution) "
-
-# ╔═╡ abed48f3-6d91-46d5-9630-ac887ec264f7
-rsinvchisq(n, ν, s2, args...) = ν .* s2 / rand.(Chisq(ν), n, args...) # nu*s2 is the scaling component multiplied by the inverse chi-squared distribution -- see Albert page 64. See also page 583 in Gelman.
-
-# ╔═╡ 65846207-be74-4668-9b80-eac52ba9c745
-# rsinvchisq(n, 2, σ2) # Appears to work. 
-
-# ╔═╡ 2655f444-ad4f-4e42-91ec-d84c89933695
-md" Construct helper function to get exact marginal density of $\sigma$."
-
-# ╔═╡ 29762462-1936-4b10-8ee7-6a71d3f2a70a
-dsinvchisq(x, ν, s2) = (exp.(log.(ν ./ 2)) .* (ν ./ 2)) .- loggamma.(ν./2) .+ (log.(s2) ./ (2 .* ν)) .- (log.(x) .* ((ν ./ 2) .+ 1)) - (((ν .* s2) ./ 2) ./ x) # Helper function to get exact marginal density of sigma. Check if this is right at a later stage. 
-
-# ╔═╡ c3720edc-79c5-4013-918d-76c123df584c
-md" Sample $1000$ random numbers from $p(\sigma^{2} | y)$ "
-
-# ╔═╡ 2fb62696-bc08-49fc-8988-5fc2a7a7b3e7
-ns = 5
-
-# ╔═╡ 567f67ed-6a39-424b-bd5e-12a7dcdd05d0
-σ2 = rsinvchisq(ns, n-1, s2)
-
-# ╔═╡ e1fc9ace-0f09-4fb5-b429-0d2907747e26
-md" Next we sample from $p(\mu | \sigma^2, y)$ "
-
-# ╔═╡ 4a3564a6-8647-4b98-a462-79537d58266f
-μ = m_fake .+ sqrt.(σ2 ./ n) .* randn(length(σ2)) # length(sigma) tells us how many variables to generate. In this case the defaults for rnorm are used. Shifted by ybar and multiplied by standard deviation. 
-
-# ╔═╡ c654671f-b481-4b93-a405-18d2c0f2a024
-md" Potentially another way to do this would have been to use the following, but matrix dimensions are off. "
-
-# ╔═╡ 81fe2acd-cffa-49c4-ac03-f1500547ac46
-mu₁ = rand.(Normal.(m_fake, sqrt.(σ2) ./ sqrt.(n)), length(σ2)) # Check dimensions here
-
-# ╔═╡ bd08a2ac-27fb-4146-9f99-d889d7f10c3c
-σ = sqrt.(σ2)
-
-# ╔═╡ d5a935c8-f497-4f75-aa67-cdb636e6e5e8
-md" For $\mu$, $\sigma$ compute the density in a grid (ranges of the grid are specified) "
-
-# ╔═╡ d66115cf-32ca-48bd-95e3-3ff1af1c3746
-begin
-	t1l = [90, 150]
-	t2l = [10, 60]
-	t1  = range(t1l[1], t1l[2], length = ns)
-	t2  = range(t2l[1], t2l[2], length = ns)
-end
-
-# ╔═╡ 013b8fcf-3bc5-4ccd-a6cf-577a48c29599
+# ╔═╡ 0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
 md"""
 
-We can also compute the exact marginal density (analytical) of $\mu$. See page $21$ of Gelman for the discussion on the transformation of a variable. Multiply by $1/\sqrt{(s2/n)}$ since $z = (x - (\bar y)) / \sqrt{(s2/n)}$.
+### Practical implementation with `Turing.jl`
 
 """
 
-# ╔═╡ 8d5b471a-745a-47f2-baf8-b5142d332c5b
-tdist = TDist(n - 1)
+# ╔═╡ 75215065-16a5-4c54-8966-f4bdc8b15054
+begin
+	ScaledInverseChiSq(ν,τ²) = InverseGamma(ν/2,ν*τ²/2) # Inv-χ² distribution
+	
+	# Setting up the Turing model:
+	@model function iidnormal(x, μ₀, κ₀, ν₀, σ²₀)
+	    σ² ~ ScaledInverseChiSq(ν₀, σ²₀)
+	    θ ~ Normal(μ₀,σ²/κ₀)  # prior
+	    n = length(x)  # number of observations
+	    for i in 1:n
+	        x[i] ~ Normal(θ, √σ²) # model
+	    end
+	end
+	
+	# Set up the observed data
+	x_data = [15.77,20.5,8.26,14.37,21.09]
+	
+	# Set up the prior
+	μ₀ = 20; κ₀ = 1; ν₀ = 5; σ²₀ = 5^2
+	
+	# Settings of the Hamiltonian Monte Carlo (HMC) sampler.
+	niter = 2500
+	nburn = 1000
+	α = 0.65 # target acceptance probability in No U-Turn sampler
+	       
+	# Sample the posterior using HMC
+	postdraws = sample(iidnormal(x_data, μ₀, κ₀, ν₀, σ²₀), NUTS(α), niter, discard_initial = nburn)
+	
+	# Print an plot results
+	#display(postdraws)
+end
 
-# ╔═╡ 7b2d18e6-eaa9-4eb5-91a6-d3a9bc6e8447
-pm = pdf(tdist, (t1 .- m_fake) ./ sqrt.(s2 ./ n)) ./ sqrt.(s2 ./ n)
-
-# ╔═╡ 56233e0b-31e6-4bbd-8802-a4f292cb0f24
-# plot(pm)
-
-# ╔═╡ b698f64a-c4aa-4f0c-a6e6-f5eef5e3bd35
-md" Next we estimate the marginal density of $\mu$ using samples and Gaussian kernel density estimate "
-
-# ╔═╡ 2e930ee0-f7b1-495d-a7c5-090f76a50851
-pmk = kde(μ[1, :]); ## Figure this one out.. , range(t1l[1], t1l[2], length = ns)
-
-# ╔═╡ e0d7f57b-378e-43cb-b432-8fd9a3299659
-# plot(pmk)
-
-# ╔═╡ 9dfc83e4-261c-4a62-9aad-018784e3af1b
-ps = dsinvchisq(t2.^2, n - 1, s2) .* 2 .* t2
-
-# ╔═╡ d7500b9f-72be-4547-802b-3f045baf5e1e
-# plot(ps)
-
-# ╔═╡ 287f2a4b-18bc-4519-884e-1795c298b55b
-psk = kde(vec(σ))
-
-# ╔═╡ 5bd1c513-4a2c-44ee-8f09-15e4a7917b76
-# plot(psk)
-
-# ╔═╡ a0a93295-82f4-467d-9004-6f0fcece0ef2
-dfj = DataFrame(t1 = repeat(t1, length(t2)), t2 = repeat(t2, length(t1)));
-
-# ╔═╡ 583ca31d-6b89-4ca9-ad9b-f2fbcbf5abe3
-new_normal = Normal.(m_fake, dfj.t2 ./ sqrt.(n))
-
-# ╔═╡ ebd3856f-b146-425d-8704-b24ea3edf121
-dfj.z = dsinvchisq((dfj.t2 .^2), n-1, s2) .* 2 .* dfj.t2 .* pdf.(new_normal, dfj.t1)
-
-# ╔═╡ 3e7ff0dd-d554-4617-875d-6317e6c4b6cd
-dfm = DataFrame(Grid = t1 |> collect, Exact = pm, Empirical = pmk); # Empirical component is not right
-
-# ╔═╡ 3b418347-7873-4811-9e3b-dd973b3fcc15
-md" Plot the marginal density of $\mu$ "
-
-# ╔═╡ dc6d734f-5fbe-4c0d-86c7-eb4847717126
-#plot(dfm.Grid, dfm.Exact)
-
-# ╔═╡ 56c3c32f-6913-4217-bf34-73ded6d1e454
-dfs = DataFrame(Grid = t2 |> collect, Exact = ps, Empirical = psk); # Empirical component is not right
-
-# ╔═╡ fcaba48a-2f0b-4bb3-9a24-aa2db05de78b
-#plot(dfs.Grid, dfs.Exact)
+# ╔═╡ a9052ded-2181-47b0-b9d7-1faa985e7b3a
+plot(postdraws)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2346,45 +2265,8 @@ version = "0.9.1+5"
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
 # ╟─4074ea94-617c-44de-9f88-0f62826acca4
 # ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
-# ╟─7453b184-2256-4626-8802-0521e72414c2
-# ╟─23185d7e-14be-443e-9acc-b35120b66fba
-# ╠═ac095ff8-bcab-466c-b71f-4b738b38010a
-# ╠═e2c97257-0c41-44ad-85c3-10fa4b7ffc80
-# ╠═ec4e4af3-bac9-45e2-942a-0df6de5540ba
-# ╠═9aeff475-a51c-4d2e-8b76-f38eb548bd57
-# ╟─57742df7-86bf-46ad-b0f7-986cffee0599
-# ╠═abed48f3-6d91-46d5-9630-ac887ec264f7
-# ╠═65846207-be74-4668-9b80-eac52ba9c745
-# ╟─2655f444-ad4f-4e42-91ec-d84c89933695
-# ╠═29762462-1936-4b10-8ee7-6a71d3f2a70a
-# ╟─c3720edc-79c5-4013-918d-76c123df584c
-# ╠═2fb62696-bc08-49fc-8988-5fc2a7a7b3e7
-# ╠═567f67ed-6a39-424b-bd5e-12a7dcdd05d0
-# ╟─e1fc9ace-0f09-4fb5-b429-0d2907747e26
-# ╠═4a3564a6-8647-4b98-a462-79537d58266f
-# ╟─c654671f-b481-4b93-a405-18d2c0f2a024
-# ╠═81fe2acd-cffa-49c4-ac03-f1500547ac46
-# ╠═bd08a2ac-27fb-4146-9f99-d889d7f10c3c
-# ╟─d5a935c8-f497-4f75-aa67-cdb636e6e5e8
-# ╠═d66115cf-32ca-48bd-95e3-3ff1af1c3746
-# ╟─013b8fcf-3bc5-4ccd-a6cf-577a48c29599
-# ╠═8d5b471a-745a-47f2-baf8-b5142d332c5b
-# ╠═7b2d18e6-eaa9-4eb5-91a6-d3a9bc6e8447
-# ╠═56233e0b-31e6-4bbd-8802-a4f292cb0f24
-# ╟─b698f64a-c4aa-4f0c-a6e6-f5eef5e3bd35
-# ╠═2e930ee0-f7b1-495d-a7c5-090f76a50851
-# ╠═e0d7f57b-378e-43cb-b432-8fd9a3299659
-# ╠═9dfc83e4-261c-4a62-9aad-018784e3af1b
-# ╠═d7500b9f-72be-4547-802b-3f045baf5e1e
-# ╠═287f2a4b-18bc-4519-884e-1795c298b55b
-# ╠═5bd1c513-4a2c-44ee-8f09-15e4a7917b76
-# ╠═a0a93295-82f4-467d-9004-6f0fcece0ef2
-# ╠═583ca31d-6b89-4ca9-ad9b-f2fbcbf5abe3
-# ╠═ebd3856f-b146-425d-8704-b24ea3edf121
-# ╠═3e7ff0dd-d554-4617-875d-6317e6c4b6cd
-# ╟─3b418347-7873-4811-9e3b-dd973b3fcc15
-# ╠═dc6d734f-5fbe-4c0d-86c7-eb4847717126
-# ╠═56c3c32f-6913-4217-bf34-73ded6d1e454
-# ╠═fcaba48a-2f0b-4bb3-9a24-aa2db05de78b
+# ╟─0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
+# ╠═75215065-16a5-4c54-8966-f4bdc8b15054
+# ╠═a9052ded-2181-47b0-b9d7-1faa985e7b3a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

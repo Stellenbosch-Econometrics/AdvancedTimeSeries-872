@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, QuadGK, Random, StatsBase, Statistics, StatsPlots, Turing
+using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, QuadGK, Random, RCall, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -364,11 +364,31 @@ function binomial_rv(n, p)
     return count
 end
 
+# ╔═╡ 0520b5e3-cf92-4990-8a65-baf300b19631
+# The equivalent code in R. Code is almost exactly the same for this example
+
+R"binomial_rv_r <- function(n, p) {
+  # Write the function body here
+  y <- c(1:n)
+  count <- 0
+  for (i in seq_along(y)) {
+    if (runif(n)[i] < p) {
+      count <- count + 1
+    }
+  }
+  return(count)
+}";
+
 # ╔═╡ 98db344c-2ada-4781-bb4a-f3ec2ea7ccfd
 md" Given a value of $n = 10000$ indepedent trials, how many times will we observe success? "
 
 # ╔═╡ f7b158af-537e-4d9f-9c4c-318281097dce
-binomial_rv(10000, 0.5) # Compare this with the time it takes to run in R. 
+PlutoUI.with_terminal() do
+	@time binomial_rv(10000, 0.5) # Compare this with the time it takes to run in R. 
+end
+
+# ╔═╡ 2cb41330-7ebd-45de-9aa1-632db6f9a140
+R"system.time(a <- binomial_rv_r(10000, 0.5))"
 
 # ╔═╡ 69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
 md" Now let us conduct some experiments with our new binomial random variable. "
@@ -861,6 +881,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -874,6 +895,7 @@ KernelDensity = "~0.6.3"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
 QuadGK = "~2.4.1"
+RCall = "~0.13.12"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
 Turing = "~0.16.6"
@@ -1015,6 +1037,12 @@ git-tree-sha1 = "e2f47f6d8337369411569fd45ae5753ca10394c6"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.0+6"
 
+[[CategoricalArrays]]
+deps = ["DataAPI", "Future", "JSON", "Missings", "Printf", "RecipesBase", "Statistics", "StructTypes", "Unicode"]
+git-tree-sha1 = "1562002780515d2573a4fb0c3715e4e57481075e"
+uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+version = "0.10.0"
+
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "Statistics"]
 git-tree-sha1 = "0902fc7f416c8f1e3b1e014786bb65d0c2241a9b"
@@ -1082,6 +1110,12 @@ git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
 uuid = "a33af91c-f02d-484b-be07-31d278c5ca2b"
 version = "0.1.1"
 
+[[Conda]]
+deps = ["JSON", "VersionParsing"]
+git-tree-sha1 = "299304989a5e6473d985212c28928899c74e9421"
+uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+version = "1.5.2"
+
 [[ConsoleProgressMonitor]]
 deps = ["Logging", "ProgressMeter"]
 git-tree-sha1 = "3ab7b2136722890b9af903859afcf457fa3059e8"
@@ -1109,6 +1143,12 @@ version = "4.0.4"
 git-tree-sha1 = "ee400abb2298bd13bfc3df1c412ed228061a2385"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 version = "1.7.0"
+
+[[DataFrames]]
+deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "d785f42445b63fc86caa08bb9a9351008be9b765"
+uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+version = "1.2.2"
 
 [[DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -1804,6 +1844,12 @@ git-tree-sha1 = "4b692c8ce1912bae5cd3b90ba22d1b54eb581195"
 uuid = "f517fe37-dbe3-4b94-8317-1923a5111588"
 version = "0.3.7"
 
+[[PooledArrays]]
+deps = ["DataAPI", "Future"]
+git-tree-sha1 = "cde4ce9d6f33219465b55162811d8de8139c0414"
+uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
+version = "1.2.1"
+
 [[Preferences]]
 deps = ["TOML"]
 git-tree-sha1 = "00cfd92944ca9c760982747e9a1d0d5d86ab1e5a"
@@ -1843,6 +1889,12 @@ deps = ["DataStructures", "LinearAlgebra"]
 git-tree-sha1 = "12fbe86da16df6679be7521dfb39fbc861e1dc7b"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.1"
+
+[[RCall]]
+deps = ["CategoricalArrays", "Conda", "DataFrames", "DataStructures", "Dates", "Libdl", "Missings", "REPL", "Random", "Requires", "StatsModels", "WinReg"]
+git-tree-sha1 = "80a056277142a340e646beea0e213f9aecb99caa"
+uuid = "6f49c342-dc21-5d91-9882-a32aef131414"
+version = "0.13.12"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1953,6 +2005,11 @@ version = "0.7.1"
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 
+[[ShiftedArrays]]
+git-tree-sha1 = "22395afdcf37d6709a5a0766cc4a5ca52cb85ea0"
+uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
+version = "1.0.0"
+
 [[Showoff]]
 deps = ["Dates", "Grisu"]
 git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
@@ -2023,6 +2080,12 @@ git-tree-sha1 = "30cd8c360c54081f806b1ee14d2eecbef3c04c49"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.8"
 
+[[StatsModels]]
+deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
+git-tree-sha1 = "a209a68f72601f8aa0d3a7c4e50ba3f67e32e6f8"
+uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
+version = "0.6.24"
+
 [[StatsPlots]]
 deps = ["Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
 git-tree-sha1 = "e7d1e79232310bd654c7cef46465c537562af4fe"
@@ -2040,6 +2103,12 @@ deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
 git-tree-sha1 = "000e168f5cc9aded17b6999a560b7c11dda69095"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 version = "0.6.0"
+
+[[StructTypes]]
+deps = ["Dates", "UUIDs"]
+git-tree-sha1 = "e36adc471280e8b346ea24c5c87ba0571204be7a"
+uuid = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
+version = "1.7.2"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
@@ -2139,6 +2208,11 @@ git-tree-sha1 = "a4bc1b406dcab1bc482ce647e6d3d53640defee3"
 uuid = "3d5dd08c-fd9d-11e8-17fa-ed2836048c2f"
 version = "0.20.25"
 
+[[VersionParsing]]
+git-tree-sha1 = "80229be1f670524750d905f8fc8148e5a8c4537f"
+uuid = "81def892-9a0e-5fdd-b105-ffc91e053289"
+version = "1.2.0"
+
 [[Wayland_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "3e61f0b86f90dacb0bc0e73a0c5a83f6a8636e23"
@@ -2156,6 +2230,12 @@ deps = ["Colors", "Dates", "Observables", "OrderedCollections"]
 git-tree-sha1 = "eae2fbbc34a79ffd57fb4c972b08ce50b8f6a00d"
 uuid = "cc8bc4a8-27d6-5769-a93b-9d913e69aa62"
 version = "0.6.3"
+
+[[WinReg]]
+deps = ["Test"]
+git-tree-sha1 = "808380e0a0483e134081cc54150be4177959b5f4"
+uuid = "1b915085-20d7-51cf-bf83-8f477d6f5128"
+version = "0.3.1"
 
 [[WoodburyMatrices]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -2414,8 +2494,10 @@ version = "0.9.1+5"
 # ╟─f45eb380-7b43-4fd0-af34-89ffd126a63f
 # ╟─4084f646-bce6-4a21-a529-49c7774f5ad1
 # ╠═3c49d3e4-3555-4d18-9445-5347247cf639
+# ╠═0520b5e3-cf92-4990-8a65-baf300b19631
 # ╟─98db344c-2ada-4781-bb4a-f3ec2ea7ccfd
 # ╠═f7b158af-537e-4d9f-9c4c-318281097dce
+# ╠═2cb41330-7ebd-45de-9aa1-632db6f9a140
 # ╟─69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
 # ╟─b6da2479-1545-4b1d-8d7f-07d6d1f67635
 # ╠═d6316b4f-9882-4d25-87d0-31fa3c1f3935

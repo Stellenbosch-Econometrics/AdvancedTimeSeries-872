@@ -14,7 +14,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI,Random,  SpecialFunctions, StatsBase, Statistics, StatsPlots, Turing
+using BenchmarkTools, Compat, DataFrames, Distributed, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, Random, RCall,  SpecialFunctions, StatsBase, Statistics, StatsPlots, Turing
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -92,7 +92,7 @@ md" ### Estimating 🥧 "
 
 # ╔═╡ 961747f8-c884-43bf-941d-4545fb4510e6
 md"""
-In this section we will have some fun trying to approximate $\pi$ using Monte Carlo.  
+In this section we will have some fun trying to approximate $\pi$ using Monte Carlo methods. We will compare the speed of computation between Julia and R for this example.   
  
 """
 
@@ -113,6 +113,20 @@ function compute_pi_naive(n::Int)
 	return n_landed_in_circle / n * 4.0
 end		
 
+# ╔═╡ 59df263a-a284-40b2-8d9d-bb34fbf13b3a
+# Similar code to first instance above 
+R"mc_pi_loop <- function(n){
+  count <- 0 
+  for (i in 1:n) {
+    u <- runif(2)
+    if (u[1]^2 + u[2]^2 < 1) {
+      count <- count + 1
+    } 
+  }
+  area_est <- count / n
+  return(area_est * 4)
+}";
+
 # ╔═╡ 16b216ff-81ed-481a-896b-4ddf2cd139f6
 function compute_pi(n::Int)
   
@@ -131,11 +145,37 @@ function compute_pi(n::Int)
     return n_landed_in_circle / n * 4.0    
   end
 
+# ╔═╡ 6b5886d8-d783-4cbc-9a8c-286b741cb16f
+# Vectorised version of the code
+R"mc_piv <- function(n) {
+  x <- runif(n, 0, 1)
+  y <- runif(n, 0, 1)
+  is_inside <- (x^2 + y^2) < 1
+  pi_estimate <- 4 * sum(is_inside) / n
+  return(pi_estimate)
+}";
+
+# ╔═╡ 09b953aa-7329-48df-b152-a532d997ceea
+PlutoUI.with_terminal() do
+	@time compute_pi_naive(1000000)
+end
+
 # ╔═╡ 9e6a45a9-07da-4859-861c-db0c6ca30ec1
-@benchmark compute_pi_naive(10000000); # Compare this with R to see the difference in terms of speed. 
+#@benchmark compute_pi_naive(10000000); 
+
+# ╔═╡ 0d10bec1-e358-4b9d-a452-751df45b863c
+R"system.time(a <- mc_pi_loop(1000000))"
+
+# ╔═╡ e57f06bd-941b-422a-91e6-004f92ef4b4f
+PlutoUI.with_terminal() do
+	@time compute_pi(1000000)
+end
 
 # ╔═╡ 4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
-@benchmark compute_pi(10000000); # Better code, optimised (not fully though)
+#@benchmark compute_pi(10000000);
+
+# ╔═╡ aac33160-18d2-4d0e-87c9-1eb9dc363c88
+R"system.time(a <- mc_piv(1000000))" # This is why we are advised against loops in R...
 
 # ╔═╡ 9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
 md" So we have managed to find an approximation for $\pi$. Let us look at some other methods and also draw some nice graphs in the process to better explain what is going on. Our code above is optimised to a certain extent. However, when writing code, do not worry too much about optimisation. You can always go back to code to optimise. Try and write code that makes sense to you before you expirment with optimisation.  "
@@ -460,6 +500,8 @@ In order to look at a simple multiparameter model we look at the multivariate no
 
 # ╔═╡ 0c5f78a2-7fbd-4455-a7dd-24766bf78d90
 begin
+	
+	# Uncomment the last two lines for the plot. 
 	gr()
 	Random.seed!(123)
 	
@@ -468,8 +510,8 @@ begin
 	y₁ = 0:(1/length(x₁))+1:101 # because x and y are of different lengths
 	z = [pdf(mvnorm, [i, j]) for i in x₁, j in y₁]
 	
-	plot(x₁, y₁, z, linetype=:wireframe, legend=false, color=:blues, width=0.4)
-	plot!(x₁, y₁, z, linetype=:surface, legend=false, color=:ice, alpha = 0.8)
+	#plot(x₁, y₁, z, linetype=:wireframe, legend=false, color=:blues, width=0.4)
+	#plot!(x₁, y₁, z, linetype=:surface, legend=false, color=:ice, alpha = 0.8)
 	
 end
 
@@ -495,13 +537,13 @@ $$\begin{align*}
         p(\theta_1 \mid y) = \int p(\theta_1,\theta_2 \mid y) d\theta_2
 \end{align*}$$
 
-Using the decomposition $p\left(\theta_{1}, \theta_{2} \mid y\right)=p\left(\theta_{1} \mid \theta_{2}, y\right) p\left(\theta_{2}\right)$ we can also express this as 
+Using the decomposition $p\left(\theta_{1}, \theta_{2} \mid y\right)=p\left(\theta_{1} \mid \theta_{2}, y\right) p\left(\theta_{2} \mid y\right)$ we can also express this as 
 
 $p\left(\theta_{1} \mid y\right)=\int p\left(\theta_{1} \mid \theta_{2}, y\right) p\left(\theta_{2} \mid y\right) d \theta_{2}$
 
 
 
-where $p(\theta_1 \mid y)$ is a marginal distribution. The goal is to find marginal posterior of parameter of interest. We can do this using Monte Carlo approximation.
+where $p(\theta_1 \mid y)$ is a marginal distribution. It is a mixture of conditional posterior distributions given the nuisance parameter $\theta_2$. The goal is to find marginal posterior of parameter of interest. We can do this using Monte Carlo approximation.
 
 $$\begin{align*}
       p(\theta_1 \mid y) \approx  \frac{1}{S}\sum_{s=1}^{S} p(\theta_1,\theta_2^{(s)}\mid y)
@@ -521,6 +563,7 @@ The idea behind the marginalisation concept is depicted in the graph below. Marg
 
 # ╔═╡ 679c11cf-97fd-4cab-b12d-52a2b1166402
 begin
+	gr()
 	Random.seed!(123)
 	x₂ = randn(2000)
 	marginalkde(x₂, x₂, levels = 15, color = :ice, fill = (0, 0.8, :steelblue3),  lw = 1.1, clip=((-2.5, 2.5), (-2.5, 2.5)))
@@ -691,6 +734,7 @@ KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -706,6 +750,7 @@ Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
 Plots = "~1.20.0"
 PlutoUI = "~0.7.9"
+RCall = "~0.13.12"
 SpecialFunctions = "~1.6.0"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
@@ -848,6 +893,12 @@ git-tree-sha1 = "e2f47f6d8337369411569fd45ae5753ca10394c6"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.0+6"
 
+[[CategoricalArrays]]
+deps = ["DataAPI", "Future", "JSON", "Missings", "Printf", "RecipesBase", "Statistics", "StructTypes", "Unicode"]
+git-tree-sha1 = "1562002780515d2573a4fb0c3715e4e57481075e"
+uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+version = "0.10.0"
+
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "Statistics"]
 git-tree-sha1 = "0902fc7f416c8f1e3b1e014786bb65d0c2241a9b"
@@ -914,6 +965,12 @@ uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
 uuid = "a33af91c-f02d-484b-be07-31d278c5ca2b"
 version = "0.1.1"
+
+[[Conda]]
+deps = ["JSON", "VersionParsing"]
+git-tree-sha1 = "299304989a5e6473d985212c28928899c74e9421"
+uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+version = "1.5.2"
 
 [[ConsoleProgressMonitor]]
 deps = ["Logging", "ProgressMeter"]
@@ -1689,6 +1746,12 @@ git-tree-sha1 = "12fbe86da16df6679be7521dfb39fbc861e1dc7b"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.1"
 
+[[RCall]]
+deps = ["CategoricalArrays", "Conda", "DataFrames", "DataStructures", "Dates", "Libdl", "Missings", "REPL", "Random", "Requires", "StatsModels", "WinReg"]
+git-tree-sha1 = "80a056277142a340e646beea0e213f9aecb99caa"
+uuid = "6f49c342-dc21-5d91-9882-a32aef131414"
+version = "0.13.12"
+
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -1798,6 +1861,11 @@ version = "0.7.1"
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 
+[[ShiftedArrays]]
+git-tree-sha1 = "22395afdcf37d6709a5a0766cc4a5ca52cb85ea0"
+uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
+version = "1.0.0"
+
 [[Showoff]]
 deps = ["Dates", "Grisu"]
 git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
@@ -1837,9 +1905,9 @@ version = "0.3.0"
 
 [[StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
-git-tree-sha1 = "885838778bb6f0136f8317757d7803e0d81201e4"
+git-tree-sha1 = "3240808c6d463ac46f1c1cd7638375cd22abbccb"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.2.9"
+version = "1.2.12"
 
 [[StatisticalTraits]]
 deps = ["ScientificTypesBase"]
@@ -1868,6 +1936,12 @@ git-tree-sha1 = "30cd8c360c54081f806b1ee14d2eecbef3c04c49"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.8"
 
+[[StatsModels]]
+deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
+git-tree-sha1 = "a209a68f72601f8aa0d3a7c4e50ba3f67e32e6f8"
+uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
+version = "0.6.24"
+
 [[StatsPlots]]
 deps = ["Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
 git-tree-sha1 = "e7d1e79232310bd654c7cef46465c537562af4fe"
@@ -1885,6 +1959,12 @@ deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
 git-tree-sha1 = "000e168f5cc9aded17b6999a560b7c11dda69095"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 version = "0.6.0"
+
+[[StructTypes]]
+deps = ["Dates", "UUIDs"]
+git-tree-sha1 = "e36adc471280e8b346ea24c5c87ba0571204be7a"
+uuid = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
+version = "1.7.2"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
@@ -1984,6 +2064,11 @@ git-tree-sha1 = "ae4ed2c6ee912c1ebad431e1cc76450f93ee7e7e"
 uuid = "3d5dd08c-fd9d-11e8-17fa-ed2836048c2f"
 version = "0.20.28"
 
+[[VersionParsing]]
+git-tree-sha1 = "80229be1f670524750d905f8fc8148e5a8c4537f"
+uuid = "81def892-9a0e-5fdd-b105-ffc91e053289"
+version = "1.2.0"
+
 [[Wayland_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "3e61f0b86f90dacb0bc0e73a0c5a83f6a8636e23"
@@ -2001,6 +2086,12 @@ deps = ["Colors", "Dates", "Observables", "OrderedCollections"]
 git-tree-sha1 = "eae2fbbc34a79ffd57fb4c972b08ce50b8f6a00d"
 uuid = "cc8bc4a8-27d6-5769-a93b-9d913e69aa62"
 version = "0.6.3"
+
+[[WinReg]]
+deps = ["Test"]
+git-tree-sha1 = "808380e0a0483e134081cc54150be4177959b5f4"
+uuid = "1b915085-20d7-51cf-bf83-8f477d6f5128"
+version = "0.3.1"
 
 [[WoodburyMatrices]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -2226,9 +2317,15 @@ version = "0.9.1+5"
 # ╟─2e83e207-2405-44f4-a5d9-13dd69b741a9
 # ╟─961747f8-c884-43bf-941d-4545fb4510e6
 # ╠═e3f722c1-739f-45b4-8fbf-db07e9483d92
+# ╠═59df263a-a284-40b2-8d9d-bb34fbf13b3a
 # ╠═16b216ff-81ed-481a-896b-4ddf2cd139f6
+# ╠═6b5886d8-d783-4cbc-9a8c-286b741cb16f
+# ╠═09b953aa-7329-48df-b152-a532d997ceea
 # ╠═9e6a45a9-07da-4859-861c-db0c6ca30ec1
+# ╠═0d10bec1-e358-4b9d-a452-751df45b863c
+# ╠═e57f06bd-941b-422a-91e6-004f92ef4b4f
 # ╠═4dfbbd9f-0f34-4b7c-a018-b89df5a81dfe
+# ╠═aac33160-18d2-4d0e-87c9-1eb9dc363c88
 # ╟─9d1a94ac-7ca2-4c8c-a801-021fd2cfc90e
 # ╟─880792b2-02b7-444e-a787-d02ee685ee72
 # ╟─309c4a9b-cd46-43ed-8a59-001057549fc4
@@ -2274,7 +2371,7 @@ version = "0.9.1+5"
 # ╟─8973afa7-2325-42f4-8e14-28aa090448d6
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
-# ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90
+# ╠═0c5f78a2-7fbd-4455-a7dd-24766bf78d90
 # ╟─a793de54-cb93-4127-944b-30d23dbd8ff5
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
 # ╠═679c11cf-97fd-4cab-b12d-52a2b1166402

@@ -802,19 +802,6 @@ This indicates that the posterior mean is somewhere between the prior mean and t
 
 """
 
-# ╔═╡ a2860a31-2db0-4435-a5b8-ed0e6b10223d
-md"""
-
-### Convergence
-
-"""
-
-# ╔═╡ e5b6c5b3-e6f7-4a6b-ad64-d08748dec76a
-md" Let us look at an example where we flip the coin $200$ times to see what happens to the posterior mean. This will perhaps illustrate our point further. The idea for this example comes from the following blog post of Denis Cohen at [Method Bites](https://www.mzes.uni-mannheim.de/socialsciencedatalab/article/applied-bayesian-statistics/). The R code is available at this website. "
-
-# ╔═╡ 8ff9b041-2118-40ae-9c7f-4e9ca2c09a9b
-
-
 # ╔═╡ 92a4aa17-2e2d-45c2-a9a2-803d389077d5
 md" ## Coin toss with `Turing.jl` 🤓"
 
@@ -2471,9 +2458,6 @@ version = "0.9.1+5"
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
 # ╟─e7669fea-5aff-4522-81bf-3356ce126b1f
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
-# ╟─a2860a31-2db0-4435-a5b8-ed0e6b10223d
-# ╟─e5b6c5b3-e6f7-4a6b-ad64-d08748dec76a
-# ╠═8ff9b041-2118-40ae-9c7f-4e9ca2c09a9b
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5
 # ╟─0a3ed179-b60b-4740-ab73-b176bba08d84
 # ╟─0259f04b-6739-4803-a3eb-4641a6af8361

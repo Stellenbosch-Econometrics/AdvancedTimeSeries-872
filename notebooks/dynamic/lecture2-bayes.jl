@@ -68,6 +68,13 @@ html"""
 # ╔═╡ aa69729a-0b08-4299-a14c-c9eb2eb65d5c
 md" # Introduction "
 
+# ╔═╡ bcba487d-0b1f-4f08-9a20-768d50d67d7f
+md""" 
+
+> "When the facts change, I change my mind. What do you do, sir?" -- **John Maynard Keynes**
+
+"""
+
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
 md" In this session we will be looking at the basics of Bayesian econometrics / statistics. We will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. I assume some familiarity with linear algebra, probability and calculus for this module. The section is on probability is simply a high level overview that leads us to our derivation of Bayes' theorem / rule. "
 
@@ -155,6 +162,13 @@ Bayesian statistics uses this theorem as method to conduct inference on paramete
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
 md" ## Bayesian thinking "
+
+# ╔═╡ 7bbecc2b-8c49-458c-8f2e-8792efa62a32
+md"""
+
+> A good discussion on Bayesian thinking is the one by [Cam Davidson-Pilon](https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC3.ipynb). You can read the first part of this chapter to get an idea of what the Bayesian way of approaching probability is all about. 
+
+"""
 
 # ╔═╡ 03288125-5ebd-47d3-9e1a-32e2308dbd51
 md" Consider an economic model that describes an AR($1$) process
@@ -539,7 +553,7 @@ triangle_prior = TriangularDist(0, 1); # From the Distributions.jl package
 plot(triangle_prior, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.2, :black))
 
 # ╔═╡ 8382e073-433b-4e42-a6fa-d5a051586457
-md" In this small dataset we have $1$ success out of $4$ attempts. Our distribution function will calculate the probability that we want for a given value of $\theta$. We want to do this for each value of $\theta$, but using same values for $m$ and $N$ each time.  "
+md" In this small dataset we have $1$ success out of $5$ attempts. Our distribution function will calculate the probability that we want for a given value of $\theta$. We want to do this for each value of $\theta$, but using same values for $m$ and $N$ each time.  "
 
 # ╔═╡ 9678396b-d42c-4c7c-821c-08126895efd3
 binomial₁ = binom(grid_θ, m₁, N₁);
@@ -2358,6 +2372,7 @@ version = "0.9.1+5"
 # ╟─09a9d9f9-fa1a-4192-95cc-81314582488b
 # ╟─41eb90d1-9262-42b1-9eb2-d7aa6583da17
 # ╟─aa69729a-0b08-4299-a14c-c9eb2eb65d5c
+# ╟─bcba487d-0b1f-4f08-9a20-768d50d67d7f
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
@@ -2375,6 +2390,7 @@ version = "0.9.1+5"
 # ╟─411c06a3-c8f8-4d1d-a247-1f0054701021
 # ╟─46780616-1282-4e6c-92ec-5a965f1fc701
 # ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╟─7bbecc2b-8c49-458c-8f2e-8792efa62a32
 # ╟─03288125-5ebd-47d3-9e1a-32e2308dbd51
 # ╟─eed2582d-1ba9-48a1-90bc-a6a3bca139ba
 # ╟─0c0d89c0-d70d-42ac-a55c-cd1afbc051ed

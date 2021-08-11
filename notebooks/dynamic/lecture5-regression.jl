@@ -618,9 +618,6 @@ function data_gen2(T, β, σ2)
     X * β' .+ sqrt(σ2) .* randn(T, 1)
 end
 
-# ╔═╡ 7faf5fbb-ac78-4466-8329-88e3f8d2a527
-data_gen2(T, β, σ2)
-
 # ╔═╡ 000cf50f-d3f8-452b-b661-11545c2ec0c4
 function get_prior(ν_0)
 
@@ -630,13 +627,10 @@ function get_prior(ν_0)
     return Vβ_0, Σ_0
 end
 
-# ╔═╡ a2f9e4f0-5cf9-4379-9fd2-46d5c7e6e8f0
-get_prior(ν_0)
-
 # ╔═╡ 7b70270e-2991-40ee-97a9-082691e68701
 function ols_est(T, β, σ2)
 
-    y = data_gen(T, β, σ2) # Generated data
+    y = data_gen2(T, β, σ2) # Generated data
     X = [ones(T, 1) 1 .+ randn(T, 1)]
 
     β_1 = (X' * X) \ (X' * y)
@@ -645,20 +639,17 @@ function ols_est(T, β, σ2)
     return β_1, σ2_1
 end
 
-# ╔═╡ 3be16f2d-0f8d-4be3-965e-4e6569866e63
-# y = data_gen(T, β, σ2)
-
 # ╔═╡ 791939ae-3e00-4d6b-968c-5a82a78f55f8
 function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
 
-    y = data_gen(T, β, σ2) # Generated data
+    y = data_gen2(T, β, σ2) # Generated data
     X = [ones(T, 1) 1 .+ randn(T, 1)]
 
     Vβ_0, Σ_0 = get_prior(ν_0)
     β_1, σ2_1 = ols_est(T, β, σ2)
 
     # Initialise Markov Chain
-    store_θ = @SMatrix zeros(nsim, 3)
+    store_θ = zeros(nsim, 3)
 
     # Start the Gibbs sampling procedure
     for i in 1:nsim + burnin
@@ -682,6 +673,9 @@ function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
     end
     [mean(store_θ[:, 1]), mean(store_θ[:, 2])]
 end
+
+# ╔═╡ 9d1361c3-6de1-4326-85f8-4a272856d16b
+gibbs_lin(nsim, burnin, T, β, σ2, β_0, ν_0)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1797,11 +1791,9 @@ version = "0.9.1+5"
 # ╟─223f4b6f-8321-4142-9dfa-1afe371d40ac
 # ╟─edaf930a-4933-4047-8854-bbb02ea9c39c
 # ╠═c9c8d57b-3010-4056-aaa3-a0354cf456fd
-# ╠═7faf5fbb-ac78-4466-8329-88e3f8d2a527
 # ╠═000cf50f-d3f8-452b-b661-11545c2ec0c4
-# ╠═a2f9e4f0-5cf9-4379-9fd2-46d5c7e6e8f0
 # ╠═7b70270e-2991-40ee-97a9-082691e68701
-# ╠═3be16f2d-0f8d-4be3-965e-4e6569866e63
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
+# ╠═9d1361c3-6de1-4326-85f8-4a272856d16b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

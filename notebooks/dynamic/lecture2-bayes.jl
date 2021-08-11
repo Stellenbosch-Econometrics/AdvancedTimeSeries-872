@@ -175,13 +175,15 @@ md" Consider an economic model that describes an AR($1$) process
 
 $\begin{equation*} y_{t}=\mu+\alpha y_{t-1}+\varepsilon_{t}, \quad \varepsilon_{t} \sim \mathcal{N}\left[0, \sigma^{2}\right] \end{equation*}$ 
 
-where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimte these unkown parameters with methods such as maximum likelihood estimation, as you did in the first part of the course. 
+where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimte these unkown parameters with methods such as maximum likelihood estimation (MLE), as you did in the first part of the course. So we want to estimate $\theta = \{\mu, \alpha, \sigma^{2}\}$ 
 
-Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta \mid y)$: given the data, what do we know about $\theta$? 
+Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. 
+
+Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta \mid y)$: given the data, what do we know about $\theta$? 
 
 **Notation remark**: You will see that we have switched to a small letter $p$ for probability distribution of a random variable. Previously we have used a capital $P$ to relate probability of events. You will often see probability of events written as $\mathbb{P}$ in textbooks as well. 
 
-The Bayesian view is that may be many possible values for $\theta$ from the population of parameter values $\Theta$, while the frequentist view is that only one such a $\theta$ exists. In other words, $\theta$ is regarded as a random variable in the Bayesian setting.
+The Bayesian view is that there may be many possible values for $\theta$ from the population of parameter values $\Theta$. The frequentist view is that only one such a $\theta$ exists and that repeated sampling and greater frequency of observation will reveal this value. In other words, $\theta$ is regarded as a random variable in the Bayesian setting. This means that we have some subjective belief about $\theta$ should be in the Bayesian view and there is uncertainty attached as to what the parameter value actually is. 
 
 Bayesians will test initial assertions regarding $\theta$ using data on $y$ to investigate probability of assertions. This provides probability distribution over possible values for $\theta \in \Theta$. 
 
@@ -251,7 +253,7 @@ histogram(data_realised, color = :black, legend = false, lw = 1.5,  fill = (0, 0
 # ╔═╡ bf5240e8-59fc-4b1f-8b0d-c65c196ab402
 md"""
 
-We would like to fit a density function on this histogram so that we can make probabilistic statements about observations that we have not yet observed. Our proposed density should try and match model unknowns (like to location and scale). Let us observe to potential proposed densities. One is bad guess and the other quite good. 
+We would like to fit a density function on this histogram so that we can make probabilistic statements about observations that we have not yet observed. Our proposed density should try and match model unknowns (like the location and scale). Let us observe two potential proposed densities. One is bad guess and the other quite good. 
 
 """
 
@@ -277,7 +279,7 @@ end
 # ╔═╡ 169fbcea-4e82-4756-9b4f-870bcb92cb93
 md"""
 
-A likelihood function would return a higher value for the proposed density in the case of the good guess. There are many functions that we could use to determine wheter proposed model unknowns result in a better fit. Likelihood functions are one particular approach. Like we mentioned before, these likelihood functions represent a data generating process. The assumption is that the proposed generative distribution gave rise to the data in question. We will continue this discussion on the likelihood function in our next section.  
+A likelihood function would return a higher value for the proposed density in the case of the good guess. There are many functions that we could use to determine wheter proposed model unknowns result in a better fit. Likelihood functions are one particular approach. Like we mentioned before, these likelihood functions represent a data generating process. The assumption is that the proposed generative distribution gave rise to the data in question. We will continue this discussion a bit later on.  
 
 """
 
@@ -285,7 +287,7 @@ A likelihood function would return a higher value for the proposed density in th
 md" ## Bernoulli and Binomial "
 
 # ╔═╡ 6e1de0ff-0fef-48b4-ac5b-0279ea8f2d4d
-md" In this section we will be looking at some single parameter models. In other words, models where we only have a single parameter of interest. This will draw on our knowledge from random variables and their distributions in the last lecture.  "
+md" In this section we will be looking at some single parameter models. In other words, models where we only have a single unknown parameter of interest. This will draw on our knowledge from random variables and their distributions in the previous lecture.  "
 
 # ╔═╡ 284d0a23-a329-4ea7-a069-f387e21ba797
 md"""
@@ -333,15 +335,15 @@ md" ### Binomial random variable "
 # ╔═╡ 7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 md"""
 
-It is worthwhile mentioning the Binomial distribution at this stage. The Bernoulli distribution represents the success or failure of a **single Bernoulli trial**. The Binomial distribution represents the number of successes and failues in $n$ independent Bernoulli trials for some given value of $n$. 
+It is worthwhile mentioning the Binomial distribution at this stage. The Bernoulli distribution represents the success or failure of a **single Bernoulli trial**. The Binomial distribution represents the number of successes and failues in $N$ independent Bernoulli trials for some given value of $N$. 
 
 The probability of several events in independent trials is $\theta \cdot \theta(1-\theta)\cdot\theta(1-\theta)(1-\theta)\ldots$ 
 
-If there are $n$ trials then the probability that a success occurs $y$ times is
+If there are $N$ trials then the probability that a success occurs $y$ times is
 
 $$\begin{align*}
-      p(y \mid \theta, n) & = \frac{n!}{y!(n-y)!} \theta^y(1-\theta)^{n-y} \\
-      &= \binom{n}{y} \theta^y(1-\theta)^{n-y}
+      p(y \mid \theta, N) & = \frac{n!}{y!(N-y)!} \theta^y(1-\theta)^{N-y} \\
+      &= \binom{N}{y} \theta^y(1-\theta)^{N-y}
     \end{align*}$$
 
 We can easily use the `Distributions.jl` package discussed in the previous lecture to draw from the distribution, but let us try and see what happens if we try and code this up ourselves. 
@@ -398,10 +400,10 @@ md"""
 
 !!! note "Interactive sliders for Binomial random variable"
 
-n = $(@bind n Slider(1:1:100, show_value = true, default=1));
+N = $(@bind n Slider(1:1:100, show_value = true, default=1));
 p = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5)); 
 
-> Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and increase the number of $n$, what happens to the distribution? What theorem is at play here?
+> Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and increase the number of $N$, what happens to the distribution? What theorem is at play here?
 
 """
 
@@ -461,7 +463,7 @@ $$\begin{align*}
   =& \prod_{i}^{N} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
   =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
   =& \theta^{\#\text{heads}}(1-\theta)^{\#\text{tails}} \\
-	=& \theta^m(1-\theta)^{N - m}
+	=& \theta^y(1-\theta)^{N - y}
 \end{align*}$$
 
 Let us quickly talk about this likelihood, so that we have clear vision of what it looks like. We start with an example where there are $5$ coin flips and $1$ of them is heads (as can be seen below). 
@@ -479,7 +481,7 @@ md"""
 
 Let us say that we think the probability of heads is $0.3$. Our likelihood can be represented as
 
-$p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}} = \theta ^ m (1- \theta) ^{N - m}$
+$p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}} = \theta ^ y (1- \theta) ^{N - y}$
 
 Do we think that the proposed probability of heads is a good one? We can use the likelihood function to perhaps determine this. We plot the values of the likelihood function for this data evaluated over the possible values that $\theta$ can take. 
 """
@@ -515,6 +517,9 @@ begin
 	plot!([likelihood_max], seriestype = :vline, lw = 2, color = :black, ls = :dash, alpha =0.7, xticks = [likelihood_max])
 end
 
+# ╔═╡ 987aeb82-267a-4ca9-bf21-c75a49edad70
+bin_area = sum(binomial)
+
 # ╔═╡ 9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
 md"""
 
@@ -534,7 +539,7 @@ In this case, our prior information (subjective belief) was that the probability
 # ╔═╡ 36e6f838-8277-480b-b48d-f70e8fe011eb
 md"""
 
-The next step then is to establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $m$ and number of flips by $N$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
+The next step then is to establish the prior, which will be an arbitrary choice here. One assumption could be that the factory producing the coins tends to produce mostly fair coins. Indicate number of heads by $y$ and number of flips by $N$. We need to specify some prior, and we will use the Triangular distribution for our prior in the next section.
 
 Let us code up the likelihood, prior and updated posterior for this example. In order to do this let us implement the grid method. There are many other ways to do this. However, this method is easy to do and gives us some good coding practice.
 
@@ -586,7 +591,7 @@ end
 
 # ╔═╡ e5aade9a-4593-4903-bc3a-3a37f9f71c98
 md"""
-We can normalise the likelihood for the purpose of plotting. We can do this by dividng by the sum of the likelihoods and by the width of the spaces betwen the grid points.
+We can normalise the likelihood for the purpose of plotting. We can do this by dividing by the sum of the likelihoods and by the width of the spaces betwen the grid points.
 """
 
 # ╔═╡ 87db6122-4d28-45bf-b5b0-41189792199d
@@ -622,7 +627,7 @@ md" Play around with the sliders here so that you can see what happens to the po
 
 # ╔═╡ 219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 md"""
-heads = $(@bind y₂ Slider(1:100, show_value = true, default=3));
+heads = $(@bind y₂ Slider(1:100, show_value = true, default=1));
 flips = $(@bind n₂ Slider(1:100, show_value = true, default=5))
 """
 
@@ -876,13 +881,15 @@ end
 StatsPlots.plot(chns1[:p], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false)
 
 # ╔═╡ a6ae40e6-ea8c-46f1-b430-961c1185c087
-StatsPlots.density(chns1[:p], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
+begin
+	StatsPlots.histogram(chns1[:p], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
+end
 
 # ╔═╡ eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
 begin
 	Random.seed!(1)
 	
-	# This is the same as 5 indepdent Bernoulli coin tosses
+	# This is the same as 5 indepdent Bernoulli coin tosses from above
 	
 	y₃ = 1
 	n₃ = 5
@@ -900,7 +907,7 @@ end
 StatsPlots.plot(chns2[:θ], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false)
 
 # ╔═╡ da910458-7430-4653-a263-6daae79f5a7e
-StatsPlots.density(chns2[:θ], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
+StatsPlots.histogram(chns2[:θ], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
 
 # ╔═╡ bf1a74e4-cf55-470e-843d-a8e6b90517e9
 md" We will take a look at a more involved coin toss example later in the course, but this should be easy enough to understand. "
@@ -2550,6 +2557,7 @@ version = "0.9.1+5"
 # ╟─ab9195d6-792d-4603-8605-228d479226c6
 # ╟─e42c5e18-a647-4281-8a87-1b3c6c2abd33
 # ╟─5d6a485d-90c4-4f76-a27e-497e8e12afd8
+# ╠═987aeb82-267a-4ca9-bf21-c75a49edad70
 # ╟─9eaf73e9-0f68-4e8b-9ae1-a42f050f695a
 # ╟─36e6f838-8277-480b-b48d-f70e8fe011eb
 # ╟─11b8b262-32d2-4620-bc6b-afca4a5ce977

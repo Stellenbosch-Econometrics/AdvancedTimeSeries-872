@@ -842,10 +842,41 @@ md" ## Coin toss with `Turing.jl` 🤓"
 # ╔═╡ 0a3ed179-b60b-4740-ab73-b176bba08d84
 md" In this section I will construct a coin tossing model in `Turing.jl`. You don't need to worry for now what this package is, we will devote an entire session to it later in the course. However, let us just run the example and I will explain what is going on in class. 
 
-Important to note that in this example we are utilising the Binomial distribution, since we are working with multiple independent instances of the coin tossing experiment. "
+We can approach the problem in one of two ways. We can see the process as independent Bernoulli trials or use a Binomial model. We illustrate both way below. "
 
-# ╔═╡ 0259f04b-6739-4803-a3eb-4641a6af8361
-md" First, we need to construct our model. We specify the prior and then the likelihood function. " 
+# ╔═╡ c205ff23-f1e7-459f-9339-2c80ab68945f
+begin	
+	# Set the true probability of heads in a coin.
+	p_true = 0.4	
+
+	# Iterate from having seen 0 observations to 100 observations.
+	Ns = 0:5
+
+	# Draw data from a Bernoulli distribution, i.e. draw heads or tails.
+	Random.seed!(1237)
+	data = rand(Bernoulli(p_true), last(Ns))
+
+	# Declare our Turing model.
+	@model function coin_toss1(y)
+    	# Our prior belief about the probability of heads in a coin.
+    	p ~ Beta(1, 1)
+
+    	# The number of observations.
+    	N = length(y)
+    		for n in 1:N
+        	# Heads or tails of a coin are drawn from a Bernoulli distribution.
+        	y[n] ~ Bernoulli(p)
+    	end
+	end
+
+	chns1 = sample(coin_toss1(data), NUTS(), 1000) # Using the No U Turn Sampler
+end
+
+# ╔═╡ 398da783-5e47-4d39-8048-4541aad6b8b5
+StatsPlots.plot(chns1[:p], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false)
+
+# ╔═╡ a6ae40e6-ea8c-46f1-b430-961c1185c087
+StatsPlots.density(chns1[:p], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
 
 # ╔═╡ eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
 begin
@@ -856,17 +887,20 @@ begin
 	y₃ = 1
 	n₃ = 5
 	
-	@model function coin_toss(n, y)
+	@model function coin_toss2(n, y)
 	    θ ~ Beta(1, 1) # Prior 
 	    y ~ Binomial(n, θ) # Likelihood (model)
 	    return y, θ
 	end
 	
-	chns = sample(coin_toss(n₃, y₃), NUTS(), 1000) # Using the No U Turn Sampler
+	chns2 = sample(coin_toss2(n₃, y₃), NUTS(), 1000) # Using the No U Turn Sampler
 end
 
 # ╔═╡ 54f47150-282e-434c-a588-c7c530c438b9
-StatsPlots.plot(chns, lw = 1.75, color = :steelblue, alpha = 0.8)
+StatsPlots.plot(chns2[:θ], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false)
+
+# ╔═╡ da910458-7430-4653-a263-6daae79f5a7e
+StatsPlots.density(chns2[:θ], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
 
 # ╔═╡ bf1a74e4-cf55-470e-843d-a8e6b90517e9
 md" We will take a look at a more involved coin toss example later in the course, but this should be easy enough to understand. "
@@ -2558,9 +2592,12 @@ version = "0.9.1+5"
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5
 # ╟─0a3ed179-b60b-4740-ab73-b176bba08d84
-# ╟─0259f04b-6739-4803-a3eb-4641a6af8361
+# ╠═c205ff23-f1e7-459f-9339-2c80ab68945f
+# ╠═398da783-5e47-4d39-8048-4541aad6b8b5
+# ╠═a6ae40e6-ea8c-46f1-b430-961c1185c087
 # ╠═eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
 # ╠═54f47150-282e-434c-a588-c7c530c438b9
+# ╠═da910458-7430-4653-a263-6daae79f5a7e
 # ╟─bf1a74e4-cf55-470e-843d-a8e6b90517e9
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

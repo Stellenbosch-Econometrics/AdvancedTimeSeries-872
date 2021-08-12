@@ -875,35 +875,35 @@ Turing will perform automatic inference on all variables that you specify using 
 Just like you would write in mathematical form:
 
 $$\begin{aligned}
-p &\sim \text{Beta}(1,1) \\
-\text{coin flip} &\sim \text{Bernoulli}(p)
+\theta &\sim \text{Beta}(1,1) \\
+\text{coin flip} &\sim \text{Bernoulli}(\theta)
 \end{aligned}$$
 
-> **Example**: Unfair coin with $p$ = 0.4.
+In our example we have an unfair coin with $\theta$ = 0.4 being the true value. 
 """
 
 # ╔═╡ c205ff23-f1e7-459f-9339-2c80ab68945f
 begin	
 	# Set the true probability of heads in a coin.
-	p_true = 0.4	
+	θ_true = 0.4	
 
 	# Iterate from having seen 0 observations to 100 observations.
 	Ns = 0:5
 
 	# Draw data from a Bernoulli distribution, i.e. draw heads or tails.
 	Random.seed!(1237)
-	data = rand(Bernoulli(p_true), last(Ns))
+	data = rand(Bernoulli(θ_true), last(Ns))
 
 	# Declare our Turing model.
 	@model function coin_flip(y; α::Real=1, β::Real=1)
     	# Our prior belief about the probability of heads in a coin.
-    	p ~ Beta(α, β)
+    	θ ~ Beta(α, β)
 
     	# The number of observations.
     	N = length(y)
     		for n ∈ 1:N
         	# Heads or tails of a coin are drawn from a Bernoulli distribution.
-        	y[n] ~ Bernoulli(p)
+        	y[n] ~ Bernoulli(θ)
     	end
 	end
 end
@@ -939,28 +939,34 @@ Play around if you want. Choose your `sampler`:
 # ╔═╡ 283fe6c9-6642-4bce-a639-696b92fcabb8
 @bind chosen_sampler Radio([
 		"MH()",
-		"PG(Nₚ) - Number of Particles",
+		"PG()",
 		"SMC()",
-		"HMC(ϵ, L) - leaprog step size(ϵ) and number of leaprogs steps (L)",
-		"HMCDA(Nₐ, δ, λ) - Number of samples to use for adaptation (Nₐ), target acceptance ratio (δ), and target leapfrog length(λ)",
-		"NUTS(Nₐ, δ) - Number of samples to use for adaptation (Nₐ) and target acceptance ratio (δ)"], default = "MH()")
+		"HMC()",
+		"HMCDA()",
+		"NUTS()"], default = "MH()")
 
 # ╔═╡ 0dc3b4d5-c66e-4fbe-a9fe-67f9212371cf
 begin
 	your_sampler = nothing
 	if chosen_sampler == "MH()"
 		your_sampler = MH()
-	elseif chosen_sampler == "PG(Nₚ) - Number of Particles"
+	elseif chosen_sampler == "PG()"
 		your_sampler = PG(2)
 	elseif chosen_sampler == "SMC()"
 		your_sampler = SMC()
-	elseif chosen_sampler == "HMC(ϵ, L) - leaprog step size(ϵ) and number of leaprogs steps (L)"
+	elseif chosen_sampler == "HMC()"
 		your_sampler = HMC(0.05, 10)
-	elseif chosen_sampler == "HMCDA(Nₐ, δ, λ) - Number of samples to use for adaptation (Nₐ), target acceptance ratio (δ), and target leapfrog length(λ)"
+	elseif chosen_sampler == "HMCDA()"
 		your_sampler = HMCDA(10, 0.65, 0.3)
-	elseif chosen_sampler == "NUTS(Nₐ, δ) - Number of samples to use for adaptation (Nₐ) and target acceptance ratio (δ)"
+	elseif chosen_sampler == "NUTS()"
 		your_sampler = NUTS(10, 0.65)
 	end
+end
+
+# ╔═╡ 53872a09-db29-4195-801f-54dd5c7f8dc3
+begin
+	chain_coin = sample(coin_flip(data), your_sampler, 1000)
+	summarystats(chain_coin)
 end
 
 # ╔═╡ b8053536-0e98-4a72-badd-58d9adbcf5ca
@@ -992,20 +998,6 @@ Second, we have several plots to choose from:
 
 """
 
-# ╔═╡ 53872a09-db29-4195-801f-54dd5c7f8dc3
-begin
-	chain_coin = sample(coin_flip(data), your_sampler, 1000)
-	summarystats(chain_coin)
-end
-
-# ╔═╡ 398da783-5e47-4d39-8048-4541aad6b8b5
-StatsPlots.plot(chain_coin[:p], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false, dpi = 300)
-
-# ╔═╡ a6ae40e6-ea8c-46f1-b430-961c1185c087
-begin
-	StatsPlots.histogram(chain_coin[:p], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
-end
-
 # ╔═╡ 927bce0e-e018-4ecb-94e5-09812bf75936
 plot(
 	traceplot(chain_coin, title="traceplot"),
@@ -1014,8 +1006,48 @@ plot(
 	histogram(chain_coin, title="histogram"),
 	mixeddensity(chain_coin, title="mixeddensity"),
 	autocorplot(chain_coin, title="autocorplot"),
-	dpi=300, size=(840, 600)
+	dpi=300, size=(840, 600), 
+	alpha = 0.8
 )
+
+# ╔═╡ 398da783-5e47-4d39-8048-4541aad6b8b5
+#StatsPlots.plot(chain_coin[:θ], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false, dpi = 300)
+
+# ╔═╡ a6ae40e6-ea8c-46f1-b430-961c1185c087
+begin
+#	StatsPlots.histogram(chain_coin[:θ], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
+end
+
+# ╔═╡ 10beb8b2-0841-44c4-805e-8667da325b01
+md""" 
+
+#### Comparison with true posterior 
+
+"""
+
+# ╔═╡ 58f65290-8ba9-4c27-94de-b28a5eac80a4
+md" We compare our result from using Turing with the analytical posterior that we derived in the previous section. "
+
+# ╔═╡ c0daa659-f5f6-4e6b-9973-a399cf0ea788
+begin
+	# Our prior belief about the probability of heads in a coin toss.
+	prior_belief = Beta(1, 1);
+	
+	# Compute the posterior distribution in closed-form.
+	M = length(data)
+	heads = sum(data)
+	updated_belief = Beta(prior_belief.α + heads, prior_belief.β + M - heads)
+
+	# Visualize a blue density plot of the approximate posterior distribution
+	p = plot(chain_coin[:θ], seriestype = :density, xlim = (0,1), legend = :best, w = 2, c = :blue, label = "Approximate posterior")
+	
+	# Visualize a green density plot of posterior distribution in closed-form.
+	plot!(p, range(0, stop = 1, length = 100), pdf.(Ref(updated_belief), range(0, stop = 1, length = 100)), xlabel = "probability of heads", ylabel = "", title = "", xlim = (0,1), label = "Closed-form", fill=0, α=0.3, w=3, c = :green)
+	
+	# Visualize the true probability of heads in red.
+	vline!(p, [θ_true], label = "True probability", c = :black, lw = 1.7, style = :dash)
+	
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2710,11 +2742,14 @@ version = "0.9.1+5"
 # ╟─6005e786-d4e8-4eef-8d6c-cc07fe36ea17
 # ╟─283fe6c9-6642-4bce-a639-696b92fcabb8
 # ╟─0dc3b4d5-c66e-4fbe-a9fe-67f9212371cf
+# ╠═53872a09-db29-4195-801f-54dd5c7f8dc3
 # ╟─b8053536-0e98-4a72-badd-58d9adbcf5ca
 # ╟─97dd43c3-1072-4060-b750-c898ce926861
-# ╠═53872a09-db29-4195-801f-54dd5c7f8dc3
+# ╟─927bce0e-e018-4ecb-94e5-09812bf75936
 # ╠═398da783-5e47-4d39-8048-4541aad6b8b5
 # ╠═a6ae40e6-ea8c-46f1-b430-961c1185c087
-# ╠═927bce0e-e018-4ecb-94e5-09812bf75936
+# ╟─10beb8b2-0841-44c4-805e-8667da325b01
+# ╟─58f65290-8ba9-4c27-94de-b28a5eac80a4
+# ╠═c0daa659-f5f6-4e6b-9973-a399cf0ea788
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

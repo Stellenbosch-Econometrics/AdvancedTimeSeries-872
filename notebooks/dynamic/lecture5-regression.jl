@@ -83,9 +83,9 @@ md" ## Bayesian methods overview "
 # ╔═╡ f3823457-8757-4665-86a8-bf536d80e24d
 md"""
 
-**Please read** the following section carefully. It is from the notes by Joshua Chen and it explains in clear detail what we have been trying to do up to this point. 
+**Please read** the following section carefully. It is from the notes by Joshua Chen and it explains in clear detail what we have been trying to do up to this point. This first section is a quick recap of many of the concepts we have covered so far. You will notice that we adopt matrix notation from now on. This takes some getting used to, but in the end it is worth it. 
 
-As we have established, the fundamental organizing principle in Bayesian econometrics is **Bayes' theorem**. It forms the unifying principle on how Bayesians estimate model parameters, conduct inference, compare models, etc. 
+As we have established, the fundamental organizing principle in Bayesian econometrics is **Bayes' theorem**. It forms the unifying principle on how Bayesians estimate model parameters, conduct inference, compare models and so forth. 
 
 Bayes' theorem states that for events $A$ and $B$, the conditional probability of $A$ given $B$ is:
 
@@ -325,12 +325,12 @@ function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
     # Start the Gibbs sampling procedure
     for i in 1:nsim + burnin
         # Sample from μ (refer to Chan notes for the math)
-        D_μ   = 1/(1/σ2_0 .+ N/ σ2_1)
-        μ_hat = D_μ.*(μ_0/σ2_0 .+ sum(y)/σ2_1)
+        D_μ   = 1 / (1 / σ2_0 .+ N / σ2_1)
+        μ_hat = D_μ .* (μ_0 / σ2_0 .+ sum(y) / σ2_1)
         μ_1   = μ_hat .+ sqrt(D_μ) .* randn() # Affine transformation is also normal
 
         # Sample from σ2
-        σ2_1  = 1/rand(Gamma(ν_0 .+ N/2, 1/(Σ_0 .+ sum((y .- μ_1).^2)/2)))
+        σ2_1  = 1/rand(Gamma(ν_0 .+ N/2, 1/(Σ_0 .+ sum((y .- μ_1).^2) / 2)))
 
         if i > burnin
             isave = i .- burnin
@@ -363,10 +363,23 @@ begin
 end
 
 # ╔═╡ 80e6619b-ac42-453b-8f38-850b2b99d000
-#surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
+begin
+	surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
+end
 
-# ╔═╡ 952f022e-002f-4982-b03c-c79c72c69366
+# ╔═╡ 2815094f-804e-408e-9509-48aa8b8ab446
+md"""
 
+### Normal model with `Turing.jl`
+
+"""
+
+# ╔═╡ 84af29b8-79c9-4a13-9f1d-2c7478421c82
+md"""
+
+In this section we will see the implementation using `Turing.jl`. 
+
+"""
 
 # ╔═╡ 82b96729-33c2-49b0-b908-562faf903a1e
 md"""
@@ -655,16 +668,16 @@ function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
     for i in 1:nsim + burnin
 
         # Sample from μ (refer to Chan notes for the math)
-        D_β   = (Vβ_0 .+ X'*X/σ2_1)\I(2)
-        β_hat = D_β*(Vβ_0 * β_0' .+ X'*y./σ2_1)
+        D_β   = (Vβ_0 .+ X' * X/σ2_1) \ I(2)
+        β_hat = D_β * (Vβ_0 * β_0' .+ X' * y ./ σ2_1)
 
         # See the note with respect to algorithm 2.1 for this
         C = cholesky(Symmetric(D_β)).L
         β_1 = β_hat .+ C * randn(2,1)
 
         # Sample from σ2
-        e = y - X*β_1
-        sig2 = 1/rand(Gamma(ν_0 .+ T/2, 1/(Σ_0 + (e'*e/2)[1])))
+        e = y - X * β_1
+        sig2 = 1 / rand(Gamma(ν_0 .+ T/2, 1/(Σ_0 + (e' * e / 2)[1])))
 
         if i > burnin
             isave = i .- burnin
@@ -675,7 +688,17 @@ function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
 end
 
 # ╔═╡ 9d1361c3-6de1-4326-85f8-4a272856d16b
-gibbs_lin(nsim, burnin, T, β, σ2, β_0, ν_0)
+post_gibbs_lin = gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
+
+# ╔═╡ 798e08bc-0866-466a-91d0-59706e7d3cc5
+plot(Normal(post_gibbs_lin[1], abs(post_gibbs_lin[2])))
+
+# ╔═╡ 442f79e7-425b-43fd-a760-099f5005d4b1
+md"""
+
+### Regression with `Turing.jl`
+
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1773,7 +1796,8 @@ version = "0.9.1+5"
 # ╟─3aeab073-c98a-4213-a835-3098233ba90c
 # ╟─3335094d-a67b-471c-834d-e22089933104
 # ╠═80e6619b-ac42-453b-8f38-850b2b99d000
-# ╠═952f022e-002f-4982-b03c-c79c72c69366
+# ╟─2815094f-804e-408e-9509-48aa8b8ab446
+# ╟─84af29b8-79c9-4a13-9f1d-2c7478421c82
 # ╟─82b96729-33c2-49b0-b908-562faf903a1e
 # ╟─1f2c9795-0b2c-4a14-9f28-1fef68f6b467
 # ╟─70193cca-ce19-49ee-aa0c-06997affe2a6
@@ -1795,5 +1819,7 @@ version = "0.9.1+5"
 # ╠═7b70270e-2991-40ee-97a9-082691e68701
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
 # ╠═9d1361c3-6de1-4326-85f8-4a272856d16b
+# ╠═798e08bc-0866-466a-91d0-59706e7d3cc5
+# ╟─442f79e7-425b-43fd-a760-099f5005d4b1
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

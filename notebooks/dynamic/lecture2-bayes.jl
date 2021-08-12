@@ -399,35 +399,26 @@ md" Now let us conduct some experiments with our new binomial random variable. "
 md"""
 
 !!! note "Interactive sliders for Binomial random variable"
-
-N = $(@bind n Slider(1:1:100, show_value = true, default=1));
-p = $(@bind p Slider(0:0.01:1, show_value = true, default=0.5)); 
-
-> Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and increase the number of $N$, what happens to the distribution? What theorem is at play here?
+	Shift these sliders around to see what happens to the graph below. Try fixing values for $p$ and increase the number of $N$, what happens to the distribution?
+	
+``N``: $(@bind binom_n Slider(1:100; show_value=true, default=10))
+``p``: $(@bind binom_p Slider(0.01:0.01:0.99; show_value=true, default=0.5))
 
 """
 
-# ╔═╡ d6316b4f-9882-4d25-87d0-31fa3c1f3935
-b = [binomial_rv(n, p) for _ in 1:1000]; # Using an array comprehension
-
 # ╔═╡ c4cc482b-815b-4747-9f5a-5779d69086f7
-begin
-	#dens_b = kde(b)
-	#plot(dens_b, line = 2, color = :black, legend = false, norm = true)
-	histogram(b, alpha = 0.5, c = :steelblue, legend = false, size = (700, 500), norm = true)
-end
+Plots.plot(
+    Binomial(binom_n, binom_p);
+    seriestype=:sticks,
+    markershape=:circle,
+    xlabel=raw"$k$",
+    ylabel=raw"$p_{Y\mid \Theta}(y \mid \theta)$",
+    title="\$\\operatorname{Binom}($binom_n, $binom_p)\$",
+    label=false,
+)
 
 # ╔═╡ 9016cba4-58f0-4b7f-91af-66faaf3fe99c
 md" Naturally, one would want to use a pre-packaged solution to sampling with a binomial random variable. The `Distributions.jl` package contains optimised routines that work faster than our code, but is still a good idea to code some things yourself to fully understand the mechanisms. " 
-
-# ╔═╡ 6b1e8fc3-48ee-471b-9c04-7c75cfef156c
-# @benchmark (rand(Binomial(n, p), 1000)  # Will generally give the same result as above, but likely much faster. 
-
-# ╔═╡ 2eb59993-4ace-4acb-9810-ba064ea1eb3e
-# @benchmark [(rand(Binomial(n, p))) for _ in 1:1000] # What is different with this?
-
-# ╔═╡ 7c04e47c-eeed-47ec-9c6f-e2b710d0b746
-# @benchmark [binomial_rv(n, p) for _ in 1:1000] # We can see from our benchmarking that this is much slower. 
 
 # ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
 md" #### Estimating bias in a coin  "
@@ -770,28 +761,38 @@ The variables $a$ and $b$ are called the shape parameters of the Beta distributi
 md"""
 
 !!! note "Parameters (a, b) of Beta distribution"
+	Changing these sliders will illustrate how flexible the Beta distribution really is!
 
-a = $(@bind α Slider(1:0.1:4, show_value = true, default=1)); 
-b = $(@bind β Slider(1:1:4, show_value = true, default=1))
-
-> Changing these sliders will illustrate how flexible the Beta distribution really is!
+a = $(@bind α Slider(0.1:0.1:10, show_value = true, default=1)); 
+b = $(@bind β Slider(0.1:0.1:10, show_value = true, default=1))
 """
 
 # ╔═╡ aa69d0e8-cbbb-436c-b488-5bb113cdf97f
 prior_beta = Beta(α, β);
 
-# ╔═╡ 84d7e4dd-23a9-4412-a8de-ab8ee8351770
-plot(prior_beta, coins_grid, xlab = "theta", ylab = "prior", color = :black, legend = false, lw = 1.5,  fill = (0, 0.4, :black))
+# ╔═╡ dc43d1bc-ea5c-43ca-af0c-fc150756fa76
+Plots.plot(
+    Beta(α, β);
+    xlabel=raw"$\theta$",
+    ylabel=raw"$p_{\Theta}(\theta)$",
+    title="\$\\mathrm{Beta}\\,($α, $β)\$",
+    label=false,
+    linewidth=2,
+    fill=true,
+    fillalpha=0.3,
+	color = :black
+)
 
 # ╔═╡ 43d563ae-a435-417f-83c6-19b3b7d6e6ee
 md"""
 
 !!! note "Beta prior hyperparameters"
+	Using different parameterisations of Beta will provide different posteriors.
 
 a1 = $(@bind α₁ Slider(1:0.1:4, show_value = true, default=1));
 b1 = $(@bind β₁ Slider(1:1:4, show_value = true, default=1))
 
-> Using different parameterisations of Beta will provide different posteriors.
+
 """
 
 # ╔═╡ 11a5614b-c195-45a8-8be0-b99fda6c60fd
@@ -799,9 +800,12 @@ begin
 	prior_beta₁ = Beta(α₁, β₁)
 	prior_beta_pdf = pdf(prior_beta₁, coins_grid); # Beta distribution
 	posterior_beta = prior_beta_pdf .* likelihood_norm_2;
+	
 	plot(prior_beta₁, coins_grid, xlab = "theta", color = :black, legend = false, lw = 0,  fill = (0, 0.2, :black))
 	plot!(coins_grid, likelihood_norm_2, color = :steelblue,lw = 0,  fill = (0, 0.2, :steelblue))
-	plot!(coins_grid, posterior_beta, color = :black,lw = 2,  fill = (0, 0.4, :green))
+	plot!(coins_grid, posterior_beta, color = :black,lw = 2,  fill = (0, 0.4, :green), xlabel=raw"$\theta$",
+    ylabel=raw"$p_{\Theta}(\theta)$",
+    title="\$\\mathrm{Beta}\\,($α₁, $β₁)\$",)
 end
 
 # ╔═╡ f004ec01-1e27-4e30-9a53-23a299208846
@@ -844,10 +848,39 @@ This indicates that the posterior mean is somewhere between the prior mean and t
 # ╔═╡ 92a4aa17-2e2d-45c2-a9a2-803d389077d5
 md" ## Coin toss with `Turing.jl` 🤓"
 
-# ╔═╡ 0a3ed179-b60b-4740-ab73-b176bba08d84
-md" In this section I will construct a coin tossing model in `Turing.jl`. You don't need to worry for now what this package is, we will devote an entire session to it later in the course. However, let us just run the example and I will explain what is going on in class. 
+# ╔═╡ 33b402b9-29c5-43d3-bb77-9b1a172229bb
+md""" 
 
-We can approach the problem in one of two ways. We can see the process as independent Bernoulli trials or use a Binomial model. We illustrate both way below. "
+!!! note
+	The material from this section comes from a talk by Jose Storopoli
+
+"""
+
+# ╔═╡ 0a3ed179-b60b-4740-ab73-b176bba08d84
+md" In this section I will construct a coin tossing model in `Turing.jl`. We can approach the problem in one of two ways. We can see the process as independent Bernoulli trials or use a Binomial model. Don't worry too much about what MCMC methods are at this point, we will spend enough time going through these concepts later in the course. "
+
+# ╔═╡ 47230bb3-de03-4353-9cbe-f974cc25411c
+md""" #### How to specify a model """
+
+# ╔═╡ 6f76e32c-32a7-4d77-b1f9-0078807ec103
+md"""
+**We specify the model inside a macro** `@model` where we can assign variables in two ways:
+
+* using `~`: which means that a variable follows some probability distribution (Normal, Binomial etc.) and its value is random under that distribution
+
+* using `=`: which means that a variable does not follow a probability distribution and its value is deterministic (like the normal `=` assignment in programming languages)
+
+Turing will perform automatic inference on all variables that you specify using `~`.
+
+Just like you would write in mathematical form:
+
+$$\begin{aligned}
+p &\sim \text{Beta}(1,1) \\
+\text{coin flip} &\sim \text{Bernoulli}(p)
+\end{aligned}$$
+
+> **Example**: Unfair coin with $p$ = 0.4.
+"""
 
 # ╔═╡ c205ff23-f1e7-459f-9339-2c80ab68945f
 begin	
@@ -862,55 +895,127 @@ begin
 	data = rand(Bernoulli(p_true), last(Ns))
 
 	# Declare our Turing model.
-	@model function coin_toss1(y)
+	@model function coin_flip(y; α::Real=1, β::Real=1)
     	# Our prior belief about the probability of heads in a coin.
-    	p ~ Beta(1, 1)
+    	p ~ Beta(α, β)
 
     	# The number of observations.
     	N = length(y)
-    		for n in 1:N
+    		for n ∈ 1:N
         	# Heads or tails of a coin are drawn from a Bernoulli distribution.
         	y[n] ~ Bernoulli(p)
     	end
 	end
+end
 
-	chns1 = sample(coin_toss1(data), NUTS(), 1000) # Using the No U Turn Sampler
+# ╔═╡ 2bfe1d15-210d-43b4-ba4b-dec83f2363cd
+md"""
+
+In this example, `coin_flip` is a Julia function. It creates a model of the type `DynamicPPL.Model` which stores the name of the models, the generative function and the arguments of the models and their defaults. 
+
+"""
+
+# ╔═╡ b5a3a660-8928-4097-b1c4-90f045d17444
+md"""
+#### How to specify a MCMC sampler (`NUTS`, `HMC`, `MH` etc.)
+"""
+
+# ╔═╡ 6005e786-d4e8-4eef-8d6c-cc07fe36ea17
+md"""
+We have [several samplers](https://turing.ml/dev/docs/using-turing/sampler-viz) available:
+
+* `MH()`: **M**etropolis-**H**astings
+* `PG()`: **P**article **G**ibbs
+* `SMC()`: **S**equential **M**onte **C**arlo
+* `HMC()`: **H**amiltonian **M**onte **C**arlo
+* `HMCDA()`: **H**amiltonian **M**onte **C**arlo with Nesterov's **D**ual **A**veraging
+* `NUTS()`: **N**o-**U**-**T**urn **S**ampling
+
+Just stick your desired `sampler` inside the function `sample(model, sampler, N; kwargs)`.
+
+Play around if you want. Choose your `sampler`:
+"""
+
+# ╔═╡ 283fe6c9-6642-4bce-a639-696b92fcabb8
+@bind chosen_sampler Radio([
+		"MH()",
+		"PG(Nₚ) - Number of Particles",
+		"SMC()",
+		"HMC(ϵ, L) - leaprog step size(ϵ) and number of leaprogs steps (L)",
+		"HMCDA(Nₐ, δ, λ) - Number of samples to use for adaptation (Nₐ), target acceptance ratio (δ), and target leapfrog length(λ)",
+		"NUTS(Nₐ, δ) - Number of samples to use for adaptation (Nₐ) and target acceptance ratio (δ)"], default = "MH()")
+
+# ╔═╡ 0dc3b4d5-c66e-4fbe-a9fe-67f9212371cf
+begin
+	your_sampler = nothing
+	if chosen_sampler == "MH()"
+		your_sampler = MH()
+	elseif chosen_sampler == "PG(Nₚ) - Number of Particles"
+		your_sampler = PG(2)
+	elseif chosen_sampler == "SMC()"
+		your_sampler = SMC()
+	elseif chosen_sampler == "HMC(ϵ, L) - leaprog step size(ϵ) and number of leaprogs steps (L)"
+		your_sampler = HMC(0.05, 10)
+	elseif chosen_sampler == "HMCDA(Nₐ, δ, λ) - Number of samples to use for adaptation (Nₐ), target acceptance ratio (δ), and target leapfrog length(λ)"
+		your_sampler = HMCDA(10, 0.65, 0.3)
+	elseif chosen_sampler == "NUTS(Nₐ, δ) - Number of samples to use for adaptation (Nₐ) and target acceptance ratio (δ)"
+		your_sampler = NUTS(10, 0.65)
+	end
+end
+
+# ╔═╡ b8053536-0e98-4a72-badd-58d9adbcf5ca
+md"""
+#### How to inspect chains and plot with `MCMCChains.jl`
+"""
+
+# ╔═╡ 97dd43c3-1072-4060-b750-c898ce926861
+md"""
+We can inspect and plot our model's chains and its underlying parameters with [`MCMCChains.jl`](https://turinglang.github.io/MCMCChains.jl/stable/)
+
+**Inspecting Chains**
+   * Summary Statistics: just do `summarystats(chain)`
+   * Quantiles (Median, etc.): just do `quantile(chain)`
+
+**Plotting Chains**: Now we have several options. The default `plot()` recipe will plot a `traceplot()` side-by-side with a `mixeddensity()`.
+
+ First, we have to choose either to plot **parameters**(`:parameter`) or **chains**(`:chain`) with the keyword `colordim`.
+
+
+Second, we have several plots to choose from:
+* `traceplot()`: used for inspecting Markov chain **convergence**
+* `meanplot()`: running average plots per interaction
+* `density()`: **density** plots
+* `histogram()`: **histogram** plots
+* `mixeddensity()`: **mixed density** plots
+* `autcorplot()`: **autocorrelation** plots
+
+
+"""
+
+# ╔═╡ 53872a09-db29-4195-801f-54dd5c7f8dc3
+begin
+	chain_coin = sample(coin_flip(data), your_sampler, 1000)
+	summarystats(chain_coin)
 end
 
 # ╔═╡ 398da783-5e47-4d39-8048-4541aad6b8b5
-StatsPlots.plot(chns1[:p], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false)
+StatsPlots.plot(chain_coin[:p], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false, dpi = 300)
 
 # ╔═╡ a6ae40e6-ea8c-46f1-b430-961c1185c087
 begin
-	StatsPlots.histogram(chns1[:p], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
+	StatsPlots.histogram(chain_coin[:p], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
 end
 
-# ╔═╡ eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
-begin
-	Random.seed!(1)
-	
-	# This is the same as 5 indepdent Bernoulli coin tosses from above
-	
-	y₃ = 1
-	n₃ = 5
-	
-	@model function coin_toss2(n, y)
-	    θ ~ Beta(1, 1) # Prior 
-	    y ~ Binomial(n, θ) # Likelihood (model)
-	    return y, θ
-	end
-	
-	chns2 = sample(coin_toss2(n₃, y₃), NUTS(), 1000) # Using the No U Turn Sampler
-end
-
-# ╔═╡ 54f47150-282e-434c-a588-c7c530c438b9
-StatsPlots.plot(chns2[:θ], lw = 1.75, color = :steelblue, alpha = 0.8, legend = false)
-
-# ╔═╡ da910458-7430-4653-a263-6daae79f5a7e
-StatsPlots.histogram(chns2[:θ], lw = 1.75, color = :black, alpha = 0.8, fill = (0, 0.4, :steelblue), legend = false)
-
-# ╔═╡ bf1a74e4-cf55-470e-843d-a8e6b90517e9
-md" We will take a look at a more involved coin toss example later in the course, but this should be easy enough to understand. "
+# ╔═╡ 927bce0e-e018-4ecb-94e5-09812bf75936
+plot(
+	traceplot(chain_coin, title="traceplot"),
+	meanplot(chain_coin, title="meanplot"),
+	density(chain_coin, title="density"),
+	histogram(chain_coin, title="histogram"),
+	mixeddensity(chain_coin, title="mixeddensity"),
+	autocorplot(chain_coin, title="autocorplot"),
+	dpi=300, size=(840, 600)
+)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2541,12 +2646,8 @@ version = "0.9.1+5"
 # ╠═2cb41330-7ebd-45de-9aa1-632db6f9a140
 # ╟─69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
 # ╟─b6da2479-1545-4b1d-8d7f-07d6d1f67635
-# ╠═d6316b4f-9882-4d25-87d0-31fa3c1f3935
 # ╟─c4cc482b-815b-4747-9f5a-5779d69086f7
 # ╟─9016cba4-58f0-4b7f-91af-66faaf3fe99c
-# ╠═6b1e8fc3-48ee-471b-9c04-7c75cfef156c
-# ╠═2eb59993-4ace-4acb-9810-ba064ea1eb3e
-# ╠═7c04e47c-eeed-47ec-9c6f-e2b710d0b746
 # ╟─828166f7-1a69-4952-9e3b-50a99a99789f
 # ╟─24c4d724-5911-4534-a5c6-3ab86999df43
 # ╠═5046166d-b6d8-4473-8823-5209aac59c84
@@ -2592,20 +2693,28 @@ version = "0.9.1+5"
 # ╟─573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 # ╟─1ca20976-757f-4e30-94d4-ee1276a614fb
 # ╟─aa69d0e8-cbbb-436c-b488-5bb113cdf97f
-# ╟─84d7e4dd-23a9-4412-a8de-ab8ee8351770
+# ╟─dc43d1bc-ea5c-43ca-af0c-fc150756fa76
 # ╟─43d563ae-a435-417f-83c6-19b3b7d6e6ee
 # ╟─11a5614b-c195-45a8-8be0-b99fda6c60fd
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
 # ╟─e7669fea-5aff-4522-81bf-3356ce126b1f
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5
+# ╟─33b402b9-29c5-43d3-bb77-9b1a172229bb
 # ╟─0a3ed179-b60b-4740-ab73-b176bba08d84
+# ╟─47230bb3-de03-4353-9cbe-f974cc25411c
+# ╟─6f76e32c-32a7-4d77-b1f9-0078807ec103
 # ╠═c205ff23-f1e7-459f-9339-2c80ab68945f
+# ╟─2bfe1d15-210d-43b4-ba4b-dec83f2363cd
+# ╟─b5a3a660-8928-4097-b1c4-90f045d17444
+# ╟─6005e786-d4e8-4eef-8d6c-cc07fe36ea17
+# ╟─283fe6c9-6642-4bce-a639-696b92fcabb8
+# ╟─0dc3b4d5-c66e-4fbe-a9fe-67f9212371cf
+# ╟─b8053536-0e98-4a72-badd-58d9adbcf5ca
+# ╟─97dd43c3-1072-4060-b750-c898ce926861
+# ╠═53872a09-db29-4195-801f-54dd5c7f8dc3
 # ╠═398da783-5e47-4d39-8048-4541aad6b8b5
 # ╠═a6ae40e6-ea8c-46f1-b430-961c1185c087
-# ╠═eeb9d3b0-ab6b-49fd-9d3c-87489ccd7c26
-# ╠═54f47150-282e-434c-a588-c7c530c438b9
-# ╠═da910458-7430-4653-a263-6daae79f5a7e
-# ╟─bf1a74e4-cf55-470e-843d-a8e6b90517e9
+# ╠═927bce0e-e018-4ecb-94e5-09812bf75936
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

@@ -340,8 +340,12 @@ $\omega = \frac{N/\sigma^{2}}{N/\sigma^{2} + 1/\tau_{0}^{2}}$
 then we can say that the posterior mean is a weighted average of the data mean and the prior mean. Posterior therefore puts more emphasis on the data when the value of $N$ is large. This is something that we also found in our previous lecture with the Bernoulli distribution. 
 """
 
-# ╔═╡ 7644cfa5-c296-475d-bd8b-b78911ff98f3
-md" #### Summary "
+# ╔═╡ f5184e69-55c6-4688-8b0e-d543a07be97b
+md"""
+
+#### Summary
+
+"""
 
 # ╔═╡ 3b2e280f-d83a-4f1c-86bb-1397b95210cb
 md"""
@@ -483,7 +487,7 @@ g_hat = mean.(log.(abs.(mu)));
 # ╔═╡ 8973afa7-2325-42f4-8e14-28aa090448d6
 begin
 	histogram(g_hat, alpha = 0.3, norm = true)
-	StatsPlots.density!(g_hat, lw = 2, color = :black)
+	StatsPlots.density!(g_hat, lw = 2, color = :black, legend = false)
 end
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
@@ -721,6 +725,20 @@ end
 
 # ╔═╡ a9052ded-2181-47b0-b9d7-1faa985e7b3a
 plot(postdraws, line = 1.7, color = :steelblue, alpha = 0.8)
+
+# ╔═╡ 980ff4a1-fbd6-4e0f-b400-52f4e2101ceb
+@model function new_normal(x, y)
+    s² ~ InverseGamma(2, 3)
+    m ~ Normal(0, sqrt(s²))
+    x ~ Normal(m, sqrt(s²))
+    y ~ Normal(m, sqrt(s²))
+end
+
+# ╔═╡ c3fbf110-fd19-4300-ab6f-0fefddfab668
+c1 = sample(new_normal(1.5, 2), SMC(), 1000)
+
+# ╔═╡ 33d02d91-792f-43b7-8ea2-5373eb908e24
+plot(c1)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2342,7 +2360,7 @@ version = "0.9.1+5"
 # ╟─8ffaa0dc-36f8-49da-9742-74db90c6d5a8
 # ╟─5d97bab1-346d-4edd-bc5e-bc6b1a510912
 # ╟─39d705ff-4540-4103-ae10-694d5b64e82b
-# ╟─7644cfa5-c296-475d-bd8b-b78911ff98f3
+# ╟─f5184e69-55c6-4688-8b0e-d543a07be97b
 # ╟─3b2e280f-d83a-4f1c-86bb-1397b95210cb
 # ╟─9741e08b-3f54-49d7-8db0-3125f4f90d3c
 # ╟─e99e1925-6219-4bf2-b743-bb2ea725dfcd
@@ -2381,5 +2399,8 @@ version = "0.9.1+5"
 # ╟─2e125ab3-136f-44ef-a51b-475aacda96b5
 # ╠═75215065-16a5-4c54-8966-f4bdc8b15054
 # ╠═a9052ded-2181-47b0-b9d7-1faa985e7b3a
+# ╠═980ff4a1-fbd6-4e0f-b400-52f4e2101ceb
+# ╠═c3fbf110-fd19-4300-ab6f-0fefddfab668
+# ╠═33d02d91-792f-43b7-8ea2-5373eb908e24
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Distances, Distributions, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, StaticArrays, Statistics, StatsPlots, Turing
+using BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, UrlDownload
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -620,6 +620,18 @@ function data_gen2(T, β, σ2)
     X * β' .+ sqrt(σ2) .* randn(T, 1)
 end
 
+# ╔═╡ 9c00a82f-b55b-4644-9d46-06943e8050f6
+samp = data_gen2(T, β, σ2)
+
+# ╔═╡ bf0b1f01-6afe-44af-a4e8-df955745415b
+mean(samp)
+
+# ╔═╡ 14c19187-3641-4b2e-a3e3-dc136711d263
+var(samp)
+
+# ╔═╡ 31f3debd-770c-48bc-995f-427bf924a637
+density(samp)
+
 # ╔═╡ 000cf50f-d3f8-452b-b661-11545c2ec0c4
 function get_prior(ν_0)
 
@@ -728,7 +740,7 @@ begin
 end
 
 # ╔═╡ 0b23e994-d1c7-466e-bb40-e8b1db183885
-md""" ### Model specification """
+md""" #### Model specification """
 
 # ╔═╡ 8c803ed9-051b-45a0-8e8a-c3754b0a1f10
 # Bayesian linear regression.
@@ -748,12 +760,108 @@ md""" ### Model specification """
     y ~ MvNormal(mu, sqrt(σ₂))
 end
 
+# ╔═╡ 7cf8df8f-aa2d-41f9-95b7-b50fc191cb9d
+model = linear_regression(train, train_target);
+
+# ╔═╡ 7967b6e7-8391-4489-9e36-fe281dfe3fcc
+chain = sample(model, NUTS(0.65), 2_000);
+
+# ╔═╡ beaa1dfc-e2a7-4125-a45e-bfba93f8f02a
+plot(chain)
+
+# ╔═╡ 89353f76-27d3-4675-8867-d4edf0dab9a5
+md"""
+
+### ARIMA model in `Turing.jl`
+
+"""
+
+# ╔═╡ 34307b89-0a10-4339-9356-fd21fd877e95
+md" So we have looked at a basic regression model. What if we want to do an ARIMA type model, like modelling an AR(1) process? How would we go about doing this? Let us look at some financial data in this example. Ice cream data might not have been the best bet for real econometric analysis. "
+
+# ╔═╡ d81f725d-a250-44e8-98ba-5c0efecdb19c
+df = urldownload("https://raw.githubusercontent.com/inertia7/timeSeries_sp500_R/master/data/data_master_1.csv") |> DataFrame
+
+# ╔═╡ dfbe27b2-bfdd-40e9-a63c-3115c308de75
+s = df.sp_500;
+
+# ╔═╡ 455a97c8-db6e-42d8-82b1-9c21f2794ab7
+plot(s, legend = false, lw = 1.5, alpha = 0.8)
+
+# ╔═╡ 3f656347-0b61-4b7e-b52f-c4f34d724f5c
+begin
+	# Split into training and test sets. 
+	train_percentage = 0.95
+	s_train = s[1:floor(Int, train_percentage*length(s))]
+	N₂ = length(s_train)
+end
+
+# ╔═╡ 536ecb71-f33f-402d-8d6f-16291aa9530f
+md" We can test for stationarity with a Dickey Fuller test. "
+
+# ╔═╡ ccea5b69-dfb1-47ee-bd54-7b58d87f09f5
+ADFTest(s_train, Symbol("constant"), 5)
+
+# ╔═╡ d90046ec-2bb6-4224-a26d-65550d86dc96
+md" We observe stationarity and the easiest way to resolve this is by taking a first difference. "
+
+# ╔═╡ 6c7f89c4-cbeb-42c6-aba4-cff79a68ab8f
+begin
+	s_diff = diff(s_train)
+	plot(s_diff, legend = false, lw = 1.5, alpha = 0.8)
+end
+
+# ╔═╡ 1c1d4271-6cec-4d86-be3b-1e89417154ee
+ADFTest(s_diff, Symbol("constant"), 5)
+
+# ╔═╡ 9b5622fa-9caf-4f54-a15d-f8b731dc842b
+md" Seems stationary, so let's move to our next step. We want to figure out the number of MA and AR terms by using ACF and PACF plots. You should have this type of process in the first semester.   "
+
+# ╔═╡ 596fdda0-0d0e-4e45-8fa2-5618122a08b6
+begin
+	total_lags = 20
+	s1 = plot(line = :stem, collect(1:total_lags), autocor(s_diff, collect(1:total_lags)), title = "ACF", ylim = [-0.3,0.5], lw = 10)
+	s2 = plot(line = :stem, collect(1:total_lags), pacf(s_diff, collect(1:total_lags)), title = "PACF", ylim = [-0.3,0.5], lw = 10)
+	plot(s1, s2, layout = (2, 1), legend = false)
+end
+
+# ╔═╡ e680e488-f1e2-4da8-8ef4-612f60cd030b
+md" For the sake of argument, let us say that we can then model with with an AR(0, 1, 1) model."
+
+# ╔═╡ 7eecc27c-5af0-42d4-96f6-2a689e945e7f
+@model ARIMA011(x) = begin
+    T = length(x)
+
+    # Set up error vector.
+    ϵ = Vector(undef, T)
+    x_hat = Vector(undef, T)
+
+    θ ~ Uniform(-5, 5)
+
+    # Treat the first x_hat as a parameter to estimate.
+    x_hat[1] ~ Normal(550, 220)
+    ϵ[1] = x[1] - x_hat[1]
+
+    for t in 2:T
+        # Predicted value for x.
+        x_hat[t] = x[t-1] - θ * ϵ[t-1]
+        # Calculate observed error.
+        ϵ[t] = x[t] - x_hat[t]
+        # Observe likelihood.
+        x[t] ~ Normal(x_hat[t], 1)
+    end
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+HypothesisTests = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MCMCChains = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
@@ -767,11 +875,16 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+UrlDownload = "856ac37a-3032-4c1c-9122-f86d88358c8b"
 
 [compat]
 BenchmarkTools = "~1.1.1"
+CSV = "~0.8.5"
+DataFrames = "~1.2.2"
 Distances = "~0.10.3"
 Distributions = "~0.25.11"
+HTTP = "~0.9.13"
+HypothesisTests = "~0.10.4"
 KernelDensity = "~0.6.3"
 MCMCChains = "~4.13.2"
 MLDataUtils = "~0.5.4"
@@ -782,6 +895,7 @@ StaticArrays = "~1.2.9"
 StatsBase = "~0.33.9"
 StatsPlots = "~0.14.26"
 Turing = "~0.17.0"
+UrlDownload = "~1.0.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1300,6 +1414,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "3395d4d4aeb3c9d31f5929d32760d8baeee88aaf"
 uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
 version = "2.5.0+0"
+
+[[HypothesisTests]]
+deps = ["Combinatorics", "Distributions", "LinearAlgebra", "Random", "Rmath", "Roots", "Statistics", "StatsBase"]
+git-tree-sha1 = "a82a0c7e790fc16be185ce8d6d9edc7e62d5685a"
+uuid = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
+version = "0.10.4"
 
 [[IfElse]]
 git-tree-sha1 = "28e837ff3e7a6c3cdb252ce49fb412c8eb3caeef"
@@ -1903,6 +2023,12 @@ git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.3.0+0"
 
+[[Roots]]
+deps = ["CommonSolve", "Printf"]
+git-tree-sha1 = "06ba8114bf7fc4fd1688e2e4d2259d2000535985"
+uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+version = "1.2.0"
+
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
@@ -2151,6 +2277,12 @@ version = "1.0.2"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+
+[[UrlDownload]]
+deps = ["HTTP", "ProgressMeter"]
+git-tree-sha1 = "05f86730c7a53c9da603bd506a4fc9ad0851171c"
+uuid = "856ac37a-3032-4c1c-9122-f86d88358c8b"
+version = "1.0.0"
 
 [[VectorizationBase]]
 deps = ["ArrayInterface", "Hwloc", "IfElse", "Libdl", "LinearAlgebra", "Static"]
@@ -2437,6 +2569,10 @@ version = "0.9.1+5"
 # ╟─223f4b6f-8321-4142-9dfa-1afe371d40ac
 # ╟─edaf930a-4933-4047-8854-bbb02ea9c39c
 # ╠═c9c8d57b-3010-4056-aaa3-a0354cf456fd
+# ╠═9c00a82f-b55b-4644-9d46-06943e8050f6
+# ╠═bf0b1f01-6afe-44af-a4e8-df955745415b
+# ╠═14c19187-3641-4b2e-a3e3-dc136711d263
+# ╠═31f3debd-770c-48bc-995f-427bf924a637
 # ╠═000cf50f-d3f8-452b-b661-11545c2ec0c4
 # ╠═7b70270e-2991-40ee-97a9-082691e68701
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
@@ -2451,5 +2587,23 @@ version = "0.9.1+5"
 # ╠═bd6bcc2d-dd6d-4140-a62f-61a0c27bcda1
 # ╟─0b23e994-d1c7-466e-bb40-e8b1db183885
 # ╠═8c803ed9-051b-45a0-8e8a-c3754b0a1f10
+# ╠═7cf8df8f-aa2d-41f9-95b7-b50fc191cb9d
+# ╠═7967b6e7-8391-4489-9e36-fe281dfe3fcc
+# ╠═beaa1dfc-e2a7-4125-a45e-bfba93f8f02a
+# ╟─89353f76-27d3-4675-8867-d4edf0dab9a5
+# ╟─34307b89-0a10-4339-9356-fd21fd877e95
+# ╠═d81f725d-a250-44e8-98ba-5c0efecdb19c
+# ╠═dfbe27b2-bfdd-40e9-a63c-3115c308de75
+# ╠═455a97c8-db6e-42d8-82b1-9c21f2794ab7
+# ╠═3f656347-0b61-4b7e-b52f-c4f34d724f5c
+# ╟─536ecb71-f33f-402d-8d6f-16291aa9530f
+# ╠═ccea5b69-dfb1-47ee-bd54-7b58d87f09f5
+# ╟─d90046ec-2bb6-4224-a26d-65550d86dc96
+# ╠═6c7f89c4-cbeb-42c6-aba4-cff79a68ab8f
+# ╠═1c1d4271-6cec-4d86-be3b-1e89417154ee
+# ╟─9b5622fa-9caf-4f54-a15d-f8b731dc842b
+# ╟─596fdda0-0d0e-4e45-8fa2-5618122a08b6
+# ╟─e680e488-f1e2-4da8-8ef4-612f60cd030b
+# ╠═7eecc27c-5af0-42d4-96f6-2a689e945e7f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

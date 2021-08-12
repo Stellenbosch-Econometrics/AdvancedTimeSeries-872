@@ -15,7 +15,6 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 6. Bayesian Vector Autoregression (BVAR) -- **Incomplete** ❌
 7. State space modelling and TVP-VARs -- **Empty** ❌
 8. Kalman filter -- **Empty** ❌
-9. Hamiltonian Monte Carlo and `Turing.jl` -- **Empty** ❌
 
 `R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 
 
@@ -26,6 +25,6 @@ Below is a non-exhaustive list of the resources used to construct the notes for 
 1. MIT (2021). [Computational Thinking](https://computationalthinking.mit.edu). -- NB resource! Most of the first lecture based on this. 
 2. QuantEcon (2021). [Quantitative Economics with Julia](https://julia.quantecon.org/). -- Lectures 0, 4, 8
 3. Aki Vehtari (2020). [Bayesian Data Analysis](https://avehtari.github.io/BDA_course_Aalto/index.html). -- Lectures 2, 3, 4
-4. José Eduardo Storopoli (2021). [Bayesian Statistics with Julia and Turing.](https://storopoli.io/Bayesian-Julia/) -- Lectures 2, 3, 4, 9
+4. José Eduardo Storopoli (2021). [Bayesian Statistics with Julia and Turing.](https://storopoli.io/Bayesian-Julia/) -- Lectures 2, 3, 4
 5. Gary Koop (2021). [Bayesian Econometrics](https://sites.google.com/site/garykoop/teaching/sgpe-bayesian-econometrics). -- Lectures 5, 6, 7
 6. Joshua Chan (2017). [Notes on Bayesian Econometrics](https://joshuachan.org/notes_BayesMacro.html). -- Lectures 5, 6, 7

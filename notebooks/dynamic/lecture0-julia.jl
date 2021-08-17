@@ -151,37 +151,149 @@ typeof(t₄) # One dimensional array
 m₁ = [2 3 4; 2 5 6.0; 3 5 8]
 
 # ╔═╡ 6496a671-4229-4fed-87b9-49029437c28f
+t₅ = "foo", 1
 
+# ╔═╡ 06ffd4ab-4d53-4c06-85fa-ac7b020bee64
+word, val = t₅ # Unpacking tuples into variables
 
 # ╔═╡ 63344f9b-8625-48e4-af1c-80259acd164b
+word
 
+# ╔═╡ 4d111c25-d08d-497d-92ab-e602eef9438f
+val
 
-# ╔═╡ 68fc04c6-7b2f-4d90-b4e7-58e0a4f38f4c
-
+# ╔═╡ 99db77f6-9dbc-4136-b647-ce1bcd53fa54
+"word is $word, and val is $val"
 
 # ╔═╡ 8823d272-1536-451c-b55b-437c7c52eb76
-
+md""" ### Referencing items """
 
 # ╔═╡ 47d2165a-c6e8-4fa7-b155-7dbcfaa7c94c
+a₁ = [10, 20, 30, 40] # Array / vector
 
+# ╔═╡ 9b50adbd-1bde-43da-b034-88a53fbb6130
+a₁
+
+# ╔═╡ 74d39962-8f7b-4965-ab7b-ab571e6a7619
+push!(a₁, 50) # ! mutation
+
+# ╔═╡ b76c0285-4eb8-4246-8041-40e7589862e8
+a₁[1:3] # Julia uses 1 based indexing, MATLAB and R are similar. However, python uses 0 based indexing. 
+
+# ╔═╡ deeb26df-0209-4534-a89f-88921be176dc
+a₁[2:end]
+
+# ╔═╡ 94f2fb7f-1b7e-4d17-8dce-24db50f07ebc
+"foobar"[3:end]
 
 # ╔═╡ 0fbe4644-fb8e-4f3a-b9bf-c952040214f1
-
+d = Dict("name" => "Frodo", "age" => 33)
 
 # ╔═╡ 0920d0c7-ed6f-4a43-9fd6-6f392609998e
+keys(d)
 
+# ╔═╡ d574201f-6b1b-40d8-b755-adfadedd71ba
+values(d)
+
+# ╔═╡ 5e8f3186-5a81-4bab-b57a-a86f6652a4e4
+md""" ### Iteration """
+
+# ╔═╡ 1695265f-441f-41ba-9597-e6dea6a52c04
+begin
+	actions = ["surf", "ski"] # Iterable
+	for action in actions 
+		println("Charlie doesn't $action")
+	end
+end
 
 # ╔═╡ 21d77e55-d2ae-4738-a72f-1b5aa2903cde
-
+x_values = 1:5
 
 # ╔═╡ b7ef0cb7-318f-4c12-860c-2f7584c0fd95
+for x in x_values
+    println(x * x)
+end
+
+# ╔═╡ aadbf0bd-9d30-412b-935e-e06d606da334
+doubles = [ 2i for i in 1:4 ] # Array comprehension (list comprehension)
+
+# ╔═╡ 29d4b074-cf3f-45f4-b47d-4c3fcc860230
+animals = ["dog", "cat", "bird"]  
+
+# ╔═╡ f4144452-eec8-44f8-b7d9-e8c9235f1424
+plurals = [ animal * "s" for animal in animals ]
+
+# ╔═╡ 3ff56a1f-e3e6-45f5-906b-a0e34a06e302
+[ i + j for i in 1:3, j in 4:6 ]
+
+# ╔═╡ 6cb975ac-d82a-40ac-be4e-a38eca2c109f
+[ i + j + k for i in 1:3, j in 4:6, k in 7:9 ]
+
+# ╔═╡ bf1c00cf-b6d1-4a95-b25d-a108cd9d3b6c
+[ (i, j) for i in 1:2, j in animals]
+
+# ╔═╡ 4775256a-f7b1-4819-b0ea-e23e89d00d43
+md""" ### Functions """
+
+# ╔═╡ d64d5b04-d65a-4d09-88ef-055c45336b44
+function f1(a, b) # a, b positional arguments
+	return a * b
+end
+
+# ╔═╡ 20349b96-2ba7-4923-b62f-f24b91976177
+f1(2, 3) == f1(3, 2)
+
+# ╔═╡ de7b58df-066f-4eb3-81e2-ea3a24987f2b
+f(x) = sin(1/x)
+
+# ╔═╡ 67bab112-611e-45d2-ba46-987f28ec3010
+f(1/ pi)
+
+# ╔═╡ 7fc85825-96b4-4000-95ae-c8272465471d
+map(x -> sin(1/x), randn(3)) 
+
+# ╔═╡ bec09f5c-6fa3-476a-8f23-1afaaae6893f
+randn(3)
+
+# ╔═╡ 1f4dfccc-97f9-425f-b79d-875447ba2176
+g(x; a = 1) = exp(cos(a * x)) # a is a keyword argument
+
+# ╔═╡ 7b2bda6a-3701-4fa8-b002-87eb2f9b30ba
+g₂(x, a = 1) = exp(cos(a * x))
+
+# ╔═╡ 2287afcc-e7fd-4dfe-bcb5-3aed4041b478
+g₂(1, 2)
+
+# ╔═╡ 31400c16-5add-4ff7-a43b-9d7887da026a
+g(1, a = 2) # positional and keyword arguments
+
+# ╔═╡ 2cb70fff-4509-46b2-bd1c-0d21d61961e9
 
 
-# ╔═╡ e359c5a3-c652-427e-97ee-d314a681a80d
+# ╔═╡ 4e18cfb3-1f46-45d6-91d6-7857dd77836e
+
+
+# ╔═╡ aeb41add-1dbe-4214-9bf8-1ff807e5ce75
 
 
 # ╔═╡ b75a03b7-53fd-4e13-ae01-abc54e2e9dc3
+begin
+	countries = ("Japan", "Korea", "China")
+	cities = ("Tokyo", "Seoul", "Beijing")
+	for (country, city) in zip(countries, cities)
+	    println("The capital of $country is $city")
+	end
+end
 
+# ╔═╡ 6563768a-6e36-45d6-b686-9734f3603d22
+begin
+	countries = ("Japan", "Korea", "China")
+	cities = ("Tokyo", "Seoul", "Beijing")
+	for (i, country) in enumerate(countries)
+	    city = cities[i]
+	    println("The capital of $hello is $city")
+	end
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -521,15 +633,45 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═086626fb-272f-4a2d-8fc6-7e1bd34699d4
 # ╠═94342ed2-6376-4c9f-b0a7-cc1939d53426
 # ╠═6496a671-4229-4fed-87b9-49029437c28f
+# ╠═06ffd4ab-4d53-4c06-85fa-ac7b020bee64
 # ╠═63344f9b-8625-48e4-af1c-80259acd164b
-# ╠═68fc04c6-7b2f-4d90-b4e7-58e0a4f38f4c
-# ╠═8823d272-1536-451c-b55b-437c7c52eb76
+# ╠═4d111c25-d08d-497d-92ab-e602eef9438f
+# ╠═99db77f6-9dbc-4136-b647-ce1bcd53fa54
+# ╟─8823d272-1536-451c-b55b-437c7c52eb76
 # ╠═47d2165a-c6e8-4fa7-b155-7dbcfaa7c94c
+# ╠═9b50adbd-1bde-43da-b034-88a53fbb6130
+# ╠═74d39962-8f7b-4965-ab7b-ab571e6a7619
+# ╠═b76c0285-4eb8-4246-8041-40e7589862e8
+# ╠═deeb26df-0209-4534-a89f-88921be176dc
+# ╠═94f2fb7f-1b7e-4d17-8dce-24db50f07ebc
 # ╠═0fbe4644-fb8e-4f3a-b9bf-c952040214f1
 # ╠═0920d0c7-ed6f-4a43-9fd6-6f392609998e
+# ╠═d574201f-6b1b-40d8-b755-adfadedd71ba
+# ╟─5e8f3186-5a81-4bab-b57a-a86f6652a4e4
+# ╠═1695265f-441f-41ba-9597-e6dea6a52c04
 # ╠═21d77e55-d2ae-4738-a72f-1b5aa2903cde
 # ╠═b7ef0cb7-318f-4c12-860c-2f7584c0fd95
-# ╠═e359c5a3-c652-427e-97ee-d314a681a80d
 # ╠═b75a03b7-53fd-4e13-ae01-abc54e2e9dc3
+# ╠═6563768a-6e36-45d6-b686-9734f3603d22
+# ╠═aadbf0bd-9d30-412b-935e-e06d606da334
+# ╠═29d4b074-cf3f-45f4-b47d-4c3fcc860230
+# ╠═f4144452-eec8-44f8-b7d9-e8c9235f1424
+# ╠═3ff56a1f-e3e6-45f5-906b-a0e34a06e302
+# ╠═6cb975ac-d82a-40ac-be4e-a38eca2c109f
+# ╠═bf1c00cf-b6d1-4a95-b25d-a108cd9d3b6c
+# ╟─4775256a-f7b1-4819-b0ea-e23e89d00d43
+# ╠═d64d5b04-d65a-4d09-88ef-055c45336b44
+# ╠═20349b96-2ba7-4923-b62f-f24b91976177
+# ╠═de7b58df-066f-4eb3-81e2-ea3a24987f2b
+# ╠═67bab112-611e-45d2-ba46-987f28ec3010
+# ╠═7fc85825-96b4-4000-95ae-c8272465471d
+# ╠═bec09f5c-6fa3-476a-8f23-1afaaae6893f
+# ╠═1f4dfccc-97f9-425f-b79d-875447ba2176
+# ╠═7b2bda6a-3701-4fa8-b002-87eb2f9b30ba
+# ╠═2287afcc-e7fd-4dfe-bcb5-3aed4041b478
+# ╠═31400c16-5add-4ff7-a43b-9d7887da026a
+# ╠═2cb70fff-4509-46b2-bd1c-0d21d61961e9
+# ╠═4e18cfb3-1f46-45d6-91d6-7857dd77836e
+# ╠═aeb41add-1dbe-4214-9bf8-1ff807e5ce75
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

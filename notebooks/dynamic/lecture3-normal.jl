@@ -514,8 +514,8 @@ begin
 	y₁ = 0:(1/length(x₁))+1:101 # because x and y are of different lengths
 	z = [pdf(mvnorm, [i, j]) for i in x₁, j in y₁]
 	
-	#plot(x₁, y₁, z, linetype=:wireframe, legend=false, color=:blues, width=0.4)
-	#plot!(x₁, y₁, z, linetype=:surface, legend=false, color=:ice, alpha = 0.8)
+	plot(x₁, y₁, z, linetype=:wireframe, legend=false, color=:blues, width=0.4)
+	plot!(x₁, y₁, z, linetype=:surface, legend=false, color=:ice, alpha = 0.8)
 	
 end
 

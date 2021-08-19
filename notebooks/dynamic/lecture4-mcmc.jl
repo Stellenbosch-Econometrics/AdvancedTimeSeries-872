@@ -236,8 +236,7 @@ Consider a situation where we only have two islands. At any point in time you ca
 # ╔═╡ 9e907a32-3dfe-4118-9ec1-53593f632745
 md"""
 !!! note "Travel itinerary for September "
-
->🏖️ $\rightarrow$ 🌴 with probability $\alpha \in (0, 1)$. 🌴  $\rightarrow$ 🏖️ with probability $\beta \in (0, 1)$
+	🏖️ $\rightarrow$ 🌴 with probability $\alpha \in (0, 1)$. 🌴  $\rightarrow$ 🏖️ with probability $\beta \in (0, 1)$
 
 """
 

@@ -60,7 +60,7 @@ overflow-x: hidden;
 html"""
 <style>
   main {
-    max-width: 800px;
+    max-width: 900px;
   }
 </style>
 """
@@ -115,7 +115,7 @@ md" ### Conditional probability "
 md" This is the probability that one event will occur if another has occurred or not. We use the notation $P(A | B)$, which can be read as, the probability that we have observed $A$ given that we have already observed $B$."
 
 # ╔═╡ 6d0bb8df-7211-4fca-b021-b1c35da7f7db
-md" We can illustrate with an example. Think about a deck of cards, with 52 cards in a deck. The probability that you are dealt a 🂮 is $4/52$. In other words, $P(🂮 )=\left(\frac{1}{52}\right)$, while the probability of begin a dealt a 🂱 is $P(🂱)=\left(\frac{1}{52}\right)$. However, the probability that you will be dealt 🂱 given that you have been dealt 🂮 is
+md" We can illustrate with an example. Think about a deck of cards, with 52 cards in a deck. The probability that you are dealt a 🂮 is $1/52$. In other words, $P(🂮 )=\left(\frac{1}{52}\right)$, while the probability of begin a dealt a 🂱 is $P(🂱)=\left(\frac{1}{52}\right)$. However, the probability that you will be dealt 🂱 given that you have been dealt 🂮 is
 
 $P(🂱 | 🂮)=\left(\frac{1}{51}\right)$
 
@@ -144,7 +144,7 @@ md" One should note that $P(A, K) = P(K, A)$ and that from that we have
 
 $P(A) \cdot P(K \mid A) =  P(K) \cdot P(A \mid K)$
 
-One **NB note** here: Conditional probability is not commutative, which means that $P(A \mid B) \neq P(B \mid A)$. In our example above we have some nice symmetry, but this very rarely occurs.  "
+One **NB note** here: Joint probability is commutative, but conditional probability is **NOT**. This means that generally $P(A \mid B) \neq P(B \mid A)$. In our example above we have some nice symmetry, but this doesnt occur often.  "
 
 # ╔═╡ 411c06a3-c8f8-4d1d-a247-1f0054701021
 md" ### Bayes' Theorem "
@@ -487,6 +487,7 @@ end
 md"""
 
 !!! note "Coin flippling likelihood"
+	Below we have the likelihood function for our coin flipping problem. Shift the sliders to see changes in the likelihood. 
 
 heads = $(@bind m Slider(0:50, show_value = true, default=1));
 flips = $(@bind N Slider(1:50, show_value = true, default=5)); 
@@ -2750,6 +2751,6 @@ version = "0.9.1+5"
 # ╠═a6ae40e6-ea8c-46f1-b430-961c1185c087
 # ╟─10beb8b2-0841-44c4-805e-8667da325b01
 # ╟─58f65290-8ba9-4c27-94de-b28a5eac80a4
-# ╠═c0daa659-f5f6-4e6b-9973-a399cf0ea788
+# ╟─c0daa659-f5f6-4e6b-9973-a399cf0ea788
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

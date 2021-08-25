@@ -86,14 +86,16 @@ md""" ## General overview """
 # ╔═╡ 3f0c1adc-3efd-4ade-9a65-a208d8457b85
 md" Today we will be looking at the following topics, 
 
--
--
--
+- Recap of Bayesian basics
+- Gibbs sampling routine for our Normal model with unknown $\sigma^{2}$
+- The Bayesian approach to linear regression
+- Gibbs sampling and regression analysis
+- Regression with `Turing.jl` 
 
 "
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Bayesian methods overview "
+md" ## Bayesian methods recap "
 
 # ╔═╡ f3823457-8757-4665-86a8-bf536d80e24d
 md"""
@@ -122,7 +124,7 @@ where $p(\boldsymbol{\theta})$ is the prior distribution and
 
 $$p(\mathbf{y})=\int p(\boldsymbol{\theta}) p(\mathbf{y} \mid \boldsymbol{\theta}) \mathrm{d} \boldsymbol{\theta}$$
 
-is the marginal likelihood that plays a crucial role in Bayesian model comparisonwe will discuss this quantity in more detail in later chapters. Bayes' theorem says that knowledge of $\boldsymbol{\theta}$ comes from two sources: the prior distribution and an observed sample $y_{1}, \ldots, y_{T}$ summarized by the likelihood. The prior distribution $p(\boldsymbol{\theta})$ incorporates our subjective beliefs about $\boldsymbol{\theta}$ before we look at the data. 
+is the marginal likelihood. Bayes' theorem says that knowledge of $\boldsymbol{\theta}$ comes from two sources: the prior distribution and an observed sample $y_{1}, \ldots, y_{T}$ summarized by the likelihood. The prior distribution $p(\boldsymbol{\theta})$ incorporates our subjective beliefs about $\boldsymbol{\theta}$ before we look at the data. 
 
 The posterior distribution $p(\boldsymbol{\theta} \mid \mathbf{y})$ characterizes all relevant information about $\boldsymbol{\theta}$ given the data. For example, if we wish to obtain a point estimate of $\boldsymbol{\theta}$, we might compute the posterior mean $\mathbb{E}(\boldsymbol{\theta} \mid \mathbf{y})$. To characterize the uncertainty about $\boldsymbol{\theta}$, we might report the posterior standard deviations of the parameters. For instance, for the $i$ th element of $\boldsymbol{\theta}$, we can compute $\sqrt{\operatorname{Var}\left(\theta_{i} \mid \mathbf{y}\right)}$
 
@@ -862,7 +864,7 @@ md" For the sake of argument, let us say that we can then model with with an AR(
         # Observe likelihood.
         x[t] ~ Normal(x_hat[t], 1)
     end
-end
+end;
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """

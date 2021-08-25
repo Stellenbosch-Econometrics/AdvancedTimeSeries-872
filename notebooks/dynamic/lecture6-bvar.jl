@@ -60,7 +60,7 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
+md" In this session we will move toward understanding Bayesian vector autoregression models."
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 TableOfContents() # Uncomment to see TOC
@@ -302,13 +302,162 @@ md""" ### Empirical example: Small model of SA economy """
 # ╔═╡ c8e7e82f-415e-4b9d-bd62-47c1c60d0741
 md"""
 
-In this empirical example we estimate a 3-variable VAR(2) using SA quarterly data on CPI inflation rate, unemployment rate and repo rate from $1959 \mathrm{Q} 1$ to $2007 \mathrm{Q} 4$ - the sample ends at $2007 \mathrm{Q} 4$ to avoid the periods when interest rate hits the zero lower bound. These three variables are commonly used in forecasting (e.g., Banbura, Giannone and Reichlin, 2010; Koop and Korobilis, 2010; Koop, 2013) and small DSGE models (e.g., An and Schorfheide, 2007 ).
+In this empirical example we estimate a 3-variable VAR(2) using SA quarterly data on CPI inflation rate, unemployment rate and repo rate from $1994 \mathrm{Q} 1$ to $2020 \mathrm{Q} 4$. These three variables are commonly used in forecasting (e.g., Banbura, Giannone and Reichlin, 2010; Koop and Korobilis, 2010; Koop, 2013) and small DSGE models (e.g., An and Schorfheide, 2007 ).
 
 Following Primiceri $(2005)$, we order the interest rate last and treat it as the monetary policy instrument. The identified monetary policy shocks are interpreted as "non-systematic policy actions" that capture both policy mistakes and interest rate movements that are responses to variables other than inflation and unemployment.
 
-We first implement the Gibbs sampler described in Algorithm 8.1. Then, given the posterior draws of $\boldsymbol{\beta}$ and $\boldsymbol{\Sigma}$, we compute the impulse-response functions of the three variables to a 100-basis-point monetary policy shock.
+We first implement the Gibbs sampler. Then, given the posterior draws of $\boldsymbol{\beta}$ and $\boldsymbol{\Sigma}$, we compute the impulse-response functions of the three variables to a 100-basis-point monetary policy shock.
 
 """
+
+# ╔═╡ 7557b795-839c-41bf-9586-7b2b3972b28d
+begin
+	# Parameters
+	p::Int64 = 2            # Number of lags
+	nsim::Int64 = 2000    # Number of simulation in Gibbs sampler
+	burnin::Int64 = 10      # Burnin for Gibbs sampler
+	n_hz::Int64 = 40        # Horizon for the IRF
+end;
+
+# ╔═╡ 5592c6a8-defc-4b6e-a303-813bdbacaffe
+# Load the dataset and transform to array / matrix
+#df = ...
+#data = convert(Matrix, df[:, 1:end])
+
+# ╔═╡ 9e3795cf-8695-46c1-9857-728d765caa02
+# SUR representation of the VAR(p)
+function SUR_form(X::Array{Float64, 2}, n::Int64)
+
+    repX = kron(X, ones(n, 1))
+    r, c = size(X)
+    idi  = kron((1:r * n), ones(c, 1))
+    idj  = repeat((1:n * c), r, 1)
+
+    # Some prep for the out return value.
+    d    = reshape(repX', n * r * c, 1)
+    out  = sparse(idi[:, 1], idj[:, 1], d[:, 1])
+end;
+
+# ╔═╡ 741e914f-4d6d-4249-a324-4dd54fd0f277
+function construct_IR(β::Array{Float64, 2}, Σ::Array{Float64, 2}, shock::Array{Float64, 1})
+
+    n      = size(Σ, 1)
+    CΣ     = cholesky(Σ).L
+    tmpZ1  = zeros(p, n)
+    tmpZ   = zeros(p, n)
+    Yt1    = CΣ * shock
+    Yt     = zeros(n, 1)
+    yIR    = zeros(n_hz,n)
+    yIR[1,:] = Yt1'
+
+    for t = 2:n_hz
+        # update the regressors
+        tmpZ = [Yt'; tmpZ[1:end-1,:]]
+        tmpZ1 = [Yt1'; tmpZ1[1:end-1,:]]
+
+        # evolution of variables if a shock hits
+        Random.seed!(12)
+        e = CΣ*randn(n,1)
+        Z1 = reshape(tmpZ1',1,n*p)
+        Xt1 = kron(I(n), [1 Z1])
+        Yt1 = Xt1 * β + e
+
+        # evolution of variables if no shocks hit
+        Z = reshape(tmpZ',1,n*p)
+        Xt = kron(I(n), [1 Z])
+        Yt = Xt * β + e
+
+        # the IR is the difference of the two scenarios
+        yIR[t,:] = (Yt1 - Yt)'
+    end
+    return yIR
+end;
+
+# ╔═╡ 9e949115-a728-48ed-8c06-5cc26b6733bf
+function bvar(data::Array{Float64, 2})
+
+    data   = data[1:211, :]
+    Y0     = data[1:4, :]
+    Y      = data[5:end, :]
+    T      = size(Y, 1)
+    n      = size(Y, 2)
+    y      = reshape(Y', T * n, 1)
+    k      = n * p + 1 # number of coefficients in each equation (21 in total, 3 equations)
+
+    # Specification of the prior (diffuse prior in this case)
+    ν_0    = n + 3
+    Σ_0    = I(n)
+    β_0    = zeros(n * k, 1) # Best way to initialise with zeros?
+    #β_0    = fill( NaN, n * k, 1) # Alternative?k
+
+    # Precision for coefficients and intercepts
+    tmp    = ones(k * n, 1)
+    tmp[1: p * n + 1 : k * n] .= 1/10
+    A      = collect(1:k*n)
+    Vβ     = sparse(A, A, tmp[:, 1]) # This works! I seem to have figured out the sparse array struct. However, is this what we want to use? What is the benefit here?
+    Vβ_d     = Matrix(Vβ) # Dense version
+
+    # Working on the lagged matrix (preparation of the data) / method is similar to Korobilis
+    tmpY   = [Y0[(end-p+1): end,:]; Y]
+    X_til  = zeros(T, n * p)
+
+    for i=1:p
+        X_til[:, ((i - 1) * n + 1):i * n] = tmpY[(p - i + 1):end - i,:]
+    end
+    X_til  = [ones(T, 1) X_til] # This is the dense X matrix
+    X      = SUR_form(X_til, n) # Creates a sparse regression array...
+
+    # Initialise these arrays (used for storage)
+    store_Sig  = zeros(nsim, n, n) # For the sigma values
+    store_beta = zeros(nsim, k*n) # For the beta values
+    store_yIR  = zeros(n_hz, n) # For the impulse responses
+
+    X_d   = Matrix(X)
+    # Initialise chain
+    β     = (X_d'*X_d)\(X_d'*y)
+    e     = reshape(y - X_d*β, n, T)
+    Σ     = e*e'/T
+
+    iΣ    = Σ\I(n)
+    iΣ    = Symmetric(iΣ)
+
+    for isim = 1:nsim + burnin
+
+        # sample beta
+        XiΣ = X_d'*kron(I(T), iΣ)
+        XiΣX = XiΣ*X_d
+        Kβ = Vβ_d + XiΣX
+        β_hat = Kβ\(Vβ_d*β_0 + XiΣ*y)
+
+        Kβ = Symmetric(Kβ)
+        Random.seed!(12)
+        β = β_hat + Kβ'\randn(n*k, 1)
+        # β = β_hat + CKβL'\randn(n*k, 1) # sparse version
+
+        # sample Sig
+        e = reshape(y - X_d*β, n, T)
+        Σ = rand(InverseWishart(ν_0 + T, Σ_0 + e*e'))
+
+
+        if isim > burnin
+            # store the parameters
+            isave = isim - burnin;
+            store_beta[isave,:] = β';
+            store_Sig[isave,:,:] = Σ;
+
+            # compute impulse-responses
+            CΣ = cholesky(Σ).L
+
+            # 100 basis pts rather than 1 std. dev.
+            shock_d = [0; 0; 1]/Σ[n,n]
+            shock = [0; 0; 1]/CΣ[n,n]
+            yIR = construct_IR(v, β, Σ, shock)
+            store_yIR = store_yIR + yIR
+        end
+    end
+    yIR_hat = store_yIR/nsim
+    #return store_beta, store_Sig
+end;
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1539,5 +1688,10 @@ version = "3.5.0+0"
 # ╟─1e22e482-c467-4a57-bf19-96361e2896e6
 # ╟─193f5509-0733-4409-9b88-1d2bc68e3aee
 # ╟─c8e7e82f-415e-4b9d-bd62-47c1c60d0741
+# ╠═7557b795-839c-41bf-9586-7b2b3972b28d
+# ╠═5592c6a8-defc-4b6e-a303-813bdbacaffe
+# ╠═9e3795cf-8695-46c1-9857-728d765caa02
+# ╠═741e914f-4d6d-4249-a324-4dd54fd0f277
+# ╠═9e949115-a728-48ed-8c06-5cc26b6733bf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

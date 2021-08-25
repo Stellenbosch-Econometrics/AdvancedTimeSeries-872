@@ -80,6 +80,18 @@ Random.seed!(0)
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
+# ╔═╡ 38d2167d-2ca2-4398-9406-db418cc4bf17
+md""" ## General overview """
+
+# ╔═╡ 3f0c1adc-3efd-4ade-9a65-a208d8457b85
+md" Today we will be looking at the following topics, 
+
+-
+-
+-
+
+"
+
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
 md" ## Bayesian methods overview "
 
@@ -318,7 +330,7 @@ function data_gen(μ, σ2, N)
 end
 
 # ╔═╡ 0980d7a1-129b-4724-90fb-b46e3088d2d6
-data_gen(μ, σ2, N)
+data_gen(μ, σ2, N);
 
 # ╔═╡ 0919cb0d-ba03-49c8-b2b9-53a467c39f87
 function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
@@ -618,10 +630,10 @@ function data_gen2(T, β, σ2)
 	
     X = [ones(T, 1) 1 .+ randn(T, 1)]
     X * β' .+ sqrt(σ2) .* randn(T, 1)
-end
+end;
 
 # ╔═╡ 9c00a82f-b55b-4644-9d46-06943e8050f6
-samp = data_gen2(T, β, σ2)
+samp = data_gen2(T, β, σ2);
 
 # ╔═╡ bf0b1f01-6afe-44af-a4e8-df955745415b
 mean(samp)
@@ -639,7 +651,7 @@ function get_prior(ν_0)
     Σ_0  = 1 * (ν_0 - 1)
 
     return Vβ_0, Σ_0
-end
+end;
 
 # ╔═╡ 7b70270e-2991-40ee-97a9-082691e68701
 function ols_est(T, β, σ2)
@@ -651,7 +663,7 @@ function ols_est(T, β, σ2)
     σ2_1 = sum((y .- X * β_1) .^ 2) / T
 
     return β_1, σ2_1
-end
+end;
 
 # ╔═╡ 791939ae-3e00-4d6b-968c-5a82a78f55f8
 function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
@@ -686,7 +698,7 @@ function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
         end
     end
     [mean(store_θ[:, 1]), mean(store_θ[:, 2])]
-end
+end;
 
 # ╔═╡ 9d1361c3-6de1-4326-85f8-4a272856d16b
 post_gibbs_lin = gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
@@ -758,7 +770,7 @@ md""" #### Model specification """
     # Calculate all the mu terms.
     mu = intercept .+ x * coefficients
     y ~ MvNormal(mu, sqrt(σ₂))
-end
+end;
 
 # ╔═╡ 7cf8df8f-aa2d-41f9-95b7-b50fc191cb9d
 model = linear_regression(train, train_target);
@@ -2529,6 +2541,8 @@ version = "0.9.1+5"
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╠═bbcafd74-97f4-4b8f-bffa-937812d9a2eb
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
+# ╟─38d2167d-2ca2-4398-9406-db418cc4bf17
+# ╟─3f0c1adc-3efd-4ade-9a65-a208d8457b85
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─f3823457-8757-4665-86a8-bf536d80e24d
 # ╟─f95ccee4-a2d3-4492-b869-551e61acf995

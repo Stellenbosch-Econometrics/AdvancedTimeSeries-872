@@ -84,6 +84,18 @@ TableOfContents() # Uncomment to see TOC
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
+# ╔═╡ 49c0eb58-a2b0-4e66-80c7-c030070ca93d
+md""" ## General overview """
+
+# ╔═╡ d86c8eae-9bcd-43a7-a9a7-1608af719f98
+md""" Today we will cover the following topics
+
+-
+-
+-
+
+"""
+
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
 md" ## Monte Carlo methods overview "
 
@@ -106,6 +118,8 @@ md" ## Markov chain Monte Carlo "
 
 # ╔═╡ 26de0997-9548-49b5-9642-b401c6c42c41
 md"""
+We might ask ourselves at this point why getting draws from the posterior is so difficult?
+
 The main computational barrier for Bayesian statistics is the denominator $p(y)$ of the Bayes formula. In the continuous case the denominator $p(y)$ becomes a very large and complicated integral to calculate:
 
 $p(y) = \int_{\theta} p(y | \theta) \times p(\theta) d\theta$
@@ -116,7 +130,7 @@ The purpose of this denominator is to normalize the posterior in order to make i
 
 This is where Markov Chain Monte Carlo comes in. MCMC is a broad class of computational tools for approximating integrals and generating samples from a posterior probability. MCMC is used when it is not possible to sample $\theta$ directly from the subsequent probabilistic distribution $p(\theta \mid y)$. Instead, we sample in an iterative manner such that at each step of the process we expect the distribution from which we sample to become increasingly similar to the posterior. All of this is to eliminate the (often impossible) calculation of the denominator of Bayes' rule. 
 
-In the sections that follow we will first provide a nice narrative that helps establish the idea behind the Metropolis algorithm. We then touch on the idea of Markov chains, which are an essential part of the simulation process.
+In the sections that follow we will first provide a nice narrative that helps establish the idea behind the Metropolis algorithm. In our discussion we will also touch on the idea of Markov chains, which are an essential part of the simulation process.
 """
 
 # ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
@@ -644,6 +658,33 @@ md"""
 
 We will rarely code up our own Metropolis algorithm for this course, it is more likely that we will be using Gibbs sampling. However, we provide a representation of the Metropolis algorithm. It incorporates some good programming principles, so it is worthwhile going through it in more detail.
 
+We use an example where we want to explore the multivariate normal distribution of two random variables $X$ and $Y$, where $\mu_{X}=\mu_{Y}=0$ and $\sigma_{X}=\sigma_{Y}=1$. This gives us, 
+
+$$\begin{gathered}
+{\left[\begin{array}{c}
+X \\
+Y
+\end{array}\right] \sim \text { Multivariate Normal }\left(\left[\begin{array}{l}
+0 \\
+0
+\end{array}\right], \mathbf{\Sigma}\right),} \\
+\boldsymbol{\Sigma} \sim\left(\begin{array}{ll}
+1 & \rho \\
+\rho & 1
+\end{array}\right)
+\end{gathered}$$
+
+In this example we want to assign a value to $\rho$ which gives the correlation between the two variables. The code below is a Metropolis sampler for the example above. The proposal distributions for $X$ and $Y$ are given as, 
+
+$$\begin{aligned}
+&X \sim \text { Uniform }\left(X-\frac{\text { width }}{2}, X+\frac{\text { width }}{2}\right) \\
+&Y \sim \text { Uniform }\left(Y-\frac{\text { width }}{2}, Y+\frac{\text { width }}{2}\right)
+\end{aligned}$$
+
+It is easier to work with probability logs than absolute values, so we compute $r$ as follows, 
+
+$\begin{aligned} r=& \frac{ \left.\text { PDF ( Multivariate Normal }\left(\left[\begin{array}{l}x_{\text {proposed }} \\ y_{\text {proposed }}\end{array}\right]\right) \mid \text { Multivariate Normal }\left(\left[\begin{array}{c}\mu_{X} \\ \mu_{Y}\end{array}\right], \mathbf{\Sigma}\right)\right)}{ \left.\text { PDF (Multivariate Normal }\left(\left[\begin{array}{l}x_{\text {current }} \\ y_{\text {current }}\end{array}\right]\right) \mid \text { Multivariate Normal }\left(\left[\begin{array}{c}\mu_{X} \\ \mu_{Y}\end{array}\right], \mathbf{\Sigma}\right)\right)} \\ &=\frac{P D F_{\text {proposed }}}{P D F_{\text {current }}} \\ &=\exp \left(\log \left(\mathrm{PDF}_{\text {proposed }}\right)-\log \left(\mathrm{PDF}_{\text {current }}\right)\right) \end{aligned}$
+
 """
 
 # ╔═╡ 6b4b1e00-c2cf-4c06-8598-7a16965e73e3
@@ -765,103 +806,6 @@ md"""
 The **Metropolis-Hastings** algorithm is a extension of the Metropolis algorithm that incorporates a non-symmertic proposal distribution. This makes the math a bit more tricky, but the ideas essentially stay the same. 
 
 """
-
-# ╔═╡ 1fde9a98-0ca0-43ed-a290-f19cfb02af6e
-md" ### Gibbs sampling "
-
-# ╔═╡ b1b3cf86-9c25-4393-9789-61cd12f11786
-md""" Brief description of Gibbs sampling here. We will cover this in more detail in future lectures. The main focus for this lecture is on the Metropolis algorithm. """
-
-# ╔═╡ 8bef5267-2077-43a2-b825-67655b6310c4
-function gibbs(S::Int64, ρ::Float64;
-               μ_x::Float64=0.0, μ_y::Float64=0.0,
-               σ_x::Float64=1.0, σ_y::Float64=1.0,
-               start_x=-2.5, start_y=2.5,
-               seed=123)
-    rgn = MersenneTwister(seed)
-    binormal = MvNormal([μ_x; μ_y], [σ_x ρ; ρ σ_y])
-    draws = Matrix{Float64}(undef, S, 2)
-    x = start_x; y = start_y
-    β = ρ * σ_y / σ_x
-    λ = ρ * σ_x / σ_y
-    sqrt1mrho2 = sqrt(1 - ρ^2)
-    σ_YX = σ_y * sqrt1mrho2
-    σ_XY = σ_x * sqrt1mrho2
-    @inbounds draws[1, :] = [x y]
-    for s in 2:S
-        if s % 2 == 0
-            y = rand(rgn, Normal(μ_y + β * (x - μ_x), σ_YX))
-        else
-            x = rand(rgn, Normal(μ_x + λ * (y - μ_y), σ_XY))
-        end
-        @inbounds draws[s, :] = [x y]
-    end
-    return draws
-end;
-
-# ╔═╡ a901d5d4-81e4-4ded-8d58-f671f4ae4929
-X_gibbs = gibbs(S, ρ);
-
-# ╔═╡ 6c5af4db-6965-4a93-887e-b9dd43b22c41
-X_gibbs[1:10, :];
-
-# ╔═╡ a96d4470-5073-4889-bda0-2e1ffbb8cd9b
-chain_gibbs = Chains(X_gibbs, [:X, :Y]);
-
-# ╔═╡ d959286b-b0af-48c6-ac00-dd4633f0df12
-summarystats(chain_gibbs)
-
-# ╔═╡ 8326f97d-5b4e-48f9-94ef-2d90248561f0
-(mean(summarystats(chain_gibbs)[:, :ess]) / 2) / S
-
-# ╔═╡ eace39dd-4d11-45b5-8d9d-64b917d83304
-gibbs_iterations = (@bind l Slider(1:100, show_value = true, default=1))
-
-# ╔═╡ c0147203-e898-44a4-8acd-f3dff5147abe
-begin
-	plt₂ = covellipse(μ, Σ,
-	    n_std=1.64, # 5% - 95% quantiles
-	    xlims=(-3, 3), ylims=(-3, 3),
-	    alpha=0.3,
-	    c=:steelblue,
-	    label="90% HPD",
-	    xlabel="θ1", ylabel="θ2")
-	
-	    scatter!(plt₂, (X_gibbs[l, 1], X_gibbs[l, 2]),
-	             label=false, mc=:red, ma=0.5)
-	    plot!(X_gibbs[l:l + 1, 1], X_gibbs[l:l + 1, 2], seriestype=:path,
-	          lc=:green, la=0.5, label=false)
-end
-
-# ╔═╡ 1f61b2ec-4941-4d90-b094-683da0eba017
-begin
-	scatter((X_gibbs[2 * warmup:2 * warmup + 1_000, 1], X_gibbs[2 * warmup:2 * warmup + 1_000, 2]),
-	         label=false, mc=:red, ma=0.3,
-	         xlims=(-3, 3), ylims=(-3, 3),
-	         xlabel="θ1", ylabel="θ2")
-	
-	covellipse!(μ, Σ,
-	    n_std=1.64, # 5% - 95% quantiles
-	    xlims=(-3, 3), ylims=(-3, 3),
-	    alpha=0.5,
-	    c=:steelblue,
-	    label="90% HPD")
-end
-
-# ╔═╡ 4bbf4adf-ec21-4b10-9cc0-0499f64ed98d
-begin
-	scatter((X_gibbs[2 * warmup:end, 1], X_gibbs[2 * warmup:end, 2]),
-	         label=false, mc=:red, ma=0.3,
-	         xlims=(-3, 3), ylims=(-3, 3),
-	         xlabel="θ1", ylabel="θ2")
-	
-	covellipse!(μ, Σ,
-	    n_std=1.64, # 5% - 95% quantiles
-	    xlims=(-3, 3), ylims=(-3, 3),
-	    alpha=0.5,
-	    c=:steelblue,
-	    label="90% HPD")
-end
 
 # ╔═╡ 1234563c-fb5b-42ea-8f5b-abf8adf34e26
 md"""
@@ -2331,6 +2275,8 @@ version = "0.9.1+5"
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
+# ╟─49c0eb58-a2b0-4e66-80c7-c030070ca93d
+# ╟─d86c8eae-9bcd-43a7-a9a7-1608af719f98
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─bd0dc0fd-63bc-492b-bba1-a3746ea4ec22
 # ╟─7460cf95-4fc1-4c04-99d7-b13c2014b37a
@@ -2399,7 +2345,7 @@ version = "0.9.1+5"
 # ╟─aad23932-c61e-4308-956b-c2d64d85ac93
 # ╟─32b7f7aa-0a56-4cee-87a7-339826fa5c1e
 # ╟─3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
-# ╟─1970bc03-ff14-4819-86a6-0a8b802a9f8e
+# ╠═1970bc03-ff14-4819-86a6-0a8b802a9f8e
 # ╠═6b4b1e00-c2cf-4c06-8598-7a16965e73e3
 # ╠═3453a862-d9ce-4802-ace7-8b825641b4e2
 # ╠═dbaa28bc-021f-4805-b265-19b9257bbd02
@@ -2413,18 +2359,6 @@ version = "0.9.1+5"
 # ╟─b1bc647a-32f1-4ec8-a60e-f8e43e95be2d
 # ╟─a4f22ac0-db21-4e0d-8540-8e56761d42dc
 # ╟─fb9c25ae-8e95-43d5-a731-d32a6833941b
-# ╟─1fde9a98-0ca0-43ed-a290-f19cfb02af6e
-# ╟─b1b3cf86-9c25-4393-9789-61cd12f11786
-# ╠═8bef5267-2077-43a2-b825-67655b6310c4
-# ╠═a901d5d4-81e4-4ded-8d58-f671f4ae4929
-# ╠═6c5af4db-6965-4a93-887e-b9dd43b22c41
-# ╠═a96d4470-5073-4889-bda0-2e1ffbb8cd9b
-# ╠═d959286b-b0af-48c6-ac00-dd4633f0df12
-# ╠═8326f97d-5b4e-48f9-94ef-2d90248561f0
-# ╟─eace39dd-4d11-45b5-8d9d-64b917d83304
-# ╟─c0147203-e898-44a4-8acd-f3dff5147abe
-# ╟─1f61b2ec-4941-4d90-b094-683da0eba017
-# ╟─4bbf4adf-ec21-4b10-9cc0-0499f64ed98d
 # ╟─1234563c-fb5b-42ea-8f5b-abf8adf34e26
 # ╟─a370cec5-904c-43fc-94b0-523100b1fd54
 # ╟─676bed44-b4f0-4117-aa4e-649dae752bad

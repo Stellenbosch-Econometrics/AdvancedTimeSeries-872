@@ -299,14 +299,14 @@ function mc_sample_path(P; init = 1, sample_size = 1000)
         X[t] = rand(dist) # draw new value
     end
     return X
-end
+end;
 
 # ╔═╡ 0a63d554-c9f0-4df0-91ae-54c59dc312a4
 begin
 	P = [0.4 0.6; 0.2 0.8]
 	X₁ = mc_sample_path(P, init = 1, sample_size = 100_000); # note 100_000 = 100000
 	μ₁ = count(X₁ .== 1)/length(X₁) # .== broadcasts test for equality. Could use mean(X .== 1)
-end
+end;
 
 # ╔═╡ 14f6cfaf-50e5-4924-8d40-1a2d7d0a9c8a
 md" The code illustrates the fraction of the sample that takes the value of $1$. In this case it will be about 25% of the time. Doesnt matter from which island you start, you will be at island $1$ roughly 25% of the time, if we allow for a long series of values to be drawn. " 
@@ -531,7 +531,7 @@ function KingMarkovSimple(n, current = 10)
   		current   = rand(Uniform()) < prob_move ? proposal : current
 	end
 	return positions
-end
+end;
 
 # ╔═╡ bc1b3e2c-9501-4e3f-a377-02e9c13418c1
 md" Below we show a figure indicating the islands that King Markov has visited in his travels. "
@@ -647,7 +647,7 @@ We will rarely code up our own Metropolis algorithm for this course, it is more 
 """
 
 # ╔═╡ 6b4b1e00-c2cf-4c06-8598-7a16965e73e3
-function metropolis_adv(S::Int64, width::Float64, ρ::Float64;
+function metropolis(S::Int64, width::Float64, ρ::Float64;
                     μ_x::Float64=0.0, μ_y::Float64=0.0,
                     σ_x::Float64=1.0, σ_y::Float64=1.0,
                     start_x=-2.5, start_y=2.5,
@@ -672,7 +672,7 @@ function metropolis_adv(S::Int64, width::Float64, ρ::Float64;
         @inbounds draws[s, :] = [x y]
     end
     return draws
-end
+end;
 
 # ╔═╡ 3453a862-d9ce-4802-ace7-8b825641b4e2
 begin
@@ -680,8 +680,8 @@ begin
 	const width = 2.75
 	const ρ = 0.8
 	
-	X_met = metropolis_adv(S, width, ρ);
-end
+	X_met = metropolis(S, width, ρ);
+end;
 
 # ╔═╡ dbaa28bc-021f-4805-b265-19b9257bbd02
 X_met[1:10, :]
@@ -699,7 +699,7 @@ mean(summarystats(chain_met)[:, :ess]) / S
 begin
 	const μ = [0, 0]
 	const Σ = [1 0.8; 0.8 1]
-end
+end;
 
 # ╔═╡ 29298f63-a7d7-4aaa-b888-3e955841f7f5
 iterations = (@bind j Slider(1:100, show_value = true, default=1))
@@ -769,8 +769,11 @@ The **Metropolis-Hastings** algorithm is a extension of the Metropolis algorithm
 # ╔═╡ 1fde9a98-0ca0-43ed-a290-f19cfb02af6e
 md" ### Gibbs sampling "
 
+# ╔═╡ b1b3cf86-9c25-4393-9789-61cd12f11786
+md""" Brief description of Gibbs sampling here. We will cover this in more detail in future lectures. The main focus for this lecture is on the Metropolis algorithm. """
+
 # ╔═╡ 8bef5267-2077-43a2-b825-67655b6310c4
-function gibbs_adv(S::Int64, ρ::Float64;
+function gibbs(S::Int64, ρ::Float64;
                μ_x::Float64=0.0, μ_y::Float64=0.0,
                σ_x::Float64=1.0, σ_y::Float64=1.0,
                start_x=-2.5, start_y=2.5,
@@ -794,13 +797,13 @@ function gibbs_adv(S::Int64, ρ::Float64;
         @inbounds draws[s, :] = [x y]
     end
     return draws
-end
+end;
 
 # ╔═╡ a901d5d4-81e4-4ded-8d58-f671f4ae4929
-X_gibbs = gibbs_adv(S, ρ);
+X_gibbs = gibbs(S, ρ);
 
 # ╔═╡ 6c5af4db-6965-4a93-887e-b9dd43b22c41
-X_gibbs[1:10, :]
+X_gibbs[1:10, :];
 
 # ╔═╡ a96d4470-5073-4889-bda0-2e1ffbb8cd9b
 chain_gibbs = Chains(X_gibbs, [:X, :Y]);
@@ -860,14 +863,14 @@ begin
 	    label="90% HPD")
 end
 
-# ╔═╡ f16f106d-f103-488f-92f8-eabe820a7a08
-md" Let us finish up this lecture with a discussion on parallel programming with MCMC methods. "
-
 # ╔═╡ 1234563c-fb5b-42ea-8f5b-abf8adf34e26
 md"""
 
 ## MCMC and parallel programming
 """
+
+# ╔═╡ a370cec5-904c-43fc-94b0-523100b1fd54
+md""" If we have time in class we will have a quick discussion on parallel programming with MCMC methods. In the case of these methods it is often possible to leverage parallel computation to reduce the time it takes to map the posterior distribution. """
 
 # ╔═╡ 676bed44-b4f0-4117-aa4e-649dae752bad
 md" In the last lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. "
@@ -2411,6 +2414,7 @@ version = "0.9.1+5"
 # ╟─a4f22ac0-db21-4e0d-8540-8e56761d42dc
 # ╟─fb9c25ae-8e95-43d5-a731-d32a6833941b
 # ╟─1fde9a98-0ca0-43ed-a290-f19cfb02af6e
+# ╟─b1b3cf86-9c25-4393-9789-61cd12f11786
 # ╠═8bef5267-2077-43a2-b825-67655b6310c4
 # ╠═a901d5d4-81e4-4ded-8d58-f671f4ae4929
 # ╠═6c5af4db-6965-4a93-887e-b9dd43b22c41
@@ -2421,8 +2425,8 @@ version = "0.9.1+5"
 # ╟─c0147203-e898-44a4-8acd-f3dff5147abe
 # ╟─1f61b2ec-4941-4d90-b094-683da0eba017
 # ╟─4bbf4adf-ec21-4b10-9cc0-0499f64ed98d
-# ╟─f16f106d-f103-488f-92f8-eabe820a7a08
 # ╟─1234563c-fb5b-42ea-8f5b-abf8adf34e26
+# ╟─a370cec5-904c-43fc-94b0-523100b1fd54
 # ╟─676bed44-b4f0-4117-aa4e-649dae752bad
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

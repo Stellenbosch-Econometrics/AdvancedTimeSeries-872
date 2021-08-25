@@ -47,7 +47,7 @@ font-size: 1.5rem;
 opacity: 0.8;
 ">ATS 872: Lecture 3</p>
 <p style="text-align: center; font-size: 1.8rem;">
- The Normal Distribution
+ Simulation with the Normal distribution
 </p>
 
 <style>
@@ -79,22 +79,43 @@ TableOfContents() # Uncomment to see TOC
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
+# ╔═╡ 9480a241-6bd6-41a7-bda3-406e1fc8d94c
+md""" ## General overview """
+
+# ╔═╡ 82f8bccb-49f4-4c74-8e49-d0e30250b787
+md""" 
+
+In this session we plan to cover the following topics. 
+
+- Simulation of $\pi$ with Monte Carlo methods
+- Introduction to parallel programming in _Julia_
+- Sampling from a posterior Normal distribution
+- Monte Carlo integration
+- Models with more than one unknown parameter
+- Marginalisation
+- More examples with `Turing.jl`
+
+"""
+
 # ╔═╡ db39d95e-81c8-4a40-942c-6507d2f08274
 md" ## Monte Carlo and posterior draws "
 
 # ╔═╡ 675dfafa-46cb-44b8-bd7b-55395100e1ca
-md" Before we start with the Normal distribution and marginalisation, let us quickly discuss Monte Carlo methods, since we will be using them throughout the rest of the course. According to Wikpedia, Monte Carlo methods, or Monte Carlo experiments, are a broad class of computational algorithms that rely on repeated random sampling to obtain numerical results. The underlying concept is to use randomness to solve problems that might be deterministic in principle. They are often used in physical and mathematical problems and are most useful when it is difficult or impossible to use other approaches. Monte Carlo methods are mainly used in three problem classes: optimization, numerical integration, and generating draws from a probability distribution.  Our first Monte Carlo example will be to try and estimate the value for $\pi$. 
+md" Before we start with the Normal distribution and marginalisation, let us quickly discuss Monte Carlo methods, since we will be using them throughout the rest of the course. According to Wikipedia, Monte Carlo methods, or Monte Carlo experiments, are a broad class of computational algorithms that rely on repeated random sampling to obtain numerical results. The underlying concept is to use randomness to solve problems that might be deterministic in principle. They are often used in physical and mathematical problems and are most useful when it is difficult or impossible to use other approaches. Monte Carlo methods are mainly used in three problem classes: optimization, numerical integration, and generating draws from a probability distribution.  Our first Monte Carlo example will be to try and estimate the value for $\pi$. 
 
 "
 
 # ╔═╡ 2e83e207-2405-44f4-a5d9-13dd69b741a9
-md" ### Estimating 🥧 "
+md" ### Estimating π "
 
 # ╔═╡ 961747f8-c884-43bf-941d-4545fb4510e6
 md"""
 In this section we will have some fun trying to approximate $\pi$ using Monte Carlo methods. We will compare the speed of computation between Julia and R for this example.   
  
 """
+
+# ╔═╡ 42f89740-0974-4376-825a-a79b08eaecba
+md""" Why does this yield $\pi$? """
 
 # ╔═╡ e3f722c1-739f-45b4-8fbf-db07e9483d92
 function compute_pi_naive(n::Int)
@@ -111,7 +132,7 @@ function compute_pi_naive(n::Int)
 	end
 	
 	return n_landed_in_circle / n * 4.0
-end		
+end;		
 
 # ╔═╡ 59df263a-a284-40b2-8d9d-bb34fbf13b3a
 # Similar code to first instance above 
@@ -143,7 +164,7 @@ function compute_pi(n::Int)
     end
   
     return n_landed_in_circle / n * 4.0    
-  end
+end;
 
 # ╔═╡ 6b5886d8-d783-4cbc-9a8c-286b741cb16f
 # Vectorised version of the code
@@ -195,7 +216,7 @@ md" Suppose that we want this code to run even faster without changing the under
 md" This does not work so well in Pluto, so we will illustrate this in `VSCode`. "
 
 # ╔═╡ 11a1cec2-2e95-4ebd-a7ce-bbe77f3c9a1d
-md" ### Plotting 🥧 "
+md" ### Plotting π "
 
 # ╔═╡ a0981303-008c-4e4a-b96e-581b52ab15f2
 md" Let us try to plot the estimate for $\pi$ "
@@ -476,7 +497,7 @@ begin
 	S   = 10000
 	μ₁  = 19.09
 	τ₁  = 0.09
-end
+end;
 
 # ╔═╡ ec119ee9-ef16-475c-8a42-0fa5e46d1434
 mu = μ₁ .+ sqrt(τ₁) .* randn(S);  # Remember to broadcast. Think about what broadcasting does here. 
@@ -576,7 +597,7 @@ end
 # ╔═╡ 4074ea94-617c-44de-9f88-0f62826acca4
 md"""
 
-#### Derivation contd.
+#### Derivation contd. (optional)
 
 """
 
@@ -732,7 +753,7 @@ plot(postdraws, line = 1.7, color = :steelblue, alpha = 0.8)
     m ~ Normal(0, sqrt(s²))
     x ~ Normal(m, sqrt(s²))
     y ~ Normal(m, sqrt(s²))
-end
+end;
 
 # ╔═╡ c3fbf110-fd19-4300-ab6f-0fefddfab668
 c1 = sample(new_normal(1.5, 2), SMC(), 1000)
@@ -2330,10 +2351,13 @@ version = "0.9.1+5"
 # ╠═c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
+# ╟─9480a241-6bd6-41a7-bda3-406e1fc8d94c
+# ╟─82f8bccb-49f4-4c74-8e49-d0e30250b787
 # ╟─db39d95e-81c8-4a40-942c-6507d2f08274
 # ╟─675dfafa-46cb-44b8-bd7b-55395100e1ca
 # ╟─2e83e207-2405-44f4-a5d9-13dd69b741a9
 # ╟─961747f8-c884-43bf-941d-4545fb4510e6
+# ╟─42f89740-0974-4376-825a-a79b08eaecba
 # ╠═e3f722c1-739f-45b4-8fbf-db07e9483d92
 # ╠═59df263a-a284-40b2-8d9d-bb34fbf13b3a
 # ╠═16b216ff-81ed-481a-896b-4ddf2cd139f6
@@ -2389,10 +2413,10 @@ version = "0.9.1+5"
 # ╟─8973afa7-2325-42f4-8e14-28aa090448d6
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
-# ╠═0c5f78a2-7fbd-4455-a7dd-24766bf78d90
+# ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90
 # ╟─a793de54-cb93-4127-944b-30d23dbd8ff5
 # ╟─b31d550f-3cdf-44ba-b1e6-116cfe84c1c4
-# ╠═679c11cf-97fd-4cab-b12d-52a2b1166402
+# ╟─679c11cf-97fd-4cab-b12d-52a2b1166402
 # ╟─4074ea94-617c-44de-9f88-0f62826acca4
 # ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
 # ╟─0e18fe2a-0965-4ef3-b3a8-c0f880e7a719

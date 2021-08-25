@@ -79,7 +79,7 @@ md"""
 md" In this session we will be looking at the basics of Bayesian econometrics / statistics. We will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. I assume some familiarity with linear algebra, probability and calculus for this module. The section is on probability is simply a high level overview that leads us to our derivation of Bayes' theorem / rule. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-TableOfContents() # Uncomment to see TOC
+# TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ to show support."
@@ -101,7 +101,7 @@ This means that the probability of the event to occur is the set of all real num
 
 1. **Non-negativity**: For all $A$, $P(A) \geq 0$
 2. **Additivity**: For two mutually exclusive $A$ and $B$, $P(A) = 1 - P(B)$ and $P(B) = 1 - P(A)$
-3. **Normalisation**: Probability of all possible events $A_1, A_2, \ldots$ must add up to one, i.e. $\sum_{n \in \mathbb{N}} A_n = 1$
+3. **Normalisation**: Probability of all possible events $A_1, A_2, \ldots$ must add up to one, i.e. $\sum_{n \in \mathbb{N}} P (A_n) = 1$
 
 "
 
@@ -144,7 +144,7 @@ md" One should note that $P(A, K) = P(K, A)$ and that from that we have
 
 $P(A) \cdot P(K \mid A) =  P(K) \cdot P(A \mid K)$
 
-One **NB note** here: Joint probability is commutative, but conditional probability is **NOT**. This means that generally $P(A \mid B) \neq P(B \mid A)$. In our example above we have some nice symmetry, but this doesnt occur often.  "
+**NB note**: Joint probability is commutative, but conditional probability is **NOT**. This means that generally $P(A \mid B) \neq P(B \mid A)$. In our example above we have some nice symmetry, but this doesnt occur often.  "
 
 # ╔═╡ 411c06a3-c8f8-4d1d-a247-1f0054701021
 md" ### Bayes' Theorem "
@@ -175,7 +175,7 @@ md" Consider an economic model that describes an AR($1$) process
 
 $\begin{equation*} y_{t}=\mu+\alpha y_{t-1}+\varepsilon_{t}, \quad \varepsilon_{t} \sim \mathcal{N}\left[0, \sigma^{2}\right] \end{equation*}$ 
 
-where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimte these unkown parameters with methods such as maximum likelihood estimation (MLE), as you did in the first part of the course. So we want to estimate $\theta = \{\mu, \alpha, \sigma^{2}\}$ 
+where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimate these unkown parameters with methods such as maximum likelihood estimation (MLE), as you did in the first part of the course. So we want to estimate $\theta = \{\mu, \alpha, \sigma^{2}\}$ 
 
 Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. 
 
@@ -342,7 +342,7 @@ The probability of several events in independent trials is $\theta \cdot \theta(
 If there are $N$ trials then the probability that a success occurs $y$ times is
 
 $$\begin{align*}
-      p(y \mid \theta, N) & = \frac{n!}{y!(N-y)!} \theta^y(1-\theta)^{N-y} \\
+      p(y \mid \theta, N) & = \frac{N!}{y!(N-y)!} \theta^y(1-\theta)^{N-y} \\
       &= \binom{N}{y} \theta^y(1-\theta)^{N-y}
     \end{align*}$$
 
@@ -357,7 +357,8 @@ md" The binomial random variable $y \sim \text{Bin}(n, p)$ represents the number
 
 # ╔═╡ 3c49d3e4-3555-4d18-9445-5347247cf639
 function binomial_rv(n, p)
-    count = 0
+	
+	count = 0
     for i in 1:n
         if rand(n)[i] < p
             count += 1 # or count = count + 1
@@ -386,11 +387,11 @@ md" Given a value of $n = 10000$ indepedent trials, how many times will we obser
 
 # ╔═╡ f7b158af-537e-4d9f-9c4c-318281097dce
 PlutoUI.with_terminal() do
-	@time binomial_rv(10000, 0.5) # Compare this with the time it takes to run in R. 
+	@time binomial_rv(100000, 0.5) # Compare this with the time it takes to run in R. 
 end
 
 # ╔═╡ 2cb41330-7ebd-45de-9aa1-632db6f9a140
-R"system.time(a <- binomial_rv_r(10000, 0.5))"
+R"system.time(a <- binomial_rv_r(100000, 0.5))"
 
 # ╔═╡ 69a1f4bb-35f6-42bf-9a2a-e3631bf4e43e
 md" Now let us conduct some experiments with our new binomial random variable. "
@@ -472,14 +473,14 @@ md"""
 
 Let us say that we think the probability of heads is $0.3$. Our likelihood can be represented as
 
-$p(y = (1, 0, 0, 1, 1) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}} = \theta ^ y (1- \theta) ^{N - y}$
+$L(\theta \mid y) = p(y = (0, 1, 0, 0, 0) \mid \theta) = \prod_{i=1}^{N} \theta^{y_{i}} \times (1 - \theta)^{1 - y_{i}} = \theta ^ y (1- \theta) ^{N - y}$
 
 Do we think that the proposed probability of heads is a good one? We can use the likelihood function to perhaps determine this. We plot the values of the likelihood function for this data evaluated over the possible values that $\theta$ can take. 
 """
 
 # ╔═╡ 00cb5973-3047-4c57-9213-beae8f116113
 begin
-	grid_θ = range(0, 1, length = 1001) |> collect;
+	grid_θ = range(0, 1, length = 1001) |> collect; # discretised 
 	binom(grid_θ, m, N) = (grid_θ .^ m) .* ((1 .- grid_θ) .^ (N - m))
 end
 
@@ -543,8 +544,8 @@ md" #### The grid method "
 # ╔═╡ 89f7f633-4f75-4ef5-aa5b-80e318d14ee5
 md" There are four basic steps behind the grid method.
 
-1. Discretize the parameter space if it is not already discrete.
-2. Compute prior and likelihood at each “grid point” in the (discretized) parameter space.
+1. Discretise the parameter space if it is not already discrete.
+2. Compute prior and likelihood at each “grid point” in the (discretised) parameter space.
 3. Compute (kernel of) posterior as 'prior $\times$ likelihood' at each “grid point”.
 4. Normalize to get posterior, if desired."
 
@@ -2659,7 +2660,7 @@ version = "0.9.1+5"
 # ╠═f364cb91-99c6-4b64-87d0-2cd6e8043142
 # ╟─6087f997-bcb7-4482-a343-4c7830967e49
 # ╟─bf5240e8-59fc-4b1f-8b0d-c65c196ab402
-# ╟─8165a49f-bd0c-4ad6-8631-cae7425ca4a6
+# ╠═8165a49f-bd0c-4ad6-8631-cae7425ca4a6
 # ╟─5439c858-6ff3-4faa-9145-895390240d76
 # ╟─0504929d-207c-4fb7-a8b9-14e21aa0f74b
 # ╟─169fbcea-4e82-4756-9b4f-870bcb92cb93
@@ -2686,7 +2687,7 @@ version = "0.9.1+5"
 # ╠═5046166d-b6d8-4473-8823-5209aac59c84
 # ╟─82d0539f-575c-4b98-8679-aefbd11f268e
 # ╠═00cb5973-3047-4c57-9213-beae8f116113
-# ╟─9e3c0e01-8eb6-4078-bc0f-019466afba5e
+# ╠═9e3c0e01-8eb6-4078-bc0f-019466afba5e
 # ╟─c0bba3aa-d52c-4192-8eda-32d5d9f49a28
 # ╟─ab9195d6-792d-4603-8605-228d479226c6
 # ╟─e42c5e18-a647-4281-8a87-1b3c6c2abd33
@@ -2705,7 +2706,7 @@ version = "0.9.1+5"
 # ╟─f6e6c4bf-9b2f-4047-a6cc-4ab9c3ae1420
 # ╟─8382e073-433b-4e42-a6fa-d5a051586457
 # ╠═9678396b-d42c-4c7c-821c-08126895efd3
-# ╠═0a1d46ed-0295-4000-9e30-3ad838552a7e
+# ╟─0a1d46ed-0295-4000-9e30-3ad838552a7e
 # ╟─e5aade9a-4593-4903-bc3a-3a37f9f71c98
 # ╠═87db6122-4d28-45bf-b5b0-41189792199d
 # ╟─c6e9bb86-dc67-4f42-89da-98581a0c3c98

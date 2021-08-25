@@ -110,12 +110,9 @@ md" ### Estimating π "
 
 # ╔═╡ 961747f8-c884-43bf-941d-4545fb4510e6
 md"""
-In this section we will have some fun trying to approximate $\pi$ using Monte Carlo methods. We will compare the speed of computation between Julia and R for this example.   
+In this section we will have some fun trying to approximate $\pi$ using Monte Carlo methods. We will compare the speed of computation between Julia and R for this example. The purpose of this section is twofold. First, to establish a motivation for the use of simulation techniques. Second, to encourage some general problem solving through coding. Think about what this program is doing and see whether it makes sense to you. The code is easy enough to understand, it is the underlying logic that might be tricky.    
  
 """
-
-# ╔═╡ 42f89740-0974-4376-825a-a79b08eaecba
-md""" Why does this yield $\pi$? """
 
 # ╔═╡ e3f722c1-739f-45b4-8fbf-db07e9483d92
 function compute_pi_naive(n::Int)
@@ -279,7 +276,7 @@ Since the scale of the study is small, there is uncertainty around the estimate.
 
 $$\theta \sim \mathcal{N}\left(\mu_{0}, \tau_{0}^{2}\right)$$
 
-where both $\mu_{0}$ and $\sigma_{0}^{2}$ are known. **Note**: this is a distribution around our unknown parameter $\theta$. Our prior distribution is normal with these specific parameters. 
+where both $\mu_{0}$ and $\sigma_{0}^{2}$ are known. **Note**: this is a distribution around our unknown parameter $\theta$. Our prior distribution is Normal with these specific parameters. 
 
 Relevant information about $\theta$ is summarized by posterior distribution, which can be obtained by Bayes' theorem:
 
@@ -299,7 +296,7 @@ md"""
 # ╔═╡ 39d705ff-4540-4103-ae10-694d5b64e82b
 md"""
 
-We need a prior and likelihood function to produce the posterior distribution. We start with the form of the likelihood function $p(y \mid {\theta})$. Recall from our first lecture that we say a random variable $X$ follows a normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, its density is given by
+We need a prior and likelihood function to produce the posterior distribution. We start with the form of the likelihood function $p(y \mid {\theta})$. Recall from our first lecture that we say a random variable $X$ follows a Normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, its density is given by
 
 $$f_{X}\left(X = x ; a, b^{2}\right)=\left(2 \pi b^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 b^{2}}(x-a)^{2}}$$
 
@@ -411,19 +408,19 @@ $\begin{equation*}
 md" ### Practical implementation "
 
 # ╔═╡ e99e1925-6219-4bf2-b743-bb2ea725dfcd
-md" Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
+md" We know from our previous discussion that a Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. These can be thought of as to samples that we drew from the population. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
 
 # ╔═╡ 0fc998e7-d824-412b-a138-b626ba118904
 df = DataFrame(id = [1, 2], height_μ = [165, 175], height_σ = [4, 2])
 
 # ╔═╡ 01607a33-ad7e-4fab-b5cf-8ddf20a69a52
-md" The population mean and standard deviation for the male height in South Africa are given as follows, "
+md" Our prior belief on the mean and standard deviation in the population is given as follows, "
 
 # ╔═╡ aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
-pop_μ = 171 # Population mean
+pop_μ = 171 # Prior for population mean
 
 # ╔═╡ ef4ccb39-cb95-43a5-a2d8-39efb1a66197
-pop_σ = 6 # Population standard deviation
+pop_σ = 6 # Prior for population standard deviation
 
 # ╔═╡ 2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
 grid = range(150, 210, length = 601) |> collect;
@@ -431,16 +428,13 @@ grid = range(150, 210, length = 601) |> collect;
 # ╔═╡ 1316fbc2-700d-4106-99f0-0b9243a99aba
 begin
 	
-	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Person 1")
-	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Person 2")
+	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Group 1")
+	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Group 2")
 	plot!(grid, Normal(pop_μ, pop_σ), xlims = (150, 190), lw = 2.5, color = :green4, fill = (0, 0.6, :green), size = (600,400), labels = "Prior")
 end
 
 # ╔═╡ 3c409c93-545a-4d10-a972-509dff7c0120
-md" The above graph shows the fake guesses, we have also included the prior information from the population. " 
-
-# ╔═╡ 79f77683-faa5-4a25-a78a-1d7d585bc94c
-md" Next we provide the posterior function as analytically calculated above. This calculation needs some work. Typing error must have occured. "
+md" The above graph shows the data and prior information from the population. One can think of the fake guesses as likelihood functions. Next we provide the posterior function as analytically calculated above." 
 
 # ╔═╡ cef4da14-ee03-44b8-bd86-c11c263b26b3
 post_σ(prior_σ, obs_σ) = sqrt.(1 ./ ((1 ./ prior_σ .^ 2) .+ (1 ./ obs_σ .^ 2)))
@@ -465,8 +459,8 @@ posterior_μ = [post_μ₁, post_μ₂];
 
 # ╔═╡ 39b604b9-a4c8-4f54-afaa-faa84d99ad73
 begin
-	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Person 1")
-	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Person 2")
+	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Group 1")
+	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Group 2")
 	plot!(grid, Normal(pop_μ, pop_σ), lw = 0, color = :black, fill = (0, 0.5, :green), size = (600,400), labels = "Prior")
 	plot!(grid, Normal(posterior_μ[1], posterior_σ[1]), lw = 2, color = :steelblue4, size = (600,400), labels = "Posterior 1")
 	plot!(grid, Normal(posterior_μ[2], posterior_σ[2]), xlims = (150, 190), lw = 2, color = :grey20, size = (600,400), labels = "Posterior 2") # Something went wrong with this calculation. 
@@ -479,17 +473,15 @@ md" One can see that doing this analytically is quite cumbersome. That is why we
 md" #### Monte Carlo integration "
 
 # ╔═╡ 9e8aa12a-540b-4153-9dbf-8b503c16b091
-md" 
+md" Let us take another detour into the idea of simulation with Monte Carlo methods. Given that we now know how to sample from the posterior distribution we can do some interesting things, like calculate the posterior mean. If we wish to calculate the posterior mean of some function $g(\theta)$, which may not be available analytically. More precisely, consider
 
-If we wish to calculate the posterior mean of some function $g$ of $\mu$, which may not be available analytically. More precisely, consider
+$$\mathbb{E}(g(\theta) \mid {y})=\int g(\theta) p(\theta \mid {y}) \mathrm{d} \theta$$
 
-$$\mathbb{E}(g(\mu) \mid {y})=\int g(\mu) p(\mu \mid {y}) \mathrm{d} \mu$$
+In general, this integration cannot be solved analytically. However, we can estimate this quantity using Monte Carlo integration. Specifically, we generate $S$ draws $\theta^{(1)}, \ldots, \theta^{(S)}$ from $p(\theta \mid {y})$, and compute
 
-In general, this integration cannot be solved analytically. However, we can estimate this quantity using Monte Carlo integration. Specifically, we generate $S$ draws $\mu^{(1)}, \ldots, \mu^{(S)}$ from $p(\mu \mid {y})$, and compute
+$$\widehat{g}=\frac{1}{S} \sum_{r=1}^{S} g\left(\theta^{(s)}\right)$$
 
-$$\widehat{g}=\frac{1}{S} \sum_{r=1}^{S} g\left(\mu^{(s)}\right)$$
-
-By the weak law of large numbers, $\widehat{g}$ converges weakly in probability to $\mathbb{E}(g(\mu) \mid {y})$ as $S$ tends to infinity. Since we control the simulation size $S$, we can in principle estimate $\mathbb{E}(g(\mu) \mid {y})$ arbitrarily well.
+By the weak law of large numbers, $\widehat{g}$ converges weakly in probability to $\mathbb{E}(g(\theta) \mid {y})$ as $S$ tends to infinity. Since we control the simulation size $S$, we can in principle estimate $\mathbb{E}(g(\theta) \mid {y})$ arbitrarily well.
 "
 
 # ╔═╡ 8f5de37a-6c2c-400d-97c2-7f04e0fa4857
@@ -597,7 +589,7 @@ end
 # ╔═╡ 4074ea94-617c-44de-9f88-0f62826acca4
 md"""
 
-#### Derivation contd. (optional)
+#### Derivation continued (optional)
 
 """
 
@@ -707,12 +699,25 @@ md"""
 
 """
 
+# ╔═╡ 41d3b953-cdaa-468e-b3b7-bce844726ddb
+md""" Before we get into the practical implementation, let us quickly discuss what `Turing.jl` is and what it is doing. For those interested in this package I recommend going to their [main webpage](https://turing.ml/stable/) and doing some of the worked examples there. The alternative to `Turing.jl` in Python is [PyMC3](https://docs.pymc.io/). The best probabilistic programming language for R is [Stan](https://mc-stan.org/users/interfaces/rstan). There are many more packages for the different programming languages. If you want to know more please let me know. 
+
+Probabilistic programming languages like `Turing.jl` allow you to specify variables as random variables. In our case we have worked with Bernoulli, Binomial and Normal random variables. One can include known and unknown parameters in these models. In constructing the model you have specify how the variables relate to each other and then inference of the variables' unknown parameters is performed. 
+
+This means that we will specify priors and likelihoods and let the PPL worry about computing the posterior. """
+
 # ╔═╡ 2e125ab3-136f-44ef-a51b-475aacda96b5
 md"""
 
-Inputting the direct functional forms is labour intensive and it is much easier to simply run our model using a PPL like Turing or Stan. Below is the code to replicate our model with two unknown parameters. We see that the results coincide with out expectation of the mean and variance. 
+Inputting the direct functional forms is labour intensive and it is much easier to simply run our model using a PPL. Below is the code to replicate our model with two unknown parameters. We see that the results coincide with out expectation of the mean and variance. 
 
 """
+
+# ╔═╡ eb0634ba-9bca-4973-ae62-42ef9cd5b6cd
+md""" #### Putting together a model """
+
+# ╔═╡ 43f3b350-b61e-4577-b96a-13aea4188551
+md" We begin with specfiying a model by using the `@model` macro. Within this model block we can assign variables, either with `~` or `=`. In the first case the variable follows some probability distribution, where in the second case the value is deterministic. "
 
 # ╔═╡ 75215065-16a5-4c54-8966-f4bdc8b15054
 begin
@@ -746,20 +751,6 @@ end
 
 # ╔═╡ a9052ded-2181-47b0-b9d7-1faa985e7b3a
 plot(postdraws, line = 1.7, color = :steelblue, alpha = 0.8)
-
-# ╔═╡ 980ff4a1-fbd6-4e0f-b400-52f4e2101ceb
-@model function new_normal(x, y)
-    s² ~ InverseGamma(2, 3)
-    m ~ Normal(0, sqrt(s²))
-    x ~ Normal(m, sqrt(s²))
-    y ~ Normal(m, sqrt(s²))
-end;
-
-# ╔═╡ c3fbf110-fd19-4300-ab6f-0fefddfab668
-c1 = sample(new_normal(1.5, 2), SMC(), 1000)
-
-# ╔═╡ 33d02d91-792f-43b7-8ea2-5373eb908e24
-plot(c1)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2357,7 +2348,6 @@ version = "0.9.1+5"
 # ╟─675dfafa-46cb-44b8-bd7b-55395100e1ca
 # ╟─2e83e207-2405-44f4-a5d9-13dd69b741a9
 # ╟─961747f8-c884-43bf-941d-4545fb4510e6
-# ╟─42f89740-0974-4376-825a-a79b08eaecba
 # ╠═e3f722c1-739f-45b4-8fbf-db07e9483d92
 # ╠═59df263a-a284-40b2-8d9d-bb34fbf13b3a
 # ╠═16b216ff-81ed-481a-896b-4ddf2cd139f6
@@ -2395,7 +2385,6 @@ version = "0.9.1+5"
 # ╠═2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
 # ╟─1316fbc2-700d-4106-99f0-0b9243a99aba
 # ╟─3c409c93-545a-4d10-a972-509dff7c0120
-# ╟─79f77683-faa5-4a25-a78a-1d7d585bc94c
 # ╠═cef4da14-ee03-44b8-bd86-c11c263b26b3
 # ╠═d4f3331d-3dbd-4bad-b043-dff9409005c3
 # ╟─ec24134e-a9c0-491e-9a68-c95a618f0b1d
@@ -2420,11 +2409,11 @@ version = "0.9.1+5"
 # ╟─4074ea94-617c-44de-9f88-0f62826acca4
 # ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
 # ╟─0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
+# ╟─41d3b953-cdaa-468e-b3b7-bce844726ddb
 # ╟─2e125ab3-136f-44ef-a51b-475aacda96b5
+# ╟─eb0634ba-9bca-4973-ae62-42ef9cd5b6cd
+# ╟─43f3b350-b61e-4577-b96a-13aea4188551
 # ╠═75215065-16a5-4c54-8966-f4bdc8b15054
 # ╠═a9052ded-2181-47b0-b9d7-1faa985e7b3a
-# ╠═980ff4a1-fbd6-4e0f-b400-52f4e2101ceb
-# ╠═c3fbf110-fd19-4300-ab6f-0fefddfab668
-# ╠═33d02d91-792f-43b7-8ea2-5373eb908e24
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

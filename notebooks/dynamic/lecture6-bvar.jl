@@ -310,33 +310,6 @@ We first implement the Gibbs sampler described in Algorithm 8.1. Then, given the
 
 """
 
-# ╔═╡ 91339927-b430-4ab5-8445-59300b8389a8
-md""" 
-
-## Cool plot for the day 
-
-"""
-
-# ╔═╡ f0b6e9ac-c9cb-475e-8893-d691db461140
-let
-    x = y =  LinRange(-2, 2, 51)
-    z = (-x .* exp.(-x .^ 2 .- (y') .^ 2)) .* 4
-    zmin, zmax = minimum(z), maximum(z)
-    cmap = :viridis
-    fig = Figure(resolution = (800,800))
-    ax = Axis3(fig, aspect = :data, perspectiveness = 0.5, elevation = π/9,
-        xzpanelcolor= (:black, 0.75), yzpanelcolor= (:black,0.75),
-        zgridcolor = :grey, ygridcolor = :grey,xgridcolor = :grey)
-    surface!(ax, x, y, z, colormap = cmap, colorrange = (zmin, zmax))
-    xm, ym, zm = minimum(ax.finallimits[])
-    contour!(ax, x, y, z, levels = 20, colormap = cmap, linewidth = 2,
-        colorrange=(zmin, zmax), transformation = (:xy, zm))
-    wireframe!(ax, x, y, z, overdraw = true, transparency = true,
-        color = (:black, 0.1))
-    fig[1,1] = ax
-    fig
-end
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -1566,7 +1539,5 @@ version = "3.5.0+0"
 # ╟─1e22e482-c467-4a57-bf19-96361e2896e6
 # ╟─193f5509-0733-4409-9b88-1d2bc68e3aee
 # ╟─c8e7e82f-415e-4b9d-bd62-47c1c60d0741
-# ╟─91339927-b430-4ab5-8445-59300b8389a8
-# ╠═f0b6e9ac-c9cb-475e-8893-d691db461140
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

@@ -866,7 +866,7 @@ end
 # ╔═╡ 1234563c-fb5b-42ea-8f5b-abf8adf34e26
 md"""
 
-## MCMC and parallel programming
+### MCMC and parallel programming
 """
 
 # ╔═╡ a370cec5-904c-43fc-94b0-523100b1fd54

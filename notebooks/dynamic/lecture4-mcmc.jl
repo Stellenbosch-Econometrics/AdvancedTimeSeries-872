@@ -819,6 +819,26 @@ md""" If we have time in class we will have a quick discussion on parallel progr
 # ╔═╡ 676bed44-b4f0-4117-aa4e-649dae752bad
 md" In the last lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. "
 
+# ╔═╡ c22518e2-6cac-451c-bacc-15346dda54a4
+md""" ## Gibbs sampling """
+
+# ╔═╡ 0de3f161-b749-491e-ae32-4b04d5d8f851
+md""" We will cover Gibbs sampling in much more detail in future sessions. It will be a crucial method for VARs and TVP-VARs. The reason to use Gibbs sampling is because of the low acceptance rate that is often encounted in the Metropolis algorithm. With this method all proposals are accepted. This algorithm excels when we have a multidimensional sample space. 
+
+The basic algorithm is simple and can be illustrated in a few steps. This algorithm entails iterative sampling of parameters conditioned on other parameters. For this example $\theta$ is the parameter of interest and $y$ is the data.
+
+1. Define $p(\theta_{1}), p(\theta_{2}), \ldots, p(\theta_{n})$.
+2. Sample a starting point $\theta_{1}^{0}, \theta_{2}^{0}, \ldots, \theta_{n}^{0}$
+
+3. For $t = 1, 2, \ldots$
+
+$\begin{aligned} \theta_{1}^{t} & \sim p\left(\theta_{1} \mid \theta_{2}^{0}, \ldots, \theta_{n}^{0}\right) \\ \theta_{2}^{t} & \sim p\left(\theta_{2} \mid \theta_{1}^{t-1}, \ldots, \theta_{n}^{0}\right) \\ \quad &: \\ \theta_{n}^{t} & \sim p\left(\theta_{n} \mid \theta_{1}^{t-1}, \ldots, \theta_{n-1}^{t-1}\right) \end{aligned}$
+
+Don't worry too much about it for now. We will cover it multiple times throughout the course. 
+
+
+"""
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -2345,7 +2365,7 @@ version = "0.9.1+5"
 # ╟─aad23932-c61e-4308-956b-c2d64d85ac93
 # ╟─32b7f7aa-0a56-4cee-87a7-339826fa5c1e
 # ╟─3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
-# ╠═1970bc03-ff14-4819-86a6-0a8b802a9f8e
+# ╟─1970bc03-ff14-4819-86a6-0a8b802a9f8e
 # ╠═6b4b1e00-c2cf-4c06-8598-7a16965e73e3
 # ╠═3453a862-d9ce-4802-ace7-8b825641b4e2
 # ╠═dbaa28bc-021f-4805-b265-19b9257bbd02
@@ -2362,5 +2382,7 @@ version = "0.9.1+5"
 # ╟─1234563c-fb5b-42ea-8f5b-abf8adf34e26
 # ╟─a370cec5-904c-43fc-94b0-523100b1fd54
 # ╟─676bed44-b4f0-4117-aa4e-649dae752bad
+# ╟─c22518e2-6cac-451c-bacc-15346dda54a4
+# ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

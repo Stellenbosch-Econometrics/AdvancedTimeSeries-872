@@ -488,8 +488,8 @@ md""" Code seems to be running, good sign. Now I just need to fix the data and p
 
 # ╔═╡ abe69a74-74ff-4cc5-9a93-90bd36c48e8a
 begin
-	x = 0:39
-	plot(x, bvar(data)[:, 2]) # Figure out how to insert a line here
+	gr(size = (800, 600))
+	Plots.plot(bvar(data)[:, 2], legend = false) # Figure out how to insert a line here
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001

@@ -304,7 +304,7 @@ md"""
 
 In this empirical example we estimate a 3-variable VAR(2) using SA quarterly data on CPI inflation rate, unemployment rate and repo rate from $1994 \mathrm{Q} 1$ to $2020 \mathrm{Q} 4$. These three variables are commonly used in forecasting (e.g., Banbura, Giannone and Reichlin, 2010; Koop and Korobilis, 2010; Koop, 2013) and small DSGE models (e.g., An and Schorfheide, 2007 ).
 
-Following Primiceri $(2005)$, we order the interest rate last and treat it as the monetary policy instrument. The identified monetary policy shocks are interpreted as "non-systematic policy actions" that capture both policy mistakes and interest rate movements that are responses to variables other than inflation and unemployment.
+Following Primiceri (2005), we order the interest rate last and treat it as the monetary policy instrument. The identified monetary policy shocks are interpreted as "non-systematic policy actions" that capture both policy mistakes and interest rate movements that are responses to variables other than inflation and unemployment.
 
 We first implement the Gibbs sampler. Then, given the posterior draws of $\boldsymbol{\beta}$ and $\boldsymbol{\Sigma}$, we compute the impulse-response functions of the three variables to a 100-basis-point monetary policy shock.
 
@@ -313,20 +313,26 @@ We first implement the Gibbs sampler. Then, given the posterior draws of $\bolds
 # ╔═╡ 7557b795-839c-41bf-9586-7b2b3972b28d
 begin
 	# Parameters
-	p::Int64 = 2            # Number of lags
-	nsim::Int64 = 2000    # Number of simulation in Gibbs sampler
-	burnin::Int64 = 10      # Burnin for Gibbs sampler
-	n_hz::Int64 = 40        # Horizon for the IRF
+	p = 2            # Number of lags
+	nsim = 2000      # Number of simulation in Gibbs sampler
+	burnin = 10      # Burnin for Gibbs sampler
+	n_hz = 40        # Horizon for the IRF
 end;
+
+# ╔═╡ 8b97f4dd-31cf-4a55-a72b-66775d79445c
+md""" After specifying the parameters for the model, we load the data that we are going to be working with."""
 
 # ╔═╡ 5592c6a8-defc-4b6e-a303-813bdbacaffe
 # Load the dataset and transform to array / matrix
 #df = ...
-#data = convert(Matrix, df[:, 1:end])
+#data = Matrix(df[:, 1:end])
+
+# ╔═╡ 8d0a4b08-5cbf-43a8-91f3-5f448893a4c6
+md""" In order to estimate the model we use the following function to construct to regression matrix $\boldsymbol{X}$. Recall that $\mathbf{X}_{t}=\mathbf{I}_{n} \otimes\left[1, \mathbf{y}_{t-1}^{\prime}, \ldots, \mathbf{y}_{t-p}^{\prime}\right]$ and we stack $\mathbf{X}_{t}$ over $t=1, \ldots, T$ to obtain $\mathbf{X}$."""
 
 # ╔═╡ 9e3795cf-8695-46c1-9857-728d765caa02
 # SUR representation of the VAR(p)
-function SUR_form(X::Array{Float64, 2}, n::Int64)
+function SUR_form(X, n)
 
     repX = kron(X, ones(n, 1))
     r, c = size(X)
@@ -338,8 +344,15 @@ function SUR_form(X::Array{Float64, 2}, n::Int64)
     out  = sparse(idi[:, 1], idj[:, 1], d[:, 1])
 end;
 
+# ╔═╡ 171c9c8f-a4a9-4aad-8bab-f8f38d36a94b
+md""" Given the posterior draws of $\boldsymbol{\beta}$ and $\boldsymbol{\Sigma}$, we then use the function `construct_IR` to compute the impulse-response functions of the three variables to a 100 -basis-point monetary policy shock. More specifically, we consider two alternative paths: in one a 100 -basis-point monetary policy shock hits the system, and in the other this shock is absent. We then let the two systems evolve according to the $\operatorname{VAR}(p)$ written as the regression
+
+$$\mathbf{y}_{t}=\mathbf{X}_{t} \boldsymbol{\beta}_{t}+\mathbf{C} \widetilde{\varepsilon}_{t}, \quad \widetilde{\varepsilon}_{t} \sim \mathcal{N}\left(\mathbf{0}, \mathbf{I}_{3}\right)$$
+
+for $t=1, \ldots, n_{\mathrm{hz}}$, where $n_{\mathrm{hz}}$ denotes the number of horizons and $\mathbf{C}$ is the Cholesky factor of $\boldsymbol{\Sigma}$. Each impulse-response function is then the difference between these two paths. """
+
 # ╔═╡ 741e914f-4d6d-4249-a324-4dd54fd0f277
-function construct_IR(β::Array{Float64, 2}, Σ::Array{Float64, 2}, shock::Array{Float64, 1})
+function construct_IR(β, Σ, shock)
 
     n      = size(Σ, 1)
     CΣ     = cholesky(Σ).L
@@ -373,8 +386,15 @@ function construct_IR(β::Array{Float64, 2}, Σ::Array{Float64, 2}, shock::Array
     return yIR
 end;
 
+# ╔═╡ 3bb39875-2f99-4a1f-a7ab-a107b4b95716
+md"""
+
+The main function `bvar` is given next. It first loads the dataset, constructs the regression matrix $\mathbf{X}$ using the above function, and then implements the 2 -block Gibbs sampler. Note that within the for-loop we compute the impulse-response functions for each set of posterior draws $(\boldsymbol{\beta}, \boldsymbol{\Sigma})$. Also notice that the shock variable shock is normalized so that the impulse responses are to 100 basis points rather than one standard deviation of the monetary policy shock.
+
+"""
+
 # ╔═╡ 9e949115-a728-48ed-8c06-5cc26b6733bf
-function bvar(data::Array{Float64, 2})
+function bvar(data)
 
     data   = data[1:211, :]
     Y0     = data[1:4, :]
@@ -414,7 +434,7 @@ function bvar(data::Array{Float64, 2})
 
     X_d   = Matrix(X)
     # Initialise chain
-    β     = (X_d'*X_d)\(X_d'*y)
+    β     = (X_d'*X_d) \ Matrix{Float64}(X_d'*y)
     e     = reshape(y - X_d*β, n, T)
     Σ     = e*e'/T
 
@@ -1689,9 +1709,13 @@ version = "3.5.0+0"
 # ╟─193f5509-0733-4409-9b88-1d2bc68e3aee
 # ╟─c8e7e82f-415e-4b9d-bd62-47c1c60d0741
 # ╠═7557b795-839c-41bf-9586-7b2b3972b28d
+# ╟─8b97f4dd-31cf-4a55-a72b-66775d79445c
 # ╠═5592c6a8-defc-4b6e-a303-813bdbacaffe
+# ╟─8d0a4b08-5cbf-43a8-91f3-5f448893a4c6
 # ╠═9e3795cf-8695-46c1-9857-728d765caa02
+# ╟─171c9c8f-a4a9-4aad-8bab-f8f38d36a94b
 # ╠═741e914f-4d6d-4249-a324-4dd54fd0f277
+# ╟─3bb39875-2f99-4a1f-a7ab-a107b4b95716
 # ╠═9e949115-a728-48ed-8c06-5cc26b6733bf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

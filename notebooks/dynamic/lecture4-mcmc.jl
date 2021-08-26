@@ -90,9 +90,12 @@ md""" ## General overview """
 # ╔═╡ d86c8eae-9bcd-43a7-a9a7-1608af719f98
 md""" Today we will cover the following topics
 
--
--
--
+- Quick discussion on Monte Carlo methods
+- Why do we need to use MCMC methods?
+- The story of King Markov (Metropolis algorithm narrative)
+- Discussion on finite state Markov chains
+- Technical description of the Metropolis algorithm
+- Quick introduction to the Gibbs sampling algorithm
 
 """
 
@@ -656,7 +659,7 @@ md"""
 # ╔═╡ 1970bc03-ff14-4819-86a6-0a8b802a9f8e
 md"""
 
-We will rarely code up our own Metropolis algorithm for this course, it is more likely that we will be using Gibbs sampling. However, we provide a representation of the Metropolis algorithm. It incorporates some good programming principles, so it is worthwhile going through it in more detail.
+We will rarely code up our own Metropolis algorithm for this course. For this course it is more likely that we will be using Gibbs sampling. However, let us show a representation of the Metropolis algorithm. The code is sourced from [José Eduardo Storopoli](https://storopoli.io/Bayesian-Julia/pages/5_MCMC/). It incorporates some good programming principles, so it is worthwhile going through it in more detail.
 
 We use an example where we want to explore the multivariate normal distribution of two random variables $X$ and $Y$, where $\mu_{X}=\mu_{Y}=0$ and $\sigma_{X}=\sigma_{Y}=1$. This gives us, 
 
@@ -687,6 +690,9 @@ $\begin{aligned} r=& \frac{ \left.\text { PDF ( Multivariate Normal }\left(\left
 
 """
 
+# ╔═╡ 24e07f29-a534-4bdc-b26d-353484aad92b
+md""" Below is the implementation in Julia """
+
 # ╔═╡ 6b4b1e00-c2cf-4c06-8598-7a16965e73e3
 function metropolis(S::Int64, width::Float64, ρ::Float64;
                     μ_x::Float64=0.0, μ_y::Float64=0.0,
@@ -699,13 +705,15 @@ function metropolis(S::Int64, width::Float64, ρ::Float64;
     draws = Matrix{Float64}(undef, S, 2)
     accepted = 0::Int64;
     x = start_x; y = start_y
-    @inbounds draws[1, :] = [x y]
-    for s in 2:S
-        x_ = rand(rgn, Uniform(x - width, x + width))
-        y_ = rand(rgn, Uniform(y - width, y + width))
-        r = exp(logpdf(binormal, [x_, y_]) - logpdf(binormal, [x, y]))
+	
+    @inbounds draws[1, :] = [x y] # inbounds will make code run faster, but use sparingly
+    
+	for s in 2:S
+        x_ = rand(rgn, Uniform(x - width, x + width)) # proposal distribution for X
+        y_ = rand(rgn, Uniform(y - width, y + width)) # proposal distribution for Y
+        r = exp(logpdf(binormal, [x_, y_]) - logpdf(binormal, [x, y])) # acceptance ratio
 
-        if r > rand(rgn, Uniform())
+        if r > rand(rgn, Uniform()) # accept or reject the proposal, if accepted increase count 
             x = x_
             y = y_
             accepted += 1
@@ -755,10 +763,9 @@ begin
 	    label="90% HPD",
 	    xlabel="θ1", ylabel="θ2")
 	
-	scatter(plt₁, (X_met[j, 1], X_met[j, 2]),
-	             label=false, mc=:red, ma=0.5)
-	plot!(X_met[j:j + 1, 1], X_met[j:j + 1, 2], seriestype=:path,
-          lc=:green, la=0.5, label=false)
+	scatter(plt₁, (X_met[j, 1], X_met[j, 2]), label=false, mc=:red, ma=0.7)
+	plot!(X_met[j:j + 1, 1], X_met[j:j + 1, 2], seriestype=:path, lc=:green,
+		la=0.5, label=false, lw = 2)
 end
 
 # ╔═╡ 492d4b83-e736-4ca4-92d0-2bdb7973b85f
@@ -838,6 +845,12 @@ Don't worry too much about it for now. We will cover it multiple times throughou
 
 
 """
+
+# ╔═╡ 871d3e18-ea75-4cfc-aacc-b196f62cde50
+md""" ## Cool thing for the day """
+
+# ╔═╡ 759b6112-cdd6-45be-ad19-3e4aee182eb0
+md""" Here is a link to an [interactive gallery](https://chi-feng.github.io/mcmc-demo/) of the different types of MCMC algorithms. """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2366,6 +2379,7 @@ version = "0.9.1+5"
 # ╟─32b7f7aa-0a56-4cee-87a7-339826fa5c1e
 # ╟─3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
 # ╟─1970bc03-ff14-4819-86a6-0a8b802a9f8e
+# ╟─24e07f29-a534-4bdc-b26d-353484aad92b
 # ╠═6b4b1e00-c2cf-4c06-8598-7a16965e73e3
 # ╠═3453a862-d9ce-4802-ace7-8b825641b4e2
 # ╠═dbaa28bc-021f-4805-b265-19b9257bbd02
@@ -2374,7 +2388,7 @@ version = "0.9.1+5"
 # ╠═47063329-5039-4e7f-b8d0-73e991cb3772
 # ╠═a19a4458-b167-46ad-97a1-156b789be81a
 # ╟─29298f63-a7d7-4aaa-b888-3e955841f7f5
-# ╠═364377f1-3528-4e4a-99d1-91b96c546346
+# ╟─364377f1-3528-4e4a-99d1-91b96c546346
 # ╟─492d4b83-e736-4ca4-92d0-2bdb7973b85f
 # ╟─b1bc647a-32f1-4ec8-a60e-f8e43e95be2d
 # ╟─a4f22ac0-db21-4e0d-8540-8e56761d42dc
@@ -2384,5 +2398,7 @@ version = "0.9.1+5"
 # ╟─676bed44-b4f0-4117-aa4e-649dae752bad
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
+# ╟─871d3e18-ea75-4cfc-aacc-b196f62cde50
+# ╟─759b6112-cdd6-45be-ad19-3e4aee182eb0
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

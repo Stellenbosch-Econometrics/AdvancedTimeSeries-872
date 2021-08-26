@@ -134,14 +134,14 @@ end;
 # ╔═╡ 59df263a-a284-40b2-8d9d-bb34fbf13b3a
 # Similar code to first instance above 
 R"mc_pi_loop <- function(n){
-  count <- 0 
+  n_landed_in_circle <- 0 
   for (i in 1:n) {
     u <- runif(2)
     if (u[1]^2 + u[2]^2 < 1) {
-      count <- count + 1
+      n_landed_in_circle <- n_landed_in_circle + 1
     } 
   }
-  area_est <- count / n
+  area_est <- n_landed_in_circle / n
   return(area_est * 4)
 }";
 
@@ -164,7 +164,7 @@ function compute_pi(n::Int)
 end;
 
 # ╔═╡ 6b5886d8-d783-4cbc-9a8c-286b741cb16f
-# Vectorised version of the code
+# Vectorised version of the code (should be much faster)
 R"mc_piv <- function(n) {
   x <- runif(n, 0, 1)
   y <- runif(n, 0, 1)
@@ -601,7 +601,7 @@ end
 # ╔═╡ 4074ea94-617c-44de-9f88-0f62826acca4
 md"""
 
-#### Derivation continued (optional)
+#### Derivation continued (math optional)
 
 """
 

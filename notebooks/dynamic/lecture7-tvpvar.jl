@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, StatsBase, Statistics, StatsPlots
+using BenchmarkTools, CSV, DataFrames, Distributions, KernelDensity, LinearAlgebra, Plots, PlutoUI, Random, SparseArrays, StatsBase, Statistics, UrlDownload
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -60,7 +60,7 @@ html"""
 md" # Introduction "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In this session we will be looking at the basics of Bayesian econometrics / statistics. WE will start with a discussion on probability and Bayes' rule and then we will move on to discuss single parameter models. Some math will be interlaced with the code. "
+md"  "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 #TableOfContents() # Uncomment to see TOC
@@ -69,29 +69,332 @@ md" In this session we will be looking at the basics of Bayesian econometrics / 
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
-md" ## Random sampling "
+md" ## State space models "
+
+# ╔═╡ 2b25c4e9-b06b-44cd-8cc6-655176ffea35
+md""" ## TVP-VARs """
+
+# ╔═╡ bfc82e94-c842-401b-8503-4d1e74e01497
+md"""
+
+In this section we consider the time-varying parameter vector autoregression (TVP-VAR) in which the VAR coefficients gradually evolve over time. The timevarying parameter model permits the structure of the economy to change over time, while maintaining that such changes in dynamic behavior should occur smoothly. This framework allows us to study potential structural instability due to new technology, regulations and institutional changes.
+
+As mentioned in the previous section, unobserved components models can be viewed as a regression with a time-varying parameter. This line of work can be traced back to the seminal paper of Harvey (1985). Canova (1993) considers a regression with time-varying coefficients and the paper by Cogley and Sargent (2001) appears to be the first VAR with time-varying parameters.
+
+"""
+
+# ╔═╡ 815299c2-9072-419d-b9e1-88ace739a8d2
+md"""
+
+Consider again the $\operatorname{VAR}(p)$ but now with time-varying parameters:
+
+$$\mathbf{y}_{t}=\mathbf{a}_{t}+\mathbf{A}_{1 t} \mathbf{y}_{t-1}+\cdots+\mathbf{A}_{p t} \mathbf{y}_{t-p}+\varepsilon_{t}$$
+
+where $\varepsilon_{t} \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$
+
+As before, we can define $\mathbf{X}_{t}=\mathbf{I}_{n} \otimes\left[1, \mathbf{y}_{t-1}^{\prime}, \ldots, \mathbf{y}_{t-p}^{\prime}\right]$ and $\boldsymbol{\beta}_{t}=\operatorname{vec}\left(\left[\mathbf{a}_{t}, \mathbf{A}_{1 t}, \ldots, \mathbf{A}_{p t}\right]^{\prime}\right)$ and rewrite the above system as
+
+$$\mathbf{y}_{t}=\mathbf{X}_{t} \boldsymbol{\beta}_{t}+\varepsilon_{t}$$
+
+The time-varying parameters $\boldsymbol{\beta}_{t}$ are assumed to evolve as a random walk
+
+$$\boldsymbol{\beta}_{t}=\boldsymbol{\beta}_{t-1}+\mathbf{u}_{t}$$
+
+where $\mathbf{u}_{t} \sim \mathcal{N}(\mathbf{0}, \mathbf{Q})$ and the initial conditions $\boldsymbol{\beta}_{0}$ are treated as parameters. Here we make the simplifying assumption that the covariance matrix $\mathbf{Q}$ is diagonal, i.e., $\mathbf{Q}=\operatorname{diag}\left(q_{1}, \ldots, q_{k n}\right) .$ One can also consider the possibility of a block-diagonal matrix or even a full matrix.
+
+To complete the model specification, consider independent priors for $\boldsymbol{\Sigma}, \boldsymbol{\beta}_{0}$ and the diagonal elements of $\mathbf{Q}$ :
+
+$$\boldsymbol{\Sigma} \sim \mathcal{I} W\left(\nu_{0}, \mathbf{S}_{0}\right), \quad \boldsymbol{\beta}_{0} \sim \mathcal{N}\left(\mathbf{a}_{0}, \mathbf{B}_{0}\right), \quad q_{i} \sim \mathcal{I} G\left(\nu_{0, q_{i}}, S_{0, q_{i}}\right)$$
+
+
+"""
+
+# ╔═╡ c09320f1-6278-4adf-9749-c54ab6228fd7
+md""" ### Estimation """
+
+# ╔═╡ 93ef5568-8e3e-4223-b4b5-be7b8d796b6c
+md""" In this section we describe a Gibbs sampler to estimate the TVP-VAR. The model parameters are $\boldsymbol{\beta}_{0}, \boldsymbol{\Sigma}$ and $\mathbf{Q}$, and the states are $\boldsymbol{\beta}=\left(\boldsymbol{\beta}_{1}^{\prime}, \ldots, \boldsymbol{\beta}_{T}^{\prime}\right)^{\prime}$. We therefore consider a 4-block Gibbs sampler. 
+
+First, to sample $\boldsymbol{\beta}$, we write the observation equation as
+
+$$\mathbf{y}=\mathbf{X} \boldsymbol{\beta}+\varepsilon$$
+
+where $\varepsilon \sim \mathcal{N}\left(\mathbf{0}, \mathbf{I}_{T} \otimes \boldsymbol{\Sigma}\right)$ and
+
+$$\mathbf{X}=\left(\begin{array}{cccc}
+\mathbf{X}_{1} & 0 & \cdots & 0 \\
+0 & \mathbf{X}_{2} & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+\mathbf{0} & 0 & \cdots & \mathbf{X}_{T}
+\end{array}\right)$$
+
+Hence, we have
+
+$$(\mathbf{y} \mid \boldsymbol{\beta}, \mathbf{\Sigma}) \sim \mathcal{N}\left(\mathbf{X} \boldsymbol{\beta}, \mathbf{I}_{T} \otimes \mathbf{\Sigma}\right)$$
+
+So we have reframed the TVP-VAR as a normal linear regression model. Next, we derive the prior of $\boldsymbol{\beta}$. To that end, rewrite the state equation in matrix notation:
+
+$$\mathbf{H} \boldsymbol{\beta}=\widetilde{\boldsymbol{\alpha}}_{\boldsymbol{\beta}}+\mathbf{u}$$
+
+where $\mathbf{u} \sim \mathcal{N}\left(\mathbf{0}, \mathbf{I}_{T} \otimes \mathbf{Q}\right), \widetilde{\boldsymbol{\alpha}}_{\boldsymbol{\beta}}=\left(\boldsymbol{\beta}_{0}^{\prime}, \mathbf{0}, \ldots, \mathbf{0}\right)^{\prime}$ and
+
+$$\mathbf{H}=\left(\begin{array}{ccccc}
+\mathbf{I}_{n k} & \mathbf{0} & \mathbf{0} & \cdots & \mathbf{0} \\
+-\mathbf{I}_{n k} & \mathbf{I}_{n k} & \mathbf{0} & \cdots & \mathbf{0} \\
+\mathbf{0} & -\mathbf{I}_{n k} & \mathbf{I}_{n k} & \cdots & \mathbf{0} \\
+\vdots & & \ddots & \ddots & \vdots \\
+\mathbf{0} & \mathbf{0} & \cdots & -\mathbf{I}_{n k} & \mathbf{I}_{n k}
+\end{array}\right)$$
+
+Note that now $\mathbf{H}$ is of dimension $Tnk \times Tnk$, and is a multivariate generalization of the usual first difference matrix. Again $|\mathbf{H}|=1$, and is therefore invertible. One can show that $\mathbf{H}^{-1} \widetilde{\boldsymbol{\alpha}}_{\boldsymbol{\beta}}=\mathbf{1}_{T} \otimes \boldsymbol{\beta}_{0}$. Therefore, the prior of $\boldsymbol{\beta}$ is given by
+
+$$\left(\boldsymbol{\beta} \mid \boldsymbol{\beta}_{0}, \mathbf{Q}\right) \sim \mathcal{N}\left(\mathbf{1}_{T} \otimes \boldsymbol{\beta}_{0},\left(\mathbf{H}^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{Q}^{-1}\right) \mathbf{H}\right)^{-1}\right)$$
+
+Finally, by standard linear regression results, we obtain
+
+$$\left(\boldsymbol{\beta} \mid \mathbf{y}, \boldsymbol{\Sigma}, \boldsymbol{\beta}_{0}, \mathbf{Q}\right) \sim \mathcal{N}\left(\widehat{\boldsymbol{\beta}}, \mathbf{K}_{\boldsymbol{\beta}}^{-1}\right)$$
+
+where
+
+$$\begin{aligned}
+\mathbf{K}_{\boldsymbol{\beta}} &=\mathbf{H}^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{Q}^{-1}\right) \mathbf{H}+\mathbf{X}^{\prime}\left(\mathbf{I}_{T} \otimes \boldsymbol{\Sigma}^{-1}\right) \mathbf{X} \\
+\widehat{\boldsymbol{\beta}} &=\mathbf{K}_{\boldsymbol{\beta}}^{-1}\left(\mathbf{H}^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{Q}^{-1}\right) \mathbf{H}\left(\mathbf{1}_{T} \otimes \boldsymbol{\beta}_{0}\right)+\mathbf{X}^{\prime}\left(\mathbf{I}_{T} \otimes \mathbf{\Sigma}^{-1}\right) \mathbf{y}\right)
+\end{aligned}$$
+
+"""
+
+# ╔═╡ c75540dc-b09d-4235-8126-fb214b32f0ad
+md""" ### Gibbs sampler """
+
+# ╔═╡ 3a34c8d8-10c1-4c08-8716-6b0e2f5a7e30
+md""" 
+
+We summarize the Gibbs sampler as follows:
+
+Pick some initial values for $\boldsymbol{\beta}^{(0)}, \boldsymbol{\Sigma}^{(0)}, \mathbf{Q}^{(0)}$ and $\boldsymbol{\beta}_{0}^{(0)}$. Then, repeat the following steps from $r=1$ to $R:$
+
+1. Draw $\boldsymbol{\beta}^{(r)} \sim\left(\boldsymbol{\beta} \mid \mathbf{y}, \boldsymbol{\Sigma}^{(r-1)}, \mathbf{Q}^{(r-1)}, \boldsymbol{\beta}_{0}^{(r-1)}\right)$ (multivariate normal).
+
+2. Draw $\boldsymbol{\Sigma}^{(r)} \sim\left(\boldsymbol{\Sigma} \mid \mathbf{y}, \boldsymbol{\beta}^{(r)}, \mathbf{Q}^{(r-1)}, \boldsymbol{\beta}_{0}^{(r-1)}\right)$ (inverse-Wishart).
+
+3. Draw $\mathbf{Q}^{(r)} \sim\left(\mathbf{Q} \mid \mathbf{y}, \boldsymbol{\beta}^{(r)}, \mathbf{\Sigma}^{(r)}, \boldsymbol{\beta}_{0}^{(r-1)}\right)$ (independent inverse-gammas).
+
+4. Draw $\boldsymbol{\beta}_{0}^{(r)} \sim\left(\boldsymbol{\beta}_{0} \mid \mathbf{y}, \boldsymbol{\beta}^{(r)}, \boldsymbol{\Sigma}^{(r)}, \mathbf{Q}^{(r)}\right)$ (multivariate normal).
+
+"""
+
+# ╔═╡ d5f500f7-aefc-462b-9559-a555dfd7d57d
+md""" ### Empirical example revisited """
+
+# ╔═╡ 240a3ac5-32ff-4a62-bffb-7c572891bf19
+md"""
+
+In the empirical example in the previous lecture, we consider a 3-variable VAR(2) of unemployment, inflation and interest rate, and use it to compute impulse-response functions to a 100-basis-point monetary policy shock. Given the sample spans from $1985 \mathrm{Q} 1$ to $2020 \mathrm{Q} 4$, one might wonder if these the responses to the monetary policy shocks have changed over time.
+
+To address that question, here we revisit that example using a time-varying parameter VAR. In particular, we compare the impulse responses associated with the VAR coefficients in 1990 to those in 2015.
+
+The following code implements the Gibbs sampler. In addition, it computes two sets of impulse responses by picking the relevant $\boldsymbol{\beta}_{t}$.
+
+"""
+
+
+# ╔═╡ f7b55d16-83aa-4ab6-bab5-805e13b4fda6
+begin
+	# Parameters
+	p = 2            # Number of lags
+	nsim = 2000      # Number of simulation in Gibbs sampler
+	burnin = 10      # Burnin for Gibbs sampler
+	n_hz = 40        # Horizon for the IRF
+end;
+
+# ╔═╡ 59e26daf-ea39-4b83-8d2f-350e5b1cbf19
+begin
+	# Load the dataset and transform to array / matrix
+	df = urldownload("https://raw.githubusercontent.com/DawievLill/ATS-872/main/data/sa-data.csv") |> DataFrame
+end;
+
+# ╔═╡ 44ecd473-67f3-4391-8c49-49903f6fdb27
+data = Matrix(df[:, 1:end]);
+
+# ╔═╡ 0799b565-71eb-46e2-b67c-49d52d6097a3
+function prepare_data(data)
+
+    # General data preparation
+    Y0     = data[1:4, :]            # first four observations are the initial conditions
+    Y      = data[5:end, :]
+    T      = size(Y, 1)
+    n      = size(Y, 2)
+    y      = reshape(Y', T * n, 1)
+    k      = n * p + 1               # number of coefficients in each equation 
+end;
+
+# ╔═╡ aa9ee009-e808-40dd-85ed-7743c6c708a0
+# SUR representation of the VAR(p)
+function SUR_form(X, n)
+
+    repX = kron(X, ones(n, 1))
+    r, c = size(X)
+    idi  = kron((1:r * n), ones(c, 1))
+    idj  = repeat((1:n * c), r, 1)
+
+    # Some prep for the out return value.
+    d    = reshape(repX', n * r * c, 1)
+    out  = sparse(idi[:, 1], idj[:, 1], d[:, 1])
+end;
+
+# ╔═╡ 5f8cb42f-42d9-4a96-8508-692cf66a0eb3
+function construct_IR(β, Σ, shock)
+
+    n      = size(Σ, 1)
+    CΣ     = cholesky(Σ).L
+    tmpZ1  = zeros(p, n)
+    tmpZ   = zeros(p, n)
+    Yt1    = CΣ * shock
+    Yt     = zeros(n, 1)
+    yIR    = zeros(n_hz,n)
+    yIR[1,:] = Yt1'
+
+    for t = 2:n_hz
+        # update the regressors
+        tmpZ = [Yt'; tmpZ[1:end-1,:]]
+        tmpZ1 = [Yt1'; tmpZ1[1:end-1,:]]
+
+        # evolution of variables if a shock hits
+        Random.seed!(12)
+        e = CΣ*randn(n,1)
+        Z1 = reshape(tmpZ1',1,n*p)
+        Xt1 = kron(I(n), [1 Z1])
+        Yt1 = Xt1 * β + e
+
+        # evolution of variables if no shocks hit
+        Z = reshape(tmpZ',1,n*p)
+        Xt = kron(I(n), [1 Z])
+        Yt = Xt * β + e
+
+        # the IR is the difference of the two scenarios
+        yIR[t,:] = (Yt1 - Yt)'
+    end
+    return yIR
+end;
+
+# ╔═╡ 4702aa75-c00b-4916-928d-84c57bdf744d
+function tvp_var(data)
+
+    t_0    = []
+
+    # Specification of the prior (diffuse prior in this case)
+    ν_0    = n + 3
+    Σ_0    = I(n)
+    β_0    = zeros(n * k, 1) # Best way to initialise with zeros?
+    #β_0    = fill( NaN, n * k, 1) # Alternative?k
+
+    # Precision for coefficients and intercepts
+    tmp    = ones(k * n, 1)
+    tmp[1: p * n + 1: k * n] .= 1/10
+    A      = collect(1:k*n)
+    Vβ     = sparse(A, A, tmp[:, 1]) # This works! I seem to have figured out the sparse array struct. However, is this what we want to use? What is the benefit here?
+    Vβ_d     = Matrix(Vβ) # Dense version
+
+    # Working on the lagged matrix (preparation of the data) / method is similar to Korobilis
+    tmpY   = [Y0[(end-p+1): end,:]; Y]
+    X_til  = zeros(T, n * p)
+
+    for i=1:p
+        X_til[:, ((i - 1) * n + 1):i * n] = tmpY[(p - i + 1):end - i,:]
+    end
+    X_til  = [ones(T, 1) X_til] # This is the dense X matrix
+    X      = SUR_form(X_til, n) # Creates a sparse regression array...
+
+    # Initialise these arrays (used for storage)
+    store_Sig  = zeros(nsim, n, n) # For the sigma values
+    store_beta = zeros(nsim, k*n) # For the beta values
+    store_yIR  = zeros(n_hz, n) # For the impulse responses
+
+    X_d   = Matrix(X)
+    # Initialise chain
+    β     = (X_d'*X_d)\ Matrix{Float64}(X_d'*y)
+    e     = reshape(y - X_d*β, n, T)
+    Σ     = e*e'/T
+
+    iΣ    = Σ\I(n)
+    iΣ    = Symmetric(iΣ)
+
+    for isim = 1:nsim + burnin
+
+        # sample β
+        HiQH = H'*sparse(1:T*n*k, 1:T*n*k, repeat(1/Q, T, 1)) * H
+        XiΣ = X' * kron(sparse(I, T, T), iΣ)
+        Kβ = HiQH + XiΣ*X
+        β_hat = Kβ \ (HiQH * kron(ones(T,1), β_0) + XiΣ*y)
+        β = β_hat + (cholesky(Kβ).L)' \ randn(T*n*k, 1)
+        
+        # sample Σ
+        e = reshape(y - X*beta,n,T);
+        Sig = iwishrnd(S0 + e*e',nu0 + T);
+        iSig = Sig\speye(n);
+
+        # sample Q
+        e = reshape(beta - [beta0;beta(1:end-n*k)],n*k,T);
+        Q = 1/gamrnd(nu0q + T/2,1/(S0q + sum(e.^2,2)/2));
+
+        # sample β_0
+        Kβ_0 = iB0 + sparse(1:n*k,1:n*k,1/Q);
+        β_0_hat = Kβ_0\(iB0*a0 + sparse(1:n*k,1:n*k,1/Q)*beta(1:n*k));
+        β_0 = β_0_hat + (cholesky(Kβ_0).L)' \ randn(n*k, 1)
+        
+        # store the parameters
+        if isim > burnin
+            isave = isim - burnin;
+            store_beta[isave,:] = β';
+            store_Sig[isave,:,:] = Σ;
+            store_Q[isave,:] = Q';
+        
+        # compute impulse-responses
+            CΣ = cholesky(Σ).L
+            
+            # 100 basis pts rather than 1 std. dev.
+            shock = [0; 0; 1]/CSig(n,n);
+            tmp_beta = reshape(beta,n*k,T);
+            yIR_75 = construct_IR(tmp_beta(:,t0(1)),Sig,n_hz,shock);
+            yIR_05 = construct_IR(tmp_beta(:,t0(2)),Sig,n_hz,shock);
+            
+            store_yIR_75 = store_yIR_75 + yIR_75;
+            store_yIR_05 = store_yIR_05 + yIR_05;
+            
+            store_diff[isave,:,:] = yIR_05 - yIR_75;
+        end
+    end
+    yIR_hat = store_yIR/nsim
+    #return store_beta, store_Sig
+end;
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
+UrlDownload = "856ac37a-3032-4c1c-9122-f86d88358c8b"
 
 [compat]
 BenchmarkTools = "~1.1.1"
+CSV = "~0.8.5"
+DataFrames = "~1.2.2"
 Distributions = "~0.25.11"
 KernelDensity = "~0.6.3"
 Plots = "~1.19.4"
 PlutoUI = "~0.7.9"
 StatsBase = "~0.33.9"
-StatsPlots = "~0.14.26"
+UrlDownload = "~1.0.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -112,18 +415,6 @@ version = "3.3.1"
 
 [[ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
-
-[[Arpack]]
-deps = ["Arpack_jll", "Libdl", "LinearAlgebra"]
-git-tree-sha1 = "2ff92b71ba1747c5fdd541f8fc87736d82f40ec9"
-uuid = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
-version = "0.4.0"
-
-[[Arpack_jll]]
-deps = ["Libdl", "OpenBLAS_jll", "Pkg"]
-git-tree-sha1 = "e214a9b9bd1b4e1b4f15b22c0994862b66af7ff7"
-uuid = "68821587-b530-5797-8361-c406ea357684"
-version = "3.5.0+3"
 
 [[Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -149,6 +440,12 @@ git-tree-sha1 = "c3598e525718abcc440f69cc6d5f60dda0a1b61e"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.6+5"
 
+[[CSV]]
+deps = ["Dates", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode"]
+git-tree-sha1 = "b83aa3f513be680454437a0eee21001607e5d983"
+uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+version = "0.8.5"
+
 [[Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "e2f47f6d8337369411569fd45ae5753ca10394c6"
@@ -160,12 +457,6 @@ deps = ["Compat", "LinearAlgebra", "SparseArrays"]
 git-tree-sha1 = "f53ca8d41e4753c41cdafa6ec5f7ce914b34be54"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 version = "0.10.13"
-
-[[Clustering]]
-deps = ["Distances", "LinearAlgebra", "NearestNeighbors", "Printf", "SparseArrays", "Statistics", "StatsBase"]
-git-tree-sha1 = "75479b7df4167267d75294d14b58244695beb2ac"
-uuid = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
-version = "0.14.2"
 
 [[ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random", "StaticArrays"]
@@ -201,10 +492,21 @@ git-tree-sha1 = "9f02045d934dc030edad45944ea80dbd1f0ebea7"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.5.7"
 
+[[Crayons]]
+git-tree-sha1 = "3f71217b538d7aaee0b69ab47d9b7724ca8afa0d"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "4.0.4"
+
 [[DataAPI]]
 git-tree-sha1 = "ee400abb2298bd13bfc3df1c412ed228061a2385"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 version = "1.7.0"
+
+[[DataFrames]]
+deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "d785f42445b63fc86caa08bb9a9351008be9b765"
+uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+version = "1.2.2"
 
 [[DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -217,12 +519,6 @@ git-tree-sha1 = "bfc1187b79289637fa0ef6d4436ebdfe6905cbd6"
 uuid = "e2d170a0-9d28-54be-80f0-106bbe20a464"
 version = "1.0.0"
 
-[[DataValues]]
-deps = ["DataValueInterfaces", "Dates"]
-git-tree-sha1 = "d88a19299eba280a6d062e135a43f00323ae70bf"
-uuid = "e7dc6d0d-1eca-5fa6-8ad6-5aecde8b7ea5"
-version = "0.4.13"
-
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -230,12 +526,6 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 [[DelimitedFiles]]
 deps = ["Mmap"]
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-
-[[Distances]]
-deps = ["LinearAlgebra", "Statistics", "StatsAPI"]
-git-tree-sha1 = "abe4ad222b26af3337262b8afb28fab8d215e9f8"
-uuid = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
-version = "0.10.3"
 
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -329,6 +619,10 @@ git-tree-sha1 = "aa31987c2ba8704e23c6c8ba8a4f769d5d7e4f91"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.10+0"
 
+[[Future]]
+deps = ["Random"]
+uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
+
 [[GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
 git-tree-sha1 = "dba1e8614e98949abfa60480b13653813d8f0157"
@@ -397,6 +691,12 @@ deps = ["AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Ra
 git-tree-sha1 = "1470c80592cf1f0a35566ee5e93c5f8221ebc33a"
 uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 version = "0.13.3"
+
+[[InvertedIndices]]
+deps = ["Test"]
+git-tree-sha1 = "15732c475062348b0165684ffe28e85ea8396afc"
+uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
+version = "1.0.0"
 
 [[IterTools]]
 git-tree-sha1 = "05110a2ab1fc5f932622ffea2a003221f4782c18"
@@ -588,30 +888,13 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 [[MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 
-[[MultivariateStats]]
-deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsBase"]
-git-tree-sha1 = "8d958ff1854b166003238fe191ec34b9d592860a"
-uuid = "6f286f6a-111f-5878-ab1e-185364afe411"
-version = "0.8.0"
-
 [[NaNMath]]
 git-tree-sha1 = "bfe47e760d60b82b66b61d2d44128b62e3a369fb"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "0.3.5"
 
-[[NearestNeighbors]]
-deps = ["Distances", "StaticArrays"]
-git-tree-sha1 = "16baacfdc8758bc374882566c9187e785e85c2f0"
-uuid = "b8a86587-4115-5ab1-83bc-aa920d37bbce"
-version = "0.4.9"
-
 [[NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
-
-[[Observables]]
-git-tree-sha1 = "fe29afdef3d0c4a8286128d4e45cc50621b1e43d"
-uuid = "510215fc-4207-5dde-b226-833fc4488ee2"
-version = "0.4.0"
 
 [[OffsetArrays]]
 deps = ["Adapt"]
@@ -624,10 +907,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
 version = "1.3.5+0"
-
-[[OpenBLAS_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
-uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 
 [[OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -704,15 +983,33 @@ git-tree-sha1 = "44e225d5837e2a2345e69a1d1e01ac2443ff9fcb"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 version = "0.7.9"
 
+[[PooledArrays]]
+deps = ["DataAPI", "Future"]
+git-tree-sha1 = "cde4ce9d6f33219465b55162811d8de8139c0414"
+uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
+version = "1.2.1"
+
 [[Preferences]]
 deps = ["TOML"]
 git-tree-sha1 = "00cfd92944ca9c760982747e9a1d0d5d86ab1e5a"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
 version = "1.2.2"
 
+[[PrettyTables]]
+deps = ["Crayons", "Formatting", "Markdown", "Reexport", "Tables"]
+git-tree-sha1 = "0d1245a357cc61c8cd61934c07447aa569ff22e6"
+uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+version = "1.1.0"
+
 [[Printf]]
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[[ProgressMeter]]
+deps = ["Distributed", "Printf"]
+git-tree-sha1 = "afadeba63d90ff223a6a48d2009434ecee2ec9e8"
+uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
+version = "1.7.1"
 
 [[Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
@@ -847,12 +1144,6 @@ git-tree-sha1 = "30cd8c360c54081f806b1ee14d2eecbef3c04c49"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.8"
 
-[[StatsPlots]]
-deps = ["Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
-git-tree-sha1 = "e7d1e79232310bd654c7cef46465c537562af4fe"
-uuid = "f3b207a7-027a-5e70-b257-86293d7955fd"
-version = "0.14.26"
-
 [[StructArrays]]
 deps = ["Adapt", "DataAPI", "StaticArrays", "Tables"]
 git-tree-sha1 = "000e168f5cc9aded17b6999a560b7c11dda69095"
@@ -871,12 +1162,6 @@ version = "0.2.0"
 [[TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-
-[[TableOperations]]
-deps = ["SentinelArrays", "Tables", "Test"]
-git-tree-sha1 = "a7cf690d0ac3f5b53dd09b5d613540b230233647"
-uuid = "ab02a1b2-a7df-11e8-156e-fb1833f50b87"
-version = "1.0.0"
 
 [[TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
@@ -910,6 +1195,12 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
+[[UrlDownload]]
+deps = ["HTTP", "ProgressMeter"]
+git-tree-sha1 = "05f86730c7a53c9da603bd506a4fc9ad0851171c"
+uuid = "856ac37a-3032-4c1c-9122-f86d88358c8b"
+version = "1.0.0"
+
 [[Wayland_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "3e61f0b86f90dacb0bc0e73a0c5a83f6a8636e23"
@@ -921,12 +1212,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Wayland_jll"]
 git-tree-sha1 = "2839f1c1296940218e35df0bbb220f2a79686670"
 uuid = "2381bf8a-dfd0-557d-9999-79630e7b1b91"
 version = "1.18.0+4"
-
-[[Widgets]]
-deps = ["Colors", "Dates", "Observables", "OrderedCollections"]
-git-tree-sha1 = "eae2fbbc34a79ffd57fb4c972b08ce50b8f6a00d"
-uuid = "cc8bc4a8-27d6-5769-a93b-9d913e69aa62"
-version = "0.6.3"
 
 [[WoodburyMatrices]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -1142,5 +1427,21 @@ version = "0.9.1+5"
 # ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
 # ╟─040c011f-1653-446d-8641-824dc82162eb
+# ╟─2b25c4e9-b06b-44cd-8cc6-655176ffea35
+# ╟─bfc82e94-c842-401b-8503-4d1e74e01497
+# ╟─815299c2-9072-419d-b9e1-88ace739a8d2
+# ╟─c09320f1-6278-4adf-9749-c54ab6228fd7
+# ╟─93ef5568-8e3e-4223-b4b5-be7b8d796b6c
+# ╟─c75540dc-b09d-4235-8126-fb214b32f0ad
+# ╟─3a34c8d8-10c1-4c08-8716-6b0e2f5a7e30
+# ╟─d5f500f7-aefc-462b-9559-a555dfd7d57d
+# ╟─240a3ac5-32ff-4a62-bffb-7c572891bf19
+# ╠═f7b55d16-83aa-4ab6-bab5-805e13b4fda6
+# ╠═59e26daf-ea39-4b83-8d2f-350e5b1cbf19
+# ╠═44ecd473-67f3-4391-8c49-49903f6fdb27
+# ╠═0799b565-71eb-46e2-b67c-49d52d6097a3
+# ╠═aa9ee009-e808-40dd-85ed-7743c6c708a0
+# ╠═5f8cb42f-42d9-4a96-8508-692cf66a0eb3
+# ╠═4702aa75-c00b-4916-928d-84c57bdf744d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

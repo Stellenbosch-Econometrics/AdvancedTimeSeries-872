@@ -704,6 +704,15 @@ We will encounter this idea of marginalisation in many of our Markov chain Monte
 
 """
 
+# ╔═╡ f5ee5394-4e7c-4d05-a3e0-ccf6166722d2
+md""" ## Gibbs sampling """
+
+# ╔═╡ a48cbc9f-8ba1-45b1-9f02-cb432521109a
+md""" We will cover the idea of Markov chain Monte Carlo in our next lecture. However, you can look at the following code to see how the [Gibbs sampling](https://en.wikipedia.org/wiki/Gibbs_sampling) algorithm would work when we draw from two univariate Normal posterior conditionals.  This is a bit easier than our example above, but the idea is to introduce you to the notion of sampling from the posterior. """
+
+# ╔═╡ a5807dce-d0a6-42ab-85e7-bbcae47994eb
+md""" Obviously we don't always have to code up our own routines, in those instances we can use a package like `Turing.jl`. See the implementation below. """
+
 # ╔═╡ 0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
 md"""
 
@@ -2422,6 +2431,9 @@ version = "0.9.1+5"
 # ╟─679c11cf-97fd-4cab-b12d-52a2b1166402
 # ╟─4074ea94-617c-44de-9f88-0f62826acca4
 # ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
+# ╟─f5ee5394-4e7c-4d05-a3e0-ccf6166722d2
+# ╟─a48cbc9f-8ba1-45b1-9f02-cb432521109a
+# ╟─a5807dce-d0a6-42ab-85e7-bbcae47994eb
 # ╟─0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
 # ╟─41d3b953-cdaa-468e-b3b7-bce844726ddb
 # ╟─2e125ab3-136f-44ef-a51b-475aacda96b5

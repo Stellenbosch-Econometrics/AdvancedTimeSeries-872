@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, UrlDownload
+using BayesianLinearRegression, BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, UrlDownload
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -869,6 +869,7 @@ end;
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+BayesianLinearRegression = "5047281b-d44e-44a3-ad3e-58447b69b7ca"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -892,6 +893,7 @@ Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 UrlDownload = "856ac37a-3032-4c1c-9122-f86d88358c8b"
 
 [compat]
+BayesianLinearRegression = "~0.1.1"
 BenchmarkTools = "~1.1.1"
 CSV = "~0.8.5"
 DataFrames = "~1.2.2"
@@ -995,6 +997,12 @@ git-tree-sha1 = "cdb00a6fb50762255021e5571cf95df3e1797a51"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 version = "3.1.23"
 
+[[ArrayLayouts]]
+deps = ["FillArrays", "LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "0f7998147ff3d112fad027c894b6b6bebf867154"
+uuid = "4c555306-a7a7-4459-81d9-ec55ddd5c99a"
+version = "0.7.3"
+
 [[Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
@@ -1022,6 +1030,12 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 [[Baselet]]
 git-tree-sha1 = "aebf55e6d7795e02ca500a689d326ac979aaf89e"
 uuid = "9718e550-a3fa-408a-8086-8db961cd8217"
+version = "0.1.1"
+
+[[BayesianLinearRegression]]
+deps = ["LazyArrays", "LinearAlgebra", "Measurements", "Printf"]
+git-tree-sha1 = "15c1de34f0a59b00f2939d0312caed386832ad17"
+uuid = "5047281b-d44e-44a3-ad3e-58447b69b7ca"
 version = "0.1.1"
 
 [[BenchmarkTools]]
@@ -1053,6 +1067,12 @@ deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "e2f47f6d8337369411569fd45ae5753ca10394c6"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.0+6"
+
+[[Calculus]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
+uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
+version = "0.5.1"
 
 [[CategoricalArrays]]
 deps = ["DataAPI", "Future", "JSON", "Missings", "Printf", "RecipesBase", "Statistics", "StructTypes", "Unicode"]
@@ -1548,6 +1568,12 @@ git-tree-sha1 = "a4b12a1bd2ebade87891ab7e36fdbce582301a92"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 version = "0.15.6"
 
+[[LazyArrays]]
+deps = ["ArrayLayouts", "FillArrays", "LinearAlgebra", "MacroTools", "MatrixFactorizations", "SparseArrays", "StaticArrays"]
+git-tree-sha1 = "c444c537bb405b6e835fcd940839753287a48f74"
+uuid = "5078a376-72f3-5289-bfd5-ec5146d43c02"
+version = "0.21.15"
+
 [[LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
@@ -1730,6 +1756,12 @@ version = "0.4.1"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
+[[MatrixFactorizations]]
+deps = ["ArrayLayouts", "LinearAlgebra", "Printf", "Random"]
+git-tree-sha1 = "24814f4e65b4521ba081ccaaea9f5c6533c462a2"
+uuid = "a3b82374-2e81-5b9e-98ce-41277c0e4c87"
+version = "0.8.4"
+
 [[MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "Random", "Sockets"]
 git-tree-sha1 = "1c38e51c3d08ef2278062ebceade0e46cefc96fe"
@@ -1739,6 +1771,12 @@ version = "1.0.3"
 [[MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+
+[[Measurements]]
+deps = ["Calculus", "LinearAlgebra", "Printf", "RecipesBase", "Requires"]
+git-tree-sha1 = "31c8c0569b914111c94dd31149265ed47c238c5b"
+uuid = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
+version = "2.6.0"
 
 [[Measures]]
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"

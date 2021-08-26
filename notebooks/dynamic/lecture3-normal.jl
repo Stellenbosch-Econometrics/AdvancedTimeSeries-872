@@ -262,7 +262,7 @@ md"""
 
 **Note**: As we have mentioned, we start with a single parameter model. The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
 
-To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$. 
+To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$. In other words, we have some information to help us decide on a prior for $\theta$. 
 
 Our goal is to obtain the posterior distribution $p(\theta \mid {y})$ given the sample ${y}=$ $\left(y_{1}, \ldots, y_{N}\right)^{\prime} .$ To that end, we need two ingredients: a likelihood function and a prior for the parameter $\theta$.
 
@@ -270,7 +270,7 @@ One simple model for this measurement problem is the normal model:
 
 $$\left(y_{n} \mid \theta \right) \sim \mathcal{N}\left(\mu, \sigma^{2}\right), \quad n=1, \ldots, N$$
 
-where the variance $\sigma^{2}$ is assumed to be known. Then, the model defines the likelihood function $p({y} \mid \theta)$. 
+where the variance $\sigma^{2}$ is **assumed to be known**. Then, the model defines the likelihood function $p({y} \mid \theta)$. 
 
 Since the scale of the study is small, there is uncertainty around the estimate. A reasonable prior would be
 
@@ -282,21 +282,25 @@ Relevant information about $\theta$ is summarized by posterior distribution, whi
 
 $$p(\theta \mid {y})=\frac{p(\theta) p({y} \mid \theta)}{p({y})}$$
 
-It turns out that $p(\theta | y)$ is a Gaussian distribution. We will now try and show this. The derivation can get a bit messy, but the logic is important. If you have done mathematical statistics at any stage you will feel right at home! 😉
+It turns out that $p(\theta \mid y)$ is a Gaussian distribution. We will now try and show this. The derivation can get a bit messy, but the logic is important. If you have done mathematical statistics at any stage you will feel right at home! 😉
 
 """
 
 # ╔═╡ 5d97bab1-346d-4edd-bc5e-bc6b1a510912
 md"""
 
-#### Derivation
+#### Derivation (NB for Exam)
 
 """
 
 # ╔═╡ 39d705ff-4540-4103-ae10-694d5b64e82b
 md"""
 
-We need a prior and likelihood function to produce the posterior distribution. We start with the form of the likelihood function $p(y \mid {\theta})$. Recall from our first lecture that we say a random variable $X$ follows a Normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, its density is given by
+We need a prior and likelihood function to produce the posterior distribution. 
+
+We start with the form of the likelihood function $p(y \mid {\theta})$. 
+
+Recall from our first lecture that we say a random variable $X$ follows a normal or Gaussian distribution, and we write $X \sim \mathcal{N}\left(a, b^{2}\right)$, its density is given by
 
 $$f_{X}\left(X = x ; a, b^{2}\right)=\left(2 \pi b^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 b^{2}}(x-a)^{2}}$$
 
@@ -309,7 +313,7 @@ p(\theta \mid {y}) &=\prod_{n=1}^{N}\left(2 \pi \sigma^{2}\right)^{-\frac{1}{2}}
 
 Similarly, the prior density $p(\theta)$ is given by
 
-$$p(\theta)=\left(2 \pi \sigma_{0}^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \tau_{0}^{2}}\left(\theta-\mu_{0}\right)^{2}}$$
+$$p(\theta)=\left(2 \pi \tau_{0}^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \tau_{0}^{2}}\left(\theta-\mu_{0}\right)^{2}}$$
 
 Remember the assumption that we made about the distribution for the prior density in the previous section. 
 
@@ -408,19 +412,25 @@ $\begin{equation*}
 md" ### Practical implementation "
 
 # ╔═╡ e99e1925-6219-4bf2-b743-bb2ea725dfcd
-md" We know from our previous discussion that a Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. These can be thought of as to samples that we drew from the population. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
+md" We know from our previous discussion that a Gaussian model with known variance delivers Gaussian posterior. We generate some fake data in the height of males in South Africa, with different variances as well. These can be thought of as two samples that we drew from the population. We will construct a DataFrame, which is similar to the tibble / dataframe in R.  "
+
+# ╔═╡ c2897578-b910-41db-886f-a9b8688bff48
+md"""
+h₁ = $(@bind h₁ PlutoUI.Slider(150:190, show_value=true, default=165));
+h₂ = $(@bind h₂ PlutoUI.Slider(150:190, show_value=true, default=175))
+"""
 
 # ╔═╡ 0fc998e7-d824-412b-a138-b626ba118904
-df = DataFrame(id = [1, 2], height_μ = [165, 175], height_σ = [4, 2])
+df = DataFrame(id = [1, 2], height_μ = [h₁, h₂], height_σ = [4, 2]);
 
 # ╔═╡ 01607a33-ad7e-4fab-b5cf-8ddf20a69a52
 md" Our prior belief on the mean and standard deviation in the population is given as follows, "
 
 # ╔═╡ aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
-pop_μ = 171 # Prior for population mean
-
-# ╔═╡ ef4ccb39-cb95-43a5-a2d8-39efb1a66197
-pop_σ = 6 # Prior for population standard deviation
+begin
+	pop_μ = 171 # Prior for population mean
+	pop_σ = 6 # Prior for population standard deviation
+end;
 
 # ╔═╡ 2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
 grid = range(150, 210, length = 601) |> collect;
@@ -429,7 +439,9 @@ grid = range(150, 210, length = 601) |> collect;
 begin
 	
 	plot(grid, Normal(df.height_μ[1], df.height_σ[1]), lw = 0, fill = (0, 0.3, :steelblue), labels = "Group 1")
+	plot!([df.height_μ[1]], seriestype = :vline, lw = 2, color = :steelblue, ls = :dash, alpha =0.7, labels = "Group 1 Mean")
 	plot!(grid, Normal(df.height_μ[2], df.height_σ[2]), lw = 0, color = :blue, fill = (0, 0.3, :black), labels = "Group 2")
+	plot!([df.height_μ[2]], seriestype = :vline, lw = 2, color = :black, ls = :dash, alpha =0.4, labels = "Group 2 Mean")
 	plot!(grid, Normal(pop_μ, pop_σ), xlims = (150, 190), lw = 2.5, color = :green4, fill = (0, 0.6, :green), size = (600,400), labels = "Prior")
 end
 
@@ -473,7 +485,7 @@ md" One can see that doing this analytically is quite cumbersome. That is why we
 md" #### Monte Carlo integration "
 
 # ╔═╡ 9e8aa12a-540b-4153-9dbf-8b503c16b091
-md" Let us take another detour into the idea of simulation with Monte Carlo methods. Given that we now know how to sample from the posterior distribution we can do some interesting things, like calculate the posterior mean. If we wish to calculate the posterior mean of some function $g(\theta)$, which may not be available analytically. More precisely, consider
+md" Let us take another detour into the idea of simulation with Monte Carlo methods. Given that we now know how to sample from the posterior distribution we can do some interesting things, like calculate the posterior mean. If we wish to calculate the posterior mean of some function $g(\theta)$, which may not be available analytically. As an example, $g(\theta) = \theta$ or $g(\theta) = \theta^2$. Consider then the following,
 
 $$\mathbb{E}(g(\theta) \mid {y})=\int g(\theta) p(\theta \mid {y}) \mathrm{d} \theta$$
 
@@ -511,7 +523,7 @@ md"""
 
 In our models thus far we have mostly dealth with one unknown parameter. However, most models deal with more than one parameter. Many models have a rich selection of parameters. With the increasing size of datasets, we are estimating increasingly more complex models and this will increase the parameter space. 
 
-In order to look at a simple multiparameter model we look at the multivariate normal distribution. Below is a 3d representation of the mulitivariate normal. 
+In order to look at a simple multiparameter model we look at the multivariate normal distribution. Below is a three dimensional representation of the mulitivariate normal. 
 
 """
 
@@ -2378,11 +2390,11 @@ version = "0.9.1+5"
 # ╟─3b2e280f-d83a-4f1c-86bb-1397b95210cb
 # ╟─9741e08b-3f54-49d7-8db0-3125f4f90d3c
 # ╟─e99e1925-6219-4bf2-b743-bb2ea725dfcd
+# ╟─c2897578-b910-41db-886f-a9b8688bff48
 # ╠═0fc998e7-d824-412b-a138-b626ba118904
 # ╟─01607a33-ad7e-4fab-b5cf-8ddf20a69a52
 # ╠═aac22072-c3f2-4b66-bf3f-3dbf967fe6f9
-# ╠═ef4ccb39-cb95-43a5-a2d8-39efb1a66197
-# ╠═2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
+# ╟─2af6f4a8-7b64-405f-ab2e-e77a2699ceb2
 # ╟─1316fbc2-700d-4106-99f0-0b9243a99aba
 # ╟─3c409c93-545a-4d10-a972-509dff7c0120
 # ╠═cef4da14-ee03-44b8-bd86-c11c263b26b3

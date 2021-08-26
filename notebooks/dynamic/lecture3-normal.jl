@@ -586,7 +586,7 @@ $$\begin{align*}
 
 We would like to draw from the joint posterior, in other words, we are going to use Monte Carlo methods to draw $\mu^{(s)}, \sigma^{(s)} \sim p(\mu, \sigma  \mid  y)$, where the last part is the joint posterior. We assume that we have a noninformative prior so that $p(\mu,\sigma^2)  \propto \sigma^{-2}$. Note that $p(\mu,\sigma^2)$ is the joint prior here. 
 
-The idea behind the marginalisation concept is depicted in the graph below. Marginal distributions from gained from the multivariate normal joint density are depicted below. 
+The idea behind the marginalisation concept is depicted in the graph below. Marginal distributions gained from the multivariate normal joint density are depicted below. 
 
 """
 
@@ -608,7 +608,7 @@ md"""
 # ╔═╡ 9ca2715b-c6a3-48e5-80b5-131f2eeb0840
 md"""
 
-Now let us get ready for some math to show what the posterior will look like given our prior choice and the likelihood function provided.  
+Now let us get ready for some math to show what the posterior will look like given our prior choice and the likelihood function provided. This section still needs some work, the notation is not nearly clear enough. However, we will run through the basic logic in class. 
 
 $$\begin{align*}
     & p(\mu,\sigma^2 \mid y) \propto  \sigma^{-2}\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\left(-\frac{1}{2\sigma^2}(y_i-\mu)^2\right) \\
@@ -729,7 +729,9 @@ Inputting the direct functional forms is labour intensive and it is much easier 
 md""" #### Putting together a model """
 
 # ╔═╡ 43f3b350-b61e-4577-b96a-13aea4188551
-md" We begin with specfiying a model by using the `@model` macro. Within this model block we can assign variables, either with `~` or `=`. In the first case the variable follows some probability distribution, where in the second case the value is deterministic. "
+md" We begin with specfiying a model by using the `@model` macro. Within this model block we can assign variables, either with `~` or `=`. In the first case the variable follows some probability distribution, where in the second case the value is deterministic. 
+
+**Note**: At this stage the notation for the model below does not match up to our derivation, but the idea is right. I just need to relabel things. "
 
 # ╔═╡ 75215065-16a5-4c54-8966-f4bdc8b15054
 begin

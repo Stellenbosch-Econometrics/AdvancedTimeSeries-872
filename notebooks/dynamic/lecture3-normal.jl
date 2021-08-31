@@ -260,7 +260,7 @@ md" ### Gaussian model with known $\sigma^2$ "
 # ╔═╡ 8ffaa0dc-36f8-49da-9742-74db90c6d5a8
 md""" 
 
-**Note**: As we have mentioned, we start with a single parameter model. The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta | y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
+**Note**: As we have mentioned, we start with a single parameter model. The parameter of interest for this model is the mean, which we will refer to as $\theta$. We could have named it $\mu$, but that can create confusion as to whether the quantity is known or not. We know $\sigma^{2}$ but are looking for information on $\theta$ so that we can build our posterior, $p(\theta \mid y)$. In other books you might see the same calculations, but with $\mu$ instead of $\theta$. We will only do this for the first example, so that you can get comfortable with the math. 
 
 To illustrate the basic mechanics of Bayesian analysis, we start with a toy example. Suppose we take $N$ independent measurements $y_{1}, \ldots, y_{N}$ of an unknown quantity $\theta$, where the magnitude of measurement error is known. In addition, from a small pilot study $\theta$ is estimated to be about $\mu_{0}$. In other words, we have some information to help us decide on a prior for $\theta$. 
 
@@ -268,7 +268,7 @@ Our goal is to obtain the posterior distribution $p(\theta \mid {y})$ given the 
 
 One simple model for this measurement problem is the normal model:
 
-$$\left(y_{n} \mid \theta \right) \sim \mathcal{N}\left(\mu, \sigma^{2}\right), \quad n=1, \ldots, N$$
+$$\left(y_{n} \mid \theta \right) \sim \mathcal{N}\left(\theta, \sigma^{2}\right), \quad n=1, \ldots, N$$
 
 where the variance $\sigma^{2}$ is **assumed to be known**. Then, the model defines the likelihood function $p({y} \mid \theta)$. 
 
@@ -276,7 +276,7 @@ Since the scale of the study is small, there is uncertainty around the estimate.
 
 $$\theta \sim \mathcal{N}\left(\mu_{0}, \tau_{0}^{2}\right)$$
 
-where both $\mu_{0}$ and $\sigma_{0}^{2}$ are known. **Note**: this is a distribution around our unknown parameter $\theta$. Our prior distribution is Normal with these specific parameters. 
+where both $\mu_{0}$ and $\tau_{0}^{2}$ are known. **Note**: this is a distribution around our unknown parameter $\theta$. Our prior distribution is Normal with these specific parameters. 
 
 Relevant information about $\theta$ is summarized by posterior distribution, which can be obtained by Bayes' theorem:
 
@@ -307,7 +307,7 @@ $$f_{X}\left(X = x ; a, b^{2}\right)=\left(2 \pi b^{2}\right)^{-\frac{1}{2}} \ma
 The likelihood function is a product of $N$ normal densities, so we can write
 
 $$\begin{aligned}
-p(\theta \mid {y}) &=\prod_{n=1}^{N}\left(2 \pi \sigma^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}}\left(y_{n}-\theta\right)^{2}} \\
+p(y \mid {\theta}) &=\prod_{n=1}^{N}\left(2 \pi \sigma^{2}\right)^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}}\left(y_{n}-\theta\right)^{2}} \\
 &=\left(2 \pi \sigma^{2}\right)^{-\frac{N}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}} \sum_{n=1}^{N}\left(y_{n}-\theta\right)^{2}}
 \end{aligned}$$
 
@@ -421,7 +421,7 @@ h₂ = $(@bind h₂ PlutoUI.Slider(150:190, show_value=true, default=175))
 """
 
 # ╔═╡ 0fc998e7-d824-412b-a138-b626ba118904
-df = DataFrame(id = [1, 2], height_μ = [h₁, h₂], height_σ = [4, 2]);
+df = DataFrame(id = [1, 2], height_μ = [h₁, h₂], height_σ = [4, 2])
 
 # ╔═╡ 01607a33-ad7e-4fab-b5cf-8ddf20a69a52
 md" Our prior belief on the mean and standard deviation in the population is given as follows, "
@@ -449,10 +449,10 @@ end
 md" The above graph shows the data and prior information from the population. One can think of the fake guesses as likelihood functions. Next we provide the posterior function as analytically calculated above." 
 
 # ╔═╡ cef4da14-ee03-44b8-bd86-c11c263b26b3
-post_σ(prior_σ, obs_σ) = sqrt.(1 ./ ((1 ./ prior_σ .^ 2) .+ (1 ./ obs_σ .^ 2)))
+post_σ(prior_σ, obs_σ) = sqrt.(1 ./ ((1 ./ prior_σ .^ 2) .+ (1 ./ obs_σ .^ 2)));
 
 # ╔═╡ d4f3331d-3dbd-4bad-b043-dff9409005c3
-post_μ(prior_μ, prior_σ, obs_μ, obs_σ) = ((prior_μ ./ (prior_σ .^ 2)) .+ (obs_μ ./ (obs_σ .^ 2))) ./ ((1 ./ (prior_σ .^ 2)) .+ (1 ./ (obs_σ .^ 2)))
+post_μ(prior_μ, prior_σ, obs_μ, obs_σ) = ((prior_μ ./ (prior_σ .^ 2)) .+ (obs_μ ./ (obs_σ .^ 2))) ./ ((1 ./ (prior_σ .^ 2)) .+ (1 ./ (obs_σ .^ 2)));
 
 # ╔═╡ ec24134e-a9c0-491e-9a68-c95a618f0b1d
 md" The posterior combines information from the prior and the likelihood. We will show in each case how the information retrieved from the data alters the posterior. " 
@@ -521,7 +521,7 @@ md" ### Gaussian with unknown $\mu$ and $\sigma^{2}$ "
 # ╔═╡ 9781d63d-23ed-4d43-8446-9a495c31e85d
 md"""
 
-In our models thus far we have mostly dealth with one unknown parameter. However, most models deal with more than one parameter. Many models have a rich selection of parameters. With the increasing size of datasets, we are estimating increasingly more complex models and this will increase the parameter space. 
+In our models thus far we have mostly dealt with one unknown parameter. However, most models deal with more than one parameter. Many models have a rich selection of parameters. With the increasing size of datasets, we are estimating increasingly more complex models and this will increase the parameter space. 
 
 In order to look at a simple multiparameter model we look at the multivariate normal distribution. Below is a three dimensional representation of the mulitivariate normal. 
 

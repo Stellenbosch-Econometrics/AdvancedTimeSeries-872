@@ -846,6 +846,30 @@ Don't worry too much about it for now. We will cover it multiple times throughou
 
 """
 
+# ╔═╡ 56be261f-fc7c-4a27-8d18-54cbb00c149b
+
+
+# ╔═╡ b759867e-59bd-44c7-9041-afc2b4deaf88
+# Translate this code from Python. Check the repository on Kevin Murphy's site. 
+
+function gibbs(xs, zs, kv, π, μ, σ, n_iterations)
+    x_hist = np.zeros(n_iterations)
+    z_hist = np.zeros(n_iterations)
+    x_hist[0] = xs
+    z_hist[0] = zs
+
+    for s in 1:n_iterations
+        pz = norm(μ, σ).pdf(xs) * π
+        pz = pz / pz.sum()
+        zs = np.random.choice(kv, p=pz)
+        xs = norm(μ[zs], σ[zs]).rvs()
+        x_hist[s] = xs
+        z_hist[s] = zs
+	end
+    
+    return x_hist, z_hist
+end;
+
 # ╔═╡ 871d3e18-ea75-4cfc-aacc-b196f62cde50
 md""" ## Cool thing for the day """
 
@@ -2398,6 +2422,8 @@ version = "0.9.1+5"
 # ╟─676bed44-b4f0-4117-aa4e-649dae752bad
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
+# ╠═56be261f-fc7c-4a27-8d18-54cbb00c149b
+# ╠═b759867e-59bd-44c7-9041-afc2b4deaf88
 # ╟─871d3e18-ea75-4cfc-aacc-b196f62cde50
 # ╟─759b6112-cdd6-45be-ad19-3e4aee182eb0
 # ╟─00000000-0000-0000-0000-000000000001

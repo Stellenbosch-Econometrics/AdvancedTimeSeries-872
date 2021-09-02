@@ -505,13 +505,13 @@ where $s = 1, \ldots, S$. The distribution of the simulations, $q(\theta^{(1)}, 
 
 # ╔═╡ 3160f1bc-85e9-408d-8562-6306b86eace0
 md"""
-Draws = $(@bind S PlutoUI.Slider(10:1000, show_value=true, default=10));
+Draws = $(@bind S1 PlutoUI.Slider(10:1000, show_value=true, default=10));
 """
 
 # ╔═╡ 381154f0-e0bb-4bcf-aba4-81ad30477496
 begin 
 	dist = Normal(0,1); # Distribution from which we will sample
-	y = rand(dist, S);
+	y = rand(dist, S1);
 	x_axis = collect(-5:0.1:5);
 	histogram(x_axis, y, normalize = :pdf, labels = "MC draws", alpha = 0.3)
     p1 = plot!(x_axis -> pdf(dist, x_axis), labels = "True PDF", color = :black, lw = 2)
@@ -523,11 +523,11 @@ md" ### Posterior integration "
 # ╔═╡ 9e8aa12a-540b-4153-9dbf-8b503c16b091
 md" After we have derived (or approximated) a posterior we often want to calculate certain values, such as the mean or variance. Calculating these values normally requires that we compute integrals, like the one below,
 
-$$\mathbb{E}(g(\theta) \mid {y})=\int g(\theta) p(\theta \mid {y}) \mathrm{d} \theta$$
+$$\mathbb{E}(g(\theta) \mid {y})=\int_{\Theta} g(\theta) p(\theta \mid {y}) \mathrm{d} \theta$$
 
 As an example, if we wanted to calculate the posterior mean we would set $g(\theta) = \theta$ and calculate, 
 
-$$\mathbb{E}(\theta \mid {y})=\int \theta p(\theta \mid {y}) \mathrm{d} \theta$$
+$$\mathbb{E}(\theta \mid {y})=\int_{\Theta} \theta p(\theta \mid {y}) \mathrm{d} \theta$$
 
 In the case of the posterior variance one would need to have the integral for $g(\theta) = \theta^{2}$. There are cases, such as the coin flipping model, in which these values can be calculated by hand. In general, this integration cannot be solved analytically. However, we can estimate this quantity using Monte Carlo integration. The one prerequisite is that we know how to obtain samples from the posterior. If we are able to sample from the posterior then we generate $S$ draws $\theta^{(1)}, \ldots, \theta^{(S)}$ from $p(\theta \mid {y})$, and compute
 
@@ -537,33 +537,34 @@ By the weak law of large numbers, $\widehat{g}$ converges weakly in probability 
 
 If we wanted to calculate the posterior mean, this would mean that the Monte Carlo approximation is, 
 
-$\hat \theta = \sum_{s=1}^{S} \theta^{(s)}$ 
+$\hat \theta =\frac{1}{S}\sum_{s=1}^{S} \theta^{(s)}$ 
 
 We could do a similar approximation for the variance using the following formula,
 
-$\hat \sigma^{2} = \sum_{s=1}^{S} (\theta^{(s)} - \hat \theta)^{2}$ 
+$\hat \sigma^{2} =\frac{1}{S} \sum_{s=1}^{S} (\theta^{(s)} - \hat \theta)^{2}$ 
 
 Let us show how to calculate these quantities with some code. 
 
 "
 
+# ╔═╡ 41915620-c22b-49f3-bb13-299f853dfb9f
+md"""
+Draws = $(@bind S₁ PlutoUI.Slider(10:1000, show_value=true, default=10));
+"""
+
 # ╔═╡ 8f5de37a-6c2c-400d-97c2-7f04e0fa4857
 begin
-	μ₁  = 19.09
-	τ₁  = 0.09
+	Random.seed!(1234)
+	θ_s = rand(dist, S₁)
+	θ_hat = mean(θ_s) # alternative: sum(θ_s)/S₁
+	σ2 = var(θ_s, corrected = false) # alternative: sum((θ_s .- mean(θ_s).^2)/S₁)
 end;
 
-# ╔═╡ ec119ee9-ef16-475c-8a42-0fa5e46d1434
-mu = μ₁ .+ sqrt(τ₁) .* randn(S);  # Remember to broadcast. Think about what broadcasting does here. 
+# ╔═╡ e5d0ad86-5bba-4f1c-a2da-b232bff9b4f2
+θ_hat # estimate for the posterior mean
 
-# ╔═╡ 3db81fbb-31c3-416e-92d0-258f2d4d8cd5
-g_hat = mean.(log.(abs.(mu)));
-
-# ╔═╡ 8973afa7-2325-42f4-8e14-28aa090448d6
-begin
-	histogram(g_hat, alpha = 0.3, norm = true)
-	StatsPlots.density!(g_hat, lw = 2, color = :black, legend = false)
-end
+# ╔═╡ 0375ebdc-1221-4dc1-89bb-b73a0fd6cd20
+σ2 # estimate for posterior variance
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
 md" ## Gaussian with unknown $\mu$ and $\sigma^{2}$ "
@@ -2473,13 +2474,13 @@ version = "0.9.1+5"
 # ╟─f691ceb8-31c8-47dc-8ba0-8a4a6bbe811f
 # ╟─0d42559a-721e-4084-bbec-911c5c9bc722
 # ╟─3160f1bc-85e9-408d-8562-6306b86eace0
-# ╠═381154f0-e0bb-4bcf-aba4-81ad30477496
+# ╟─381154f0-e0bb-4bcf-aba4-81ad30477496
 # ╟─116982c6-80c9-4cc8-8140-804a631a77a8
 # ╟─9e8aa12a-540b-4153-9dbf-8b503c16b091
+# ╟─41915620-c22b-49f3-bb13-299f853dfb9f
 # ╠═8f5de37a-6c2c-400d-97c2-7f04e0fa4857
-# ╠═ec119ee9-ef16-475c-8a42-0fa5e46d1434
-# ╠═3db81fbb-31c3-416e-92d0-258f2d4d8cd5
-# ╠═8973afa7-2325-42f4-8e14-28aa090448d6
+# ╠═e5d0ad86-5bba-4f1c-a2da-b232bff9b4f2
+# ╠═0375ebdc-1221-4dc1-89bb-b73a0fd6cd20
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
 # ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90

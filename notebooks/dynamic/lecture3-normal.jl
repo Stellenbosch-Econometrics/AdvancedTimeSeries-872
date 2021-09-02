@@ -486,7 +486,7 @@ md""" ## Monte Carlo simulation """
 
 # ╔═╡ 8010f3a3-bc04-488f-b4de-d613be8f6f84
 md""" 
-> These notes on simulation are based of the lecture notes by [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/3_Monte_Carlo.ipynb)
+> These notes on simulation are based of the lecture notes by [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/3_Monte_Carlo.ipynb). Go check out his notes for more detail. He has some good discussions on Bayesian econometrics.  
 """
 
 # ╔═╡ 0a4bb68a-f82a-426b-842f-23c405af2e64
@@ -599,7 +599,7 @@ begin
 	end
 	
 	X = collect(1:T);
-	plot(X, Y, label = "Simulated RW", legend = :topleft, lw = 1)
+	plot(X, Y, title = "Simulated data", legend = :false, lw = 1)
 end
 
 # ╔═╡ ccf3fce7-436c-46e3-ad62-935240891259
@@ -607,7 +607,108 @@ md""" We can estimate the model using Bayesian methods. If $e_t \sim \mathcal{N}
 
 $$Y_t\sim \mathcal{N}(Y_{t-1},\sigma^2)$$
 
+Estimating the random walk model in this case is then the same as estimating parameters of the normal distribution with known mean and unknown variance. Since the mean of the distribution is known we can rewrite things in terms of first differences (subtract $Y_{t-1}$) to get, 
+
+$$\Delta Y_t\sim N(0,\sigma^2)$$
+
+We show the first difference representation below. 
 """
+
+# ╔═╡ ad298e39-3abb-45b8-bc5a-a7e1c8e7024f
+begin
+	DY = Y[2:end] - Y[1:end-1];
+	T1 = length(DY);
+	X1 = collect(1:T1);
+	plot(X1, DY, title = "First-difference of simulated data", legend = false)
+end
+
+# ╔═╡ 286e4c9a-3546-41c0-9e71-7a1d89c705f4
+md""" Now that we have our probability model, we need to consider our likelihood function and prior to gain access to our posterior. The likelihood of this model is given by, 
+
+$$\begin{align}
+p(\mathbf{Y}|\sigma^2) &= \prod_{t=1}^{T}p(\Delta Y_t|\sigma^2)\\
+&= \prod_{t=1}^{T}(2\pi\sigma^2)^{-\frac{1}{2}}\exp(-\frac{1}{2\sigma^2}(\Delta Y_t)^2)\\
+&= (2\pi\sigma^2)^{-\frac{T}{2}}\exp(-\frac{1}{2\sigma^2}\sum_{t=1}^{T}(\Delta Y_t)^2)
+\end{align}$$ 
+
+In the case of the prior we have that $\sigma^{2}$ is positive, so it makes sense to choose a prior with support over $(0, \infty)$. One such an example is the Gamma distribution or the invers-Gamma distribution will also work. You might not have heard about the Gamma distribution, but the Chi-sqaured distribution is a special case of the Gamma. Once again, Wikipedia really is your friend here. As a Bayesian econometrician it is worthwhile to think about different distributions and their properties.  """
+
+# ╔═╡ 962b5c8a-dcc0-464c-adad-04e3109dfe4a
+md""" For the prior we will use inverse-Gamma with the shape parameter $\nu$ and scale parameter $S$. We denote this distribution $IG(\nu,S)$. The probability desnity function of this distribution is, 
+
+$$p(\sigma^2) = \frac{S^\nu}{\Gamma(\nu)}(\sigma^2)^{-(\nu+1)}\exp(-\frac{\nu}{\sigma^2})$$
+
+"""
+
+# ╔═╡ 92c6c3a1-f046-44f5-ae3c-f17d342a9399
+md""" Changing the hyperparameters will change the shape of the probability density function, as shown below. """
+
+# ╔═╡ 872dc6b1-0b13-418b-a614-732d2a4d8963
+md"""
+ν = $(@bind ν PlutoUI.Slider(1:0.1:20, show_value=true, default=4));
+S = $(@bind S PlutoUI.Slider(0.1:0.1:5, show_value=true, default=0.5))
+"""
+
+# ╔═╡ d02bd87a-50ef-4e37-b11a-cfc0b023608e
+Plots.plot(
+    InverseGamma(ν, S);
+    title="\$\\mathrm{InvGamma}\\,($ν, $S)\$",
+    label=false,
+    linewidth=2,
+    fill=true,
+    fillalpha=0.3,
+	color = :steelblue
+)
+
+# ╔═╡ d172fe2c-d842-4c6a-9097-3a0e51058bb0
+md""" Now to get the posterior we will combine the likelihood function and posterior, 
+
+$$\begin{align}
+p(\sigma^2|\mathbf{Y}) &\propto p(\mathbf{Y}|\sigma^2) p(\sigma^2)\\
+                       &\propto (\sigma^2)^{-\frac{T}{2}}\exp(-\frac{1}{2\sigma^2}\sum_{t=1}^{T}(\Delta Y_t)^2)(\sigma^2)^{-(\nu_0+1)}\exp(-\frac{S_0}{\sigma^2})\\
+                       &= (\sigma^2)^{-(\frac{T}{2}+\nu_0+1)}\exp(-\frac{1}{\sigma^2}(S_0+\frac{1}{2}\sum_{t=1}^{T}(\Delta Y_t)^2)
+\end{align}$$
+
+While it might we tricky to see, the kernel of the posterior is inverse-Gamma with scale parameter $\nu = \frac{T}{2}+\nu_0+1$ and shape parameter $S=S_0+\frac{1}{2}\sum_{t=1}^{T}(\Delta Y_t)^2$. This means we have a nice analytical form to compute different moments and also to compare with our Monte Carlo approximation. 
+
+"""
+
+# ╔═╡ 6cf5de34-b256-471f-a8c7-ecc14f469967
+begin
+	# Code is directly from Jamie Cross
+
+	
+	# Prior
+	ν_pri = 3;
+	S_pri = 1 * (ν_pri-1); # sets E(sig2) = 1
+	pri = InverseGamma(ν_pri, S_pri);
+	
+	# Posterior
+	ν_post = ν_pri + T/2;
+	S_post = S_pri + 0.5 * sum(DY.^2);
+	post = InverseGamma(ν_post, S_post);
+	
+	## Approximate posterior using direct MC
+	ndraws = 1000;
+	σ2_MC = rand(post, ndraws);
+	
+	# Compute posterior mean using Monte Carlo Integration
+	σ2hat_MC = mean(σ2_MC);
+	
+	# Compute posterior mean using theoretical formula
+	σ2hat_theory = S_post/(ν_post-1);
+	
+	# Plot empirical and theoretical posterior distributions
+	X2 = collect(0.6:0.01:1.5);
+	histogram(X2, σ2_MC, normalize = :pdf, label="Empirical pdf", alpha = 0.3)
+	plot!(X2, pdf(post, X2), label = "Theoretical pdf", lc = :black, lw = 2)
+	plot!([σ2_true], seriestype="vline", label="True value", lw = 2,  ls = :dash, lc = :green)
+	plot!([σ2hat_MC], seriestype="vline", label="MC mean", lw = 2, lc = :black, ls = :dashdot)
+	plot!([σ2hat_theory], seriestype="vline", label="theoretical mean", lc = :green4, lw = 3, alpha = 0.6)
+end
+
+# ╔═╡ f0aee9ca-9b53-40b8-8f9a-0b955362118d
+md""" In this model we can still sample from the posterior using Monte Carlo methods. In the next lecture we will look toward approximating unknown distributions when we can't sample directly from them using Markov chain Monte Carlo methods. """
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
 md" ## Gaussian with unknown $\mu$ and $\sigma^{2}$ "
@@ -797,15 +898,6 @@ $$\begin{align*}
 We will encounter this idea of marginalisation in many of our Markov chain Monte Carlo algorithms, so make sure that you understand the basic logic. This will be something that features in many of the future lectures. 
 
 """
-
-# ╔═╡ f5ee5394-4e7c-4d05-a3e0-ccf6166722d2
-md""" ## Gibbs sampling """
-
-# ╔═╡ a48cbc9f-8ba1-45b1-9f02-cb432521109a
-md""" We will cover the idea of Markov chain Monte Carlo in our next lecture. However, you can look at the following code to see how the [Gibbs sampling](https://en.wikipedia.org/wiki/Gibbs_sampling) algorithm would work when we draw from two univariate Normal posterior conditionals.  This is a bit easier than our example above, but the idea is to introduce you to the notion of sampling from the posterior. """
-
-# ╔═╡ a5807dce-d0a6-42ab-85e7-bbcae47994eb
-md""" Obviously we don't always have to code up our own routines, in those instances we can use a package like `Turing.jl`. See the implementation below. """
 
 # ╔═╡ 0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
 md"""
@@ -2528,7 +2620,16 @@ version = "0.9.1+5"
 # ╟─c79eaac5-f0db-40cf-b32f-3e1be6504549
 # ╟─3bbb7b4e-b8cd-4af8-b1c5-dec8008dc448
 # ╠═8301f15f-a1e8-4910-abd6-ccd758719381
-# ╠═ccf3fce7-436c-46e3-ad62-935240891259
+# ╟─ccf3fce7-436c-46e3-ad62-935240891259
+# ╠═ad298e39-3abb-45b8-bc5a-a7e1c8e7024f
+# ╟─286e4c9a-3546-41c0-9e71-7a1d89c705f4
+# ╟─962b5c8a-dcc0-464c-adad-04e3109dfe4a
+# ╟─92c6c3a1-f046-44f5-ae3c-f17d342a9399
+# ╟─872dc6b1-0b13-418b-a614-732d2a4d8963
+# ╟─d02bd87a-50ef-4e37-b11a-cfc0b023608e
+# ╟─d172fe2c-d842-4c6a-9097-3a0e51058bb0
+# ╠═6cf5de34-b256-471f-a8c7-ecc14f469967
+# ╟─f0aee9ca-9b53-40b8-8f9a-0b955362118d
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
 # ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90
@@ -2537,9 +2638,6 @@ version = "0.9.1+5"
 # ╟─679c11cf-97fd-4cab-b12d-52a2b1166402
 # ╟─4074ea94-617c-44de-9f88-0f62826acca4
 # ╟─9ca2715b-c6a3-48e5-80b5-131f2eeb0840
-# ╟─f5ee5394-4e7c-4d05-a3e0-ccf6166722d2
-# ╟─a48cbc9f-8ba1-45b1-9f02-cb432521109a
-# ╟─a5807dce-d0a6-42ab-85e7-bbcae47994eb
 # ╟─0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
 # ╟─41d3b953-cdaa-468e-b3b7-bce844726ddb
 # ╟─2e125ab3-136f-44ef-a51b-475aacda96b5

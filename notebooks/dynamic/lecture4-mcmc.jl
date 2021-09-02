@@ -125,7 +125,7 @@ We might ask ourselves at this point why getting draws from the posterior is so 
 
 The main computational barrier for Bayesian statistics is the denominator $p(y)$ of the Bayes formula. In the continuous case the denominator $p(y)$ becomes a very large and complicated integral to calculate:
 
-$p(y) = \int_{\theta} p(y | \theta) \times p(\theta) d\theta$
+$p(y) = \int_{\Theta} p(y | \theta) \times p(\theta) d\theta$
 
 In many cases this integral becomes intractable (incalculable) and therefore we must find other ways to calculate the posterior probability $p(\theta \mid y)$ without using the denominator $p(y)$.
 

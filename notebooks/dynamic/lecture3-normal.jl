@@ -421,7 +421,7 @@ h₂ = $(@bind h₂ PlutoUI.Slider(150:190, show_value=true, default=175))
 """
 
 # ╔═╡ 0fc998e7-d824-412b-a138-b626ba118904
-df = DataFrame(id = [1, 2], height_μ = [h₁, h₂], height_σ = [4, 2])
+df = DataFrame(id = [1, 2], height_μ = [h₁, h₂], height_σ = [4, 2]);
 
 # ╔═╡ 01607a33-ad7e-4fab-b5cf-8ddf20a69a52
 md" Our prior belief on the mean and standard deviation in the population is given as follows, "
@@ -565,6 +565,49 @@ end;
 
 # ╔═╡ 0375ebdc-1221-4dc1-89bb-b73a0fd6cd20
 σ2 # estimate for posterior variance
+
+# ╔═╡ 135aa2d9-05e0-4ab0-8838-5c77326d43b2
+md""" ### Random walk model """
+
+# ╔═╡ c79eaac5-f0db-40cf-b32f-3e1be6504549
+md""" Let us work through a time series example where the mean is known, but the variance is unknown. This is a single parameter model, but slightly different from the derivation we explored above.  """
+
+# ╔═╡ 3bbb7b4e-b8cd-4af8-b1c5-dec8008dc448
+md""" We let $\mathbf{Y}=(Y_1,\dots,Y_T)'$ be the time series. The random walk model is then given by, 
+
+$$Y_t = Y_{t-1} + e_t$$ 
+
+where $Y_0 = 0$ and $e_t$ is a random vairable with distribution $\mathcal{N}(0, \sigma^{2})$. In this case **$\sigma^{2}$ is unknown**. You will have encountered this type of model in previous econometrics courses, specifically the financial econometrics course as this underlies the random walk hypothesis of stock prices. 
+
+Next we simulate the data for such a random walk model. In another lecture, we will take data from the S&P 500 or even JSE. However, for today let us work with simulated data, as we are on the topic of simulation. """
+
+# ╔═╡ 8301f15f-a1e8-4910-abd6-ccd758719381
+begin
+	
+	Random.seed!(1232)
+	
+	## Simulate Data from random walk model
+	σ2_true = 1; # true σ2
+	T = 1000; # number of dates
+	Y0 = 0;   # initial condition
+	
+	Y = zeros(T); # storage vector
+	
+	Y[1] = Y0;
+	for t = 2:T
+	    Y[t] = Y[t-1] + rand(Normal(0,sqrt(σ2_true)));
+	end
+	
+	X = collect(1:T);
+	plot(X, Y, label = "Simulated RW", legend = :topleft, lw = 1)
+end
+
+# ╔═╡ ccf3fce7-436c-46e3-ad62-935240891259
+md""" We can estimate the model using Bayesian methods. If $e_t \sim \mathcal{N}(0, \sigma^2)$ then our probability model representation is given by, 
+
+$$Y_t\sim \mathcal{N}(Y_{t-1},\sigma^2)$$
+
+"""
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
 md" ## Gaussian with unknown $\mu$ and $\sigma^{2}$ "
@@ -2481,6 +2524,11 @@ version = "0.9.1+5"
 # ╠═8f5de37a-6c2c-400d-97c2-7f04e0fa4857
 # ╠═e5d0ad86-5bba-4f1c-a2da-b232bff9b4f2
 # ╠═0375ebdc-1221-4dc1-89bb-b73a0fd6cd20
+# ╟─135aa2d9-05e0-4ab0-8838-5c77326d43b2
+# ╟─c79eaac5-f0db-40cf-b32f-3e1be6504549
+# ╟─3bbb7b4e-b8cd-4af8-b1c5-dec8008dc448
+# ╠═8301f15f-a1e8-4910-abd6-ccd758719381
+# ╠═ccf3fce7-436c-46e3-ad62-935240891259
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
 # ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90

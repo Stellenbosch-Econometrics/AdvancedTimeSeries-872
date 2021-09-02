@@ -77,7 +77,7 @@ In this session we use some mathematics and theorethical constructs. Make sure y
 TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
-md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
+md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐."
 
 # ╔═╡ 9480a241-6bd6-41a7-bda3-406e1fc8d94c
 md""" ## General overview """
@@ -90,7 +90,7 @@ In this session we plan to cover the following topics.
 - Simulation of $\pi$ with Monte Carlo methods
 - Introduction to parallel programming in _Julia_
 - Sampling from a posterior Normal distribution
-- Monte Carlo integration
+- Posterior simulation
 - Models with more than one unknown parameter
 - Marginalisation
 - More examples with `Turing.jl`
@@ -98,7 +98,7 @@ In this session we plan to cover the following topics.
 """
 
 # ╔═╡ db39d95e-81c8-4a40-942c-6507d2f08274
-md" ## Basic Monte Carlo simulation "
+md" ## Basic Monte Carlo methods "
 
 # ╔═╡ 675dfafa-46cb-44b8-bd7b-55395100e1ca
 md" Before we start with the Normal distribution and marginalisation, let us quickly discuss Monte Carlo methods, since we will be using them throughout the rest of the course. According to Wikipedia, Monte Carlo methods, or Monte Carlo experiments, are a broad class of computational algorithms that rely on repeated random sampling to obtain numerical results. The underlying concept is to use randomness to solve problems that might be deterministic in principle. They are often used in physical and mathematical problems and are most useful when it is difficult or impossible to use other approaches. Monte Carlo methods are mainly used in three problem classes: optimization, numerical integration, and generating draws from a probability distribution.  Our first Monte Carlo example will be to try and estimate the value for $\pi$. 
@@ -482,7 +482,12 @@ end
 md" One can see that doing this analytically is quite cumbersome. That is why we will often rely on numerical methods to draw from the posterior. Our next lecture will focus exclusively on such methods. In particular, we will consider different types of **Markov chain Monte Carlo** methods to draw from the posterior distribution of interest. We can use a basic Monte Carlo simulation to get an answer, before we move to another analytical example.  "
 
 # ╔═╡ 8af7a479-7ac5-4a21-a354-fcaee618367b
-md""" ## Simulation """
+md""" ## Monte Carlo simulation """
+
+# ╔═╡ 8010f3a3-bc04-488f-b4de-d613be8f6f84
+md""" 
+> These notes on simulation are based of the lecture notes by [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/3_Monte_Carlo.ipynb)
+"""
 
 # ╔═╡ 0a4bb68a-f82a-426b-842f-23c405af2e64
 md""" Monte Carlo methods can be used to approximate our parameter of interest by random sampling from a probability distribution. We can construct posterior distributions with these techniques and then find different moments or probabilities. We will discuss two methods Monte Carlo methods that are commonly employed in Bayesian statistics. First, we look at posterior simulation and then posterio integration.  """
@@ -490,24 +495,60 @@ md""" Monte Carlo methods can be used to approximate our parameter of interest b
 # ╔═╡ f691ceb8-31c8-47dc-8ba0-8a4a6bbe811f
 md""" ### Posterior simulation """
 
+# ╔═╡ 0d42559a-721e-4084-bbec-911c5c9bc722
+md""" With posterior simulation we are using Monte Carlo methods to draw from the posterior distribution. We will employ direct sampling here, which means that we draw from the posterior distribution directly and then from these draws we approximate the posterior distribution. In other words we take 
+
+$\theta^{(s)} \sim p(\theta \mid y)$ 
+
+where $s = 1, \ldots, S$. The distribution of the simulations, $q(\theta^{(1)}, \ldots, \theta^{(S)} \mid y)$ will converge to the true posterior as $S \rightarrow \infty$. Increasing the number of draws will get us a better approximation. Approximation of true posterior via simulations is then known as posterior simulation.  """
+
+
+# ╔═╡ 3160f1bc-85e9-408d-8562-6306b86eace0
+md"""
+Draws = $(@bind S PlutoUI.Slider(10:1000, show_value=true, default=10));
+"""
+
+# ╔═╡ 381154f0-e0bb-4bcf-aba4-81ad30477496
+begin 
+	dist = Normal(0,1); # Distribution from which we will sample
+	y = rand(dist, S);
+	x_axis = collect(-5:0.1:5);
+	histogram(x_axis, y, normalize = :pdf, labels = "MC draws", alpha = 0.3)
+    p1 = plot!(x_axis -> pdf(dist, x_axis), labels = "True PDF", color = :black, lw = 2)
+end
+
 # ╔═╡ 116982c6-80c9-4cc8-8140-804a631a77a8
 md" ### Posterior integration "
 
 # ╔═╡ 9e8aa12a-540b-4153-9dbf-8b503c16b091
-md" Let us take another detour into the idea of simulation with Monte Carlo methods. Given that we now know how to sample from the posterior distribution we can do some interesting things, like calculate the posterior mean. If we wish to calculate the posterior mean of some function $g(\theta)$, which may not be available analytically. As an example, $g(\theta) = \theta$ or $g(\theta) = \theta^2$. Consider then the following,
+md" After we have derived (or approximated) a posterior we often want to calculate certain values, such as the mean or variance. Calculating these values normally requires that we compute integrals, like the one below,
 
 $$\mathbb{E}(g(\theta) \mid {y})=\int g(\theta) p(\theta \mid {y}) \mathrm{d} \theta$$
 
-In general, this integration cannot be solved analytically. However, we can estimate this quantity using Monte Carlo integration. Specifically, we generate $S$ draws $\theta^{(1)}, \ldots, \theta^{(S)}$ from $p(\theta \mid {y})$, and compute
+As an example, if we wanted to calculate the posterior mean we would set $g(\theta) = \theta$ and calculate, 
 
-$$\widehat{g}=\frac{1}{S} \sum_{r=1}^{S} g\left(\theta^{(s)}\right)$$
+$$\mathbb{E}(\theta \mid {y})=\int \theta p(\theta \mid {y}) \mathrm{d} \theta$$
+
+In the case of the posterior variance one would need to have the integral for $g(\theta) = \theta^{2}$. There are cases, such as the coin flipping model, in which these values can be calculated by hand. In general, this integration cannot be solved analytically. However, we can estimate this quantity using Monte Carlo integration. The one prerequisite is that we know how to obtain samples from the posterior. If we are able to sample from the posterior then we generate $S$ draws $\theta^{(1)}, \ldots, \theta^{(S)}$ from $p(\theta \mid {y})$, and compute
+
+$$\widehat{g}=\frac{1}{S} \sum_{s=1}^{S} g\left(\theta^{(s)}\right)$$
 
 By the weak law of large numbers, $\widehat{g}$ converges weakly in probability to $\mathbb{E}(g(\theta) \mid {y})$ as $S$ tends to infinity. Since we control the simulation size $S$, we can in principle estimate $\mathbb{E}(g(\theta) \mid {y})$ arbitrarily well.
+
+If we wanted to calculate the posterior mean, this would mean that the Monte Carlo approximation is, 
+
+$\hat \theta = \sum_{s=1}^{S} \theta^{(s)}$ 
+
+We could do a similar approximation for the variance using the following formula,
+
+$\hat \sigma^{2} = \sum_{s=1}^{S} (\theta^{(s)} - \hat \theta)^{2}$ 
+
+Let us show how to calculate these quantities with some code. 
+
 "
 
 # ╔═╡ 8f5de37a-6c2c-400d-97c2-7f04e0fa4857
 begin
-	S   = 10000
 	μ₁  = 19.09
 	τ₁  = 0.09
 end;
@@ -2427,14 +2468,18 @@ version = "0.9.1+5"
 # ╟─39b604b9-a4c8-4f54-afaa-faa84d99ad73
 # ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
 # ╟─8af7a479-7ac5-4a21-a354-fcaee618367b
+# ╟─8010f3a3-bc04-488f-b4de-d613be8f6f84
 # ╟─0a4bb68a-f82a-426b-842f-23c405af2e64
 # ╟─f691ceb8-31c8-47dc-8ba0-8a4a6bbe811f
+# ╟─0d42559a-721e-4084-bbec-911c5c9bc722
+# ╟─3160f1bc-85e9-408d-8562-6306b86eace0
+# ╠═381154f0-e0bb-4bcf-aba4-81ad30477496
 # ╟─116982c6-80c9-4cc8-8140-804a631a77a8
 # ╟─9e8aa12a-540b-4153-9dbf-8b503c16b091
 # ╠═8f5de37a-6c2c-400d-97c2-7f04e0fa4857
 # ╠═ec119ee9-ef16-475c-8a42-0fa5e46d1434
 # ╠═3db81fbb-31c3-416e-92d0-258f2d4d8cd5
-# ╟─8973afa7-2325-42f4-8e14-28aa090448d6
+# ╠═8973afa7-2325-42f4-8e14-28aa090448d6
 # ╟─5bf3c91c-cac2-4259-85eb-d798b296355e
 # ╟─9781d63d-23ed-4d43-8446-9a495c31e85d
 # ╟─0c5f78a2-7fbd-4455-a7dd-24766bf78d90

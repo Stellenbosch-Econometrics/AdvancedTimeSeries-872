@@ -114,10 +114,22 @@ With Monte Carlo methods one simulates draws from the target distribution. These
 Monte Carlo = simulation methods. Evaluation points are selected stochastically (randomly). With deterministic methods (e.g. grid) evaluation points are selected by some deterministic rule. Good deterministic methods converge faster (need less function evaluations). 
 
 Grid sampling is prone to curse of dimensionality. Say we have 10 parameters. if we don't know beforehand where the posterior mass is need to choose wide box for the grid and need to have enough grid points to get some of them where essential mass is (e.g. 50 or 1000 grid points per dimension). This means 50$^{10} \approx$ 1e17 grid points and 1000$^{10} \approx$ 1e30 grid points. Using R and an average computer, we can compute the density of a normal distribution about 20 million times per second. Evaluation in 1e17 grid points would take 150 years. Evaluation in 1e30 grid points would take 1 500 billion years!
+
 "
 
 # ╔═╡ 7460cf95-4fc1-4c04-99d7-b13c2014b37a
-md" ## Markov chain Monte Carlo "
+md" ## Indirect sampling "
+
+# ╔═╡ d2fcc16f-075e-44d1-83ee-d9ab2372bfc7
+md""" From the previous lecture we saw that direct sampling from the posterior is possible in some cases. This method is also preferred if we know the shape of the distribution since draws are iid. However, we are often in the situation where we don't have access to the posterior distribution. In this case we must use **indirect sampling**. The main methods for this approach are
+
+1. Importance sampling
+2. Markov chain Monte Carlo (MCMC)
+
+We covered importance sampling last year, so you can view the lecture videos and slides from last year if you want to learn more about that. We will not go into much detail on it in these notes. Our focus is going to be on MCMC methods. Once again, these MCMC methods allow us to sample from unknown distributions and accordingly approximate some of the features of the distributions in question.  """
+
+# ╔═╡ 17382827-e3fc-4038-aa47-9db30f7f45ae
+md""" ### Markov chain Monte Carlo """
 
 # ╔═╡ 26de0997-9548-49b5-9642-b401c6c42c41
 md"""
@@ -131,7 +143,9 @@ In many cases this integral becomes intractable (incalculable) and therefore we 
 
 The purpose of this denominator is to normalize the posterior in order to make it a valid probability distribution. When we remove the denominator we have that the posterior is proportional to the prior multiplied by the likelihood, as discussed in previous lectures.
 
-This is where Markov Chain Monte Carlo comes in. MCMC is a broad class of computational tools for approximating integrals and generating samples from a posterior probability. MCMC is used when it is not possible to sample $\theta$ directly from the subsequent probabilistic distribution $p(\theta \mid y)$. Instead, we sample in an iterative manner such that at each step of the process we expect the distribution from which we sample to become increasingly similar to the posterior. All of this is to eliminate the (often impossible) calculation of the denominator of Bayes' rule. 
+This is where Markov chain Monte Carlo comes in. As we stated above, MCMC is a broad class of computational tools for approximating integrals and generating samples from a posterior probability. MCMC is used when it is not possible to sample $\theta$ directly from the subsequent probabilistic distribution $p(\theta \mid y)$. Instead, we sample in an iterative manner such that at each step of the process we expect the distribution from which we sample to become increasingly similar to the posterior. All of this is to eliminate the (often impossible) calculation of the denominator of Bayes' rule. 
+
+The basic idea underlying MCMC is to first specify a candidate function from which you obtain random samples. Given this candidate function we generate candidate draws and use those to approximate the target distribution. If certain conditions are met then the approximation will converge in distribution to the target distribution (we will also refer to it as the stationary distribution). There are many different MCMC methods, but we will focus primarily on the Metropolis algorithm and Gibbs sampling. There are newer methods, such as Hamiltonian Monte Carlo, which are slowly making there way into economics. 
 
 In the sections that follow we will first provide a nice narrative that helps establish the idea behind the Metropolis algorithm. In our discussion we will also touch on the idea of Markov chains, which are an essential part of the simulation process.
 """
@@ -2337,6 +2351,8 @@ version = "0.9.1+5"
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─bd0dc0fd-63bc-492b-bba1-a3746ea4ec22
 # ╟─7460cf95-4fc1-4c04-99d7-b13c2014b37a
+# ╟─d2fcc16f-075e-44d1-83ee-d9ab2372bfc7
+# ╟─17382827-e3fc-4038-aa47-9db30f7f45ae
 # ╟─26de0997-9548-49b5-9642-b401c6c42c41
 # ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
 # ╟─5f8c67ac-c5c7-4999-8d22-417d8199ddac

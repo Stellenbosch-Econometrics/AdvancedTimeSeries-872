@@ -147,8 +147,13 @@ This is where Markov chain Monte Carlo comes in. As we stated above, MCMC is a b
 
 The basic idea underlying MCMC is to first specify a candidate function from which you obtain random samples. Given this candidate function we generate candidate draws and use those to approximate the target distribution. If certain conditions are met then the approximation will converge in distribution to the target distribution (we will also refer to it as the stationary distribution). There are many different MCMC methods, but we will focus primarily on the Metropolis algorithm and Gibbs sampling. There are newer methods, such as Hamiltonian Monte Carlo, which are slowly making there way into economics. 
 
+Here is a link to an [interactive gallery](https://chi-feng.github.io/mcmc-demo/) of the different types of MCMC algorithms.
+
 In the sections that follow we will first provide a nice narrative that helps establish the idea behind the Metropolis algorithm. In our discussion we will also touch on the idea of Markov chains, which are an essential part of the simulation process.
 """
+
+# ╔═╡ 47971296-f3b4-429a-9d5e-86e901cc2dcb
+
 
 # ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
 md" ### King Markov 👑 and advisor Metropolis 🧙🏻"
@@ -663,10 +668,69 @@ which is the same as the probability of transition from $\theta_a$ to $\theta_b$
 
 """
 
+# ╔═╡ 2799a8c7-a93d-4577-a5ce-9f771538634b
+md""" #### Practical implementation # 1 """
+
+# ╔═╡ 2ea2563b-0a28-42f4-ac43-f12f8d3bcfa7
+md""" In this section we are using code from [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/4_MCMC.ipynb). For this example """
+
+# ╔═╡ 60bf263c-013c-4e6e-9bbe-2b9683f6eb83
+begin
+	## Independence chain MH algorithm
+	## Create functions
+	# Target distribution
+	function p(x)
+		exp(-abs(x))/(2);
+	end
+		
+	# Proposal distribution
+	function q(x)
+		pdf(Normal(0,1),x);
+	end
+		
+	# Acceptance probability
+	function a(x,y)
+		min(1, p(x)*q(y)/(p(y)*q(x)));
+	end
+end
+
+# ╔═╡ 155dc645-a2a5-49ec-a836-95f25eed9a88
+begin
+	
+	Random.seed!(7244)
+	
+	## Independence chain MH sampler
+	# Set-up
+	D = 10000; # number of draws in Markov chain
+	x = zeros(D); # storage vector
+	x[1] = -5; # initial condition
+	
+	#Markov chain
+	for d in 2:D
+	#1. Sample candidate
+	    xc = rand(Normal(0,1));
+	#2. Update
+	    alp = a(xc,x[d-1]);
+	    u = rand(Uniform(0,1));
+	    if alp >= u
+	        x[d] = xc;
+	    else
+	        x[d] = x[d-1];
+	    end
+	end
+	
+	## Summary
+	p1 = plot(x[2500:10000], title = "Markov chain of draws", legend = false);
+	p2 = histogram(x, title = "Empirical distribution", legend = false, alpha = 0.5);
+end
+
+# ╔═╡ 7087ac52-c5ae-4398-b4d5-00955b742d84
+p1
+
 # ╔═╡ 3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
 md"""
 
-#### Practical implementation
+#### Practical implementation # 2
 
 """
 
@@ -861,7 +925,7 @@ Don't worry too much about it for now. We will cover it multiple times throughou
 """
 
 # ╔═╡ 56be261f-fc7c-4a27-8d18-54cbb00c149b
-
+md""" ### Random walk with drift model """
 
 # ╔═╡ b759867e-59bd-44c7-9041-afc2b4deaf88
 # Translate this code from Python. Check the repository on Kevin Murphy's site. 
@@ -883,12 +947,6 @@ function gibbs(xs, zs, kv, π, μ, σ, n_iterations)
     
     return x_hist, z_hist
 end;
-
-# ╔═╡ 871d3e18-ea75-4cfc-aacc-b196f62cde50
-md""" ## Cool thing for the day """
-
-# ╔═╡ 759b6112-cdd6-45be-ad19-3e4aee182eb0
-md""" Here is a link to an [interactive gallery](https://chi-feng.github.io/mcmc-demo/) of the different types of MCMC algorithms. """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2354,6 +2412,7 @@ version = "0.9.1+5"
 # ╟─d2fcc16f-075e-44d1-83ee-d9ab2372bfc7
 # ╟─17382827-e3fc-4038-aa47-9db30f7f45ae
 # ╟─26de0997-9548-49b5-9642-b401c6c42c41
+# ╠═47971296-f3b4-429a-9d5e-86e901cc2dcb
 # ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
 # ╟─5f8c67ac-c5c7-4999-8d22-417d8199ddac
 # ╟─76853f63-4969-4823-a16b-d1033af26a2c
@@ -2400,7 +2459,7 @@ version = "0.9.1+5"
 # ╟─ed9890f1-061c-4ada-90e7-a39e08af7af8
 # ╟─106087bc-1a39-4e97-b77a-bafe8b692844
 # ╟─80154dfd-dac5-4579-8cdc-a14b9862df18
-# ╠═3742f58c-de0b-40db-bba0-59a4bf9e58ad
+# ╟─3742f58c-de0b-40db-bba0-59a4bf9e58ad
 # ╟─635cd82c-8fa6-4bf3-b586-fd2ec915c4b7
 # ╟─411d9644-55c7-4cef-81d1-7ca41181d3fa
 # ╟─e9819877-d4c1-4378-8430-04f43d057f1f
@@ -2417,6 +2476,11 @@ version = "0.9.1+5"
 # ╟─c3046dbc-e894-4194-aa54-4f4f28f1066b
 # ╟─aad23932-c61e-4308-956b-c2d64d85ac93
 # ╟─32b7f7aa-0a56-4cee-87a7-339826fa5c1e
+# ╟─2799a8c7-a93d-4577-a5ce-9f771538634b
+# ╟─2ea2563b-0a28-42f4-ac43-f12f8d3bcfa7
+# ╠═60bf263c-013c-4e6e-9bbe-2b9683f6eb83
+# ╠═155dc645-a2a5-49ec-a836-95f25eed9a88
+# ╟─7087ac52-c5ae-4398-b4d5-00955b742d84
 # ╟─3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
 # ╟─1970bc03-ff14-4819-86a6-0a8b802a9f8e
 # ╟─24e07f29-a534-4bdc-b26d-353484aad92b
@@ -2438,9 +2502,7 @@ version = "0.9.1+5"
 # ╟─676bed44-b4f0-4117-aa4e-649dae752bad
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
-# ╠═56be261f-fc7c-4a27-8d18-54cbb00c149b
-# ╠═b759867e-59bd-44c7-9041-afc2b4deaf88
-# ╟─871d3e18-ea75-4cfc-aacc-b196f62cde50
-# ╟─759b6112-cdd6-45be-ad19-3e4aee182eb0
+# ╟─56be261f-fc7c-4a27-8d18-54cbb00c149b
+# ╟─b759867e-59bd-44c7-9041-afc2b4deaf88
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

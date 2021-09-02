@@ -98,7 +98,7 @@ In this session we plan to cover the following topics.
 """
 
 # ╔═╡ db39d95e-81c8-4a40-942c-6507d2f08274
-md" ## Monte Carlo and posterior draws "
+md" ## Basic Monte Carlo simulation "
 
 # ╔═╡ 675dfafa-46cb-44b8-bd7b-55395100e1ca
 md" Before we start with the Normal distribution and marginalisation, let us quickly discuss Monte Carlo methods, since we will be using them throughout the rest of the course. According to Wikipedia, Monte Carlo methods, or Monte Carlo experiments, are a broad class of computational algorithms that rely on repeated random sampling to obtain numerical results. The underlying concept is to use randomness to solve problems that might be deterministic in principle. They are often used in physical and mathematical problems and are most useful when it is difficult or impossible to use other approaches. Monte Carlo methods are mainly used in three problem classes: optimization, numerical integration, and generating draws from a probability distribution.  Our first Monte Carlo example will be to try and estimate the value for $\pi$. 
@@ -481,8 +481,17 @@ end
 # ╔═╡ a0670eb1-2091-47d0-9d9f-bba76834fbed
 md" One can see that doing this analytically is quite cumbersome. That is why we will often rely on numerical methods to draw from the posterior. Our next lecture will focus exclusively on such methods. In particular, we will consider different types of **Markov chain Monte Carlo** methods to draw from the posterior distribution of interest. We can use a basic Monte Carlo simulation to get an answer, before we move to another analytical example.  "
 
+# ╔═╡ 8af7a479-7ac5-4a21-a354-fcaee618367b
+md""" ## Simulation """
+
+# ╔═╡ 0a4bb68a-f82a-426b-842f-23c405af2e64
+md""" Monte Carlo methods can be used to approximate our parameter of interest by random sampling from a probability distribution. We can construct posterior distributions with these techniques and then find different moments or probabilities. We will discuss two methods Monte Carlo methods that are commonly employed in Bayesian statistics. First, we look at posterior simulation and then posterio integration.  """
+
+# ╔═╡ f691ceb8-31c8-47dc-8ba0-8a4a6bbe811f
+md""" ### Posterior simulation """
+
 # ╔═╡ 116982c6-80c9-4cc8-8140-804a631a77a8
-md" #### Monte Carlo integration "
+md" ### Posterior integration "
 
 # ╔═╡ 9e8aa12a-540b-4153-9dbf-8b503c16b091
 md" Let us take another detour into the idea of simulation with Monte Carlo methods. Given that we now know how to sample from the posterior distribution we can do some interesting things, like calculate the posterior mean. If we wish to calculate the posterior mean of some function $g(\theta)$, which may not be available analytically. As an example, $g(\theta) = \theta$ or $g(\theta) = \theta^2$. Consider then the following,
@@ -516,7 +525,7 @@ begin
 end
 
 # ╔═╡ 5bf3c91c-cac2-4259-85eb-d798b296355e
-md" ### Gaussian with unknown $\mu$ and $\sigma^{2}$ "
+md" ## Gaussian with unknown $\mu$ and $\sigma^{2}$ "
 
 # ╔═╡ 9781d63d-23ed-4d43-8446-9a495c31e85d
 md"""
@@ -601,7 +610,7 @@ end
 # ╔═╡ 4074ea94-617c-44de-9f88-0f62826acca4
 md"""
 
-#### Derivation continued (math optional)
+#### Derivation continued (section optional)
 
 """
 
@@ -716,7 +725,7 @@ md""" Obviously we don't always have to code up our own routines, in those insta
 # ╔═╡ 0e18fe2a-0965-4ef3-b3a8-c0f880e7a719
 md"""
 
-### Practical implementation with `Turing.jl`
+## Practical implementation with `Turing.jl`
 
 """
 
@@ -2417,6 +2426,9 @@ version = "0.9.1+5"
 # ╠═fd9fe53b-3c5c-4e09-837e-bef6f00e485f
 # ╟─39b604b9-a4c8-4f54-afaa-faa84d99ad73
 # ╟─a0670eb1-2091-47d0-9d9f-bba76834fbed
+# ╟─8af7a479-7ac5-4a21-a354-fcaee618367b
+# ╟─0a4bb68a-f82a-426b-842f-23c405af2e64
+# ╟─f691ceb8-31c8-47dc-8ba0-8a4a6bbe811f
 # ╟─116982c6-80c9-4cc8-8140-804a631a77a8
 # ╟─9e8aa12a-540b-4153-9dbf-8b503c16b091
 # ╠═8f5de37a-6c2c-400d-97c2-7f04e0fa4857

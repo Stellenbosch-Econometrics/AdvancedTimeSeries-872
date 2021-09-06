@@ -29,3 +29,5 @@ Below is a non-exhaustive list of the resources used to construct the notes for 
 5. Gary Koop (2021). [Bayesian Econometrics](https://sites.google.com/site/garykoop/teaching/sgpe-bayesian-econometrics). -- Lectures 5, 6, 7
 6. Joshua Chan (2017). [Notes on Bayesian Econometrics](https://joshuachan.org/notes_BayesMacro.html). -- Lectures 5, 6, 7
 7. Jamie Cross (2020). [Introduction to Bayesian Econometrics](https://github.com/Jamie-L-Cross/Bayes) -- Lectures 2, 3, 4, 5, 6, 7
+
+We will also make use of notes from the [University of Queensland](https://courses.smp.uq.edu.au/MATH2504/).

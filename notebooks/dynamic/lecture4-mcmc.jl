@@ -898,7 +898,7 @@ md"""
 md""" If we have time in class we will have a quick discussion on parallel programming with MCMC methods. In the case of these methods it is often possible to leverage parallel computation to reduce the time it takes to map the posterior distribution. """
 
 # ╔═╡ c22518e2-6cac-451c-bacc-15346dda54a4
-md""" ## Gibbs sampling """
+md""" ## Gibbs sampling (WIP) """
 
 # ╔═╡ 0de3f161-b749-491e-ae32-4b04d5d8f851
 md""" We will cover Gibbs sampling in future sessions, so we provide a quick summary of the procedure here. It will be a crucial method for VARs and TVP-VARs. The reason to use Gibbs sampling is because of the low acceptance rate that is often encounted in the Metropolis algorithm. With this method all proposals are accepted. This algorithm excels when we have a multidimensional sample space. 
@@ -942,13 +942,67 @@ The first thing we want to write a program that uses Monte Carlo integration to 
 """
 
 # ╔═╡ d6e39812-f1c2-494e-a48a-04be4a7ba6a1
-
+function monte_carlo(r₁, ρ₁, r₀ = 100)
+		
+	Random.seed!(1)
+	
+	Σ₁ = [1.0 ρ₁; ρ₁ 1.0] # variance-covariance matrix
+	MC = zeros(2, 1) # initialise Monte Carlo sum to zero
+	MC2 = zeros(2, 1)
+	
+	# Monte Carlo integration
+	for i in 1:r₁
+		
+		MCdraw = rand(MvNormal([0.0; 0.0], Σ₁))
+		
+		if i > r₀
+			MC = MC + MCdraw
+			MC2 = MC2 + MCdraw .^ 2
+		end
+	end
+	return MC, MC2
+end;
 
 # ╔═╡ 918f3cd0-f6f9-4d23-9f5e-1ef21617e852
 md""" Next we will use Gibbs sampling to calculate the posterior means and standard deviations of $\theta_1$ and $\theta_2$ """
 
-# ╔═╡ 39ad43fb-e99e-42d4-a29f-b8f2d78af896
+# ╔═╡ 7bca38d2-3918-4cc6-9869-983cda421aee
+function gibbs_sampler(r₁, ρ₁, r₀ = 100)
+		
+	Random.seed!(1)
+		
+	drawθ₂ = 1 # starting value for θ₂
+	
+	θ_gibbs = zeros(2, 1)
+	θ_gibbs2 = zeros(2, 1)
+	
+	for i in 1:r₁
+		
+		# first block
+		avgθ₁ = ρ₁ * drawθ₂
+		varθ₁ = 1 - ρ₁ .^ 2
+		drawθ₁ = avgθ₁ - rand(Normal(0, varθ₁))
+		
+		# second block
+		avgθ₂ = ρ₁ * drawθ₁
+		varθ₂ = 1 - ρ₁ .^ 2
+		drawθ₂ = avgθ₁ - rand(Normal(0, varθ₂))
+		
+		if i > r₀
+			
+			θ_draw = [drawθ₁; drawθ₂]
+			θ_gibbs = θ_gibbs + θ_draw
+			θ_gibbs2 = θ_gibbs + θ_draw .^2
+		end
+	end
+	return θ_gibbs, θ_gibbs2
+end;
 
+# ╔═╡ 4ab65a54-d7e9-4949-a494-91886f8ee1e7
+replications = (@bind r₁ Slider(2000:100:10000, show_value = true, default=2000))
+
+# ╔═╡ 9ccd3d2d-f178-4dd5-96ab-a63e9f97a3ab
+rho = (@bind ρ₁ Slider(0:0.01:0.99, show_value = true, default=0.1))
 
 # ╔═╡ 54c1d150-b8ff-4e95-ad03-6a0f2124e495
 md""" Now we can set $\rho$ and compare the results from the above calculations for the posterior means and standard deviations, while increasing the number of draws. This allows us to compare accuracy of the algorithms. """
@@ -2769,7 +2823,9 @@ version = "0.9.1+5"
 # ╟─12819f3d-bed0-4af6-82d8-3be5e6c79b3a
 # ╠═d6e39812-f1c2-494e-a48a-04be4a7ba6a1
 # ╟─918f3cd0-f6f9-4d23-9f5e-1ef21617e852
-# ╠═39ad43fb-e99e-42d4-a29f-b8f2d78af896
+# ╠═7bca38d2-3918-4cc6-9869-983cda421aee
+# ╠═4ab65a54-d7e9-4949-a494-91886f8ee1e7
+# ╠═9ccd3d2d-f178-4dd5-96ab-a63e9f97a3ab
 # ╟─54c1d150-b8ff-4e95-ad03-6a0f2124e495
 # ╠═acef097a-7e53-4177-813a-4f69ad83ff42
 # ╟─2662a1e1-2135-4d3f-8cb8-65d38f944971

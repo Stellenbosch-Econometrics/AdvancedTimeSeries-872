@@ -613,7 +613,7 @@ The general Metropolis algorithm can be written as follows,
 $\begin{equation*}
             r=\frac{p(\theta^{*} \mid y)}{p(\theta^{t-1} \mid y)}
 \end{equation*}$
-4. Set 
+4. Set the **update probability**
 
 $\theta^{t}= \begin{cases}\theta^{*} & \text { with probability } \min (r, 1) \\ \theta^{t-1} & \text { otherwise }\end{cases}$ 
 
@@ -747,7 +747,7 @@ md"""
 # ╔═╡ 1970bc03-ff14-4819-86a6-0a8b802a9f8e
 md"""
 
-We will rarely code up our own Metropolis algorithm for this course. For this course it is more likely that we will be using Gibbs sampling. However, let us show a representation of the Metropolis algorithm. The code is sourced from [José Eduardo Storopoli](https://storopoli.io/Bayesian-Julia/pages/5_MCMC/). It incorporates some good programming principles, so it is worthwhile going through it in more detail.
+For this course it is more likely that we will be using Gibbs sampling. However, let us show a representation of the Metropolis algorithm. The code is sourced from [José Eduardo Storopoli](https://storopoli.io/Bayesian-Julia/pages/5_MCMC/). It incorporates some good programming principles, so it is worthwhile going through it in more detail. This example is a bit more complicated, so if you are having trouble following the steps it isn't a problem. 
 
 We use an example where we want to explore the multivariate normal distribution of two random variables $X$ and $Y$, where $\mu_{X}=\mu_{Y}=0$ and $\sigma_{X}=\sigma_{Y}=1$. This gives us, 
 
@@ -901,7 +901,12 @@ md""" If we have time in class we will have a quick discussion on parallel progr
 md""" ## Gibbs sampling """
 
 # ╔═╡ 0de3f161-b749-491e-ae32-4b04d5d8f851
-md""" We will cover Gibbs sampling in much more detail in future sessions. It will be a crucial method for VARs and TVP-VARs. The reason to use Gibbs sampling is because of the low acceptance rate that is often encounted in the Metropolis algorithm. With this method all proposals are accepted. This algorithm excels when we have a multidimensional sample space. 
+md""" We will cover Gibbs sampling in future sessions, so we provide a quick summary of the procedure here. It will be a crucial method for VARs and TVP-VARs. The reason to use Gibbs sampling is because of the low acceptance rate that is often encounted in the Metropolis algorithm. With this method all proposals are accepted. This algorithm excels when we have a multidimensional sample space. 
+
+"""
+
+# ╔═╡ 5373a12c-4732-4d1c-9c71-d113d5c6a5b3
+md"""
 
 The basic algorithm is simple and can be illustrated in a few steps. This algorithm entails iterative sampling of parameters conditioned on other parameters. For this example $\theta$ is the parameter of interest and $y$ is the data.
 
@@ -910,18 +915,249 @@ The basic algorithm is simple and can be illustrated in a few steps. This algori
 
 3. For $t = 1, 2, \ldots$
 
-$\begin{aligned} \theta_{1}^{t} & \sim p\left(\theta_{1} \mid \theta_{2}^{0}, \ldots, \theta_{n}^{0}\right) \\ \theta_{2}^{t} & \sim p\left(\theta_{2} \mid \theta_{1}^{t-1}, \ldots, \theta_{n}^{0}\right) \\ \quad &: \\ \theta_{n}^{t} & \sim p\left(\theta_{n} \mid \theta_{1}^{t-1}, \ldots, \theta_{n-1}^{t-1}\right) \end{aligned}$
+$\begin{aligned} \theta_{1}^{t} & \sim p\left(\theta_{1} \mid \theta_{2}^{0}, \ldots, \theta_{n}^{0}\right) \\ \theta_{2}^{t} & \sim p\left(\theta_{2} \mid \theta_{1}^{t-1}, \ldots, \theta_{n}^{0}\right) \\ \quad &: \\ \theta_{n}^{t} & \sim p\left(\theta_{n} \mid \theta_{1}^{t-1}, \ldots, \theta_{n-1}^{t-1}\right) \end{aligned}$ 
 
-Don't worry too much about it for now. We will cover it multiple times throughout the course. 
+"""
 
+# ╔═╡ 02422bf4-ec7f-4428-8067-3091e2a70ba4
+md"""
+
+The idea can be extended to a more general setting as follows. 
+
+We start this part with an assumption on our ability to sample from **full conditional distributions**. Suppose that there exits a partition $\boldsymbol{\theta}=\{\boldsymbol{\theta}_{1},\dots,\boldsymbol{\theta}_{B}\}$, in which $\boldsymbol{\theta}_{i}$, $i=1,\dots,B$ may be scalars or vectors, and that we can sample from each component of the *full conditional distributions*
+1. $p(\theta_{1}|\mathbf{y},\theta_{2},\dots,\theta_{B})$
+2. $\ldots$
+3. $p(\theta_{B}|\mathbf{y},\theta_{1},\dots,\theta_{B-1})$
+
+Then, we can use these conditional distributions as the transition density in the MH algorithm. In this case the update probability equals one, so each candidate draw is always accepted. This idea is referred to as *Gibbs sampling* as is summarized in the following algorithm.
+
+**Gibbs Sampling**: Let $\boldsymbol{\theta}_{d,b}$ denote the dth draw of the bth block of a partition $\boldsymbol{\theta}=\{\boldsymbol{\theta}_{1},\dots,\boldsymbol{\theta}_{B}\}$. Then, given a set of initial conditions $\boldsymbol{\theta}_{0,1},\dots,\boldsymbol{\theta}_{0,B}$ (typically a guess), the Gibbs sampling algorithm works as follows
+1. **Sample** a draw from the full set of conditional distributions: 
+    1. $\boldsymbol{\theta}_{1,1}\sim p(\boldsymbol{\theta}_{1,1}|\mathbf{y},\boldsymbol{\theta}_{0,2},\dots,\boldsymbol{\theta}_{0,B})$
+    2. $\boldsymbol{\theta}_{1,2}\sim p(\boldsymbol{\theta}_{1,2}|\mathbf{y},\boldsymbol{\theta}_{1,1},\boldsymbol{\theta}_{0,3},\dots,\boldsymbol{\theta}_{0,B})$
+    3. $\ldots$
+    4. $\boldsymbol{\theta}_{1,B}\sim p(\theta_{1,B}|\mathbf{y},\theta_{1,1},\dots,\theta_{0,B-1})$
+2. **Repeat** for $d=2,\dots,D$, i.e. 
+    1. $\boldsymbol{\theta}_{d,1}\sim p(\theta_{d,1}|\mathbf{y},\theta_{d-1,2},\dots,\theta_{d-1,B})$
+    2. $\boldsymbol{\theta}_{d,2}\sim p(\boldsymbol{\theta}_{d,2}|\mathbf{y},\boldsymbol{\theta}_{d,1},\boldsymbol{\theta}_{d-1,3},\dots,\boldsymbol{\theta}_{0,B})$
+    3. $\ldots$
+    4. $\boldsymbol{\theta}_{d,B}\sim p(\theta_{d,B}|\mathbf{y},\theta_{d,1},\dots,\theta_{d-1,B-1})$
+
+Following these steps will provide us with a set of $D$ draws $\theta_1,\dots,\theta_D$. Given a large enough set of draws $D$, then the Markov chain will converge in distribution to the true posterior distribution.
 
 """
 
 # ╔═╡ 56be261f-fc7c-4a27-8d18-54cbb00c149b
 md""" ### Random walk with drift model """
 
-# ╔═╡ 676bed44-b4f0-4117-aa4e-649dae752bad
-md" In the last lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. "
+# ╔═╡ a6e68438-0bba-4add-8fe9-815ebfbebedb
+md"""
+>In this section we are using another example from [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/4_MCMC.ipynb).
+
+"""
+
+# ╔═╡ 3d8bf98f-5a0e-4f28-a2fe-c7f832b1850b
+md"""
+
+The random walk model used in the previous lecture can be extended to have a non-zero mean by adding a constant term, i.e.
+
+$$Y_t = \mu + Y_{t-1} + e_t, \quad e_t\sim N(0,\sigma^2)$$
+
+in which $\mu$ is an unknown real-valued constant. This is known as the random walk with drift model.
+
+"""
+
+# ╔═╡ 2d1cb903-a130-4d66-a03f-f965f4b12d8d
+begin
+	## Simulate Data from random walk with drift model
+	true_mu = 1; # true mean
+	true_sig2 = 1; # true variance
+	T = 1001; # no. of dates
+	y0 = 0;   # initial condition
+	y = zeros(T); # storage vector
+	
+	y[1] = y0;
+	for t = 2:T
+	    y[t] = true_mu + y[t-1] + rand(Normal(0,sqrt(true_sig2)));
+	end
+	
+	x = collect(1:1:T);
+	plot(x,y, label="Simulated Data")
+end
+
+# ╔═╡ 1c165b82-0a76-4897-8c22-31ed5f103cff
+md"""
+
+We can estimate this model using Bayesian methods. Since the mean of the above distribution is known, we can take it to the left and side and instead work with the *first-difference* of the data $\Delta Y_t=Y_t-Y_{t-1}$ to estimate the model
+
+$$\Delta Y_t\sim N(\mu,\sigma^2)$$
+
+This shows that estimating the random walk with drift model is the same as estimating the parameters of the normal distribution with unknown mean and unknown variance. 
+
+"""
+
+# ╔═╡ 6cc5a39c-d404-4c41-bb21-6787abc7895f
+begin
+	# Plot data in first differences
+	Dy = y[2:end] - y[1:end-1];
+	T₁ = length(Dy);
+	x₁ = collect(1:1:T₁);
+	plot(x₁,Dy, label="First-difference of simulated data")
+end
+
+# ╔═╡ fc921837-304f-4e55-aa45-fbc05717f654
+md"""
+
+**Priors**:
+When setting the priors we need to make an assumption about the dependence of the unknown parameters. Here we will assume that they are independent, so that $p(\mu,\sigma^2)=p(\mu)p(\sigma^2)$ and set the following independent prior distributions:
+1. Since $\mu$ can be any real number, we will assume that $\mu\sim N(m_0,v^2_0)$ 
+2. Since $\sigma^2>0$, we will assume that $\sigma^2\sim IG(\nu_0,S_0)$ 
+
+"""
+
+# ╔═╡ b7dbca52-3027-46ff-8a45-e0e430fcb924
+md"""
+
+**Likelihood**: Let $\theta = (\mu,\sigma^2)'$ denote the vector of unknown parameters. The likelihood of this model is given by
+
+$$\begin{align}
+p(\mathbf{Y}|\theta) &= \prod_{t=1}^{T}p(\Delta Y_t|\theta)\\
+&= \prod_{t=1}^{T}(2\pi\sigma^2)^{-\frac{1}{2}}\exp(-\frac{1}{2\sigma^2}(\Delta Y_t-\mu)^2)\\
+&= (2\pi\sigma^2)^{-\frac{T}{2}}\exp(-\frac{1}{2\sigma^2}\sum_{t=1}^{T}(\Delta Y_t-\mu)^2)
+\end{align}$$
+
+"""
+
+# ╔═╡ 12c4db07-d4c9-43bc-a284-9964f19ce917
+md"""
+
+**Posterior**:
+To get the posterior, we combine the prior and likelihood
+
+$$\begin{align}
+p(\theta|\mathbf{Y}) &\propto p(\mathbf{Y}|\theta)p(\theta)\\
+                     &\propto p(\mathbf{Y}|\theta)p(\mu)p(\sigma^2)\\
+                     &\propto (\sigma^2)^{-(\frac{T}{2}+\nu_0+1)}\exp(-\frac{1}{2\sigma^2}(S_0 + \sum_{t=1}^{T}(\Delta Y_t-\mu)^2) -\frac{1}{2 v^2}(\mu-m_0)^2)\\
+\end{align}$$
+
+The final expression is an **unknown distribution** meaning that we can not apply direct Monte Carlo sampling methods. The trick to estimating it is noticing that the posterior distribution looks like it is Normal in $\mu$ and inverse-Gamma in $\sigma^2$. We can therefore try a two block Gibbs Sampler with the full conditional distributions
+
+$p(\mu|\mathbf{y},\sigma^2)$
+
+$p(\sigma^2|\mathbf{y},\mu)$
+
+"""
+
+# ╔═╡ cdb75867-520c-4527-9d3b-a963f370c900
+md"""
+
+**First block:** Let $\bar{Y} = \frac{1}{T}\sum_{t=1}^{T}\Delta Y_t$, then
+
+$$\begin{align} p(\mu|\mathbf{y},\sigma^2)&\propto p(\mathbf{Y}|\theta)p(\mu)\\
+                          &\propto\exp(-\frac{1}{2\sigma^2}(\sum_{t=1}^{T}(\Delta Y_t-\mu)^2) -\frac{1}{2 v^2}(\mu-m_0)^2)\\
+                          &=\exp(-\frac{1}{2}(\frac{1}{\sigma^2}((T\bar{Y})^2-2 T\bar{Y}\mu+T\mu^2)) -\frac{1}{v^2}(\mu^2-2\mu m_0 + m_0^2))\\
+                          &\propto\exp(-\frac{1}{2}(\frac{1}{\sigma^2}((-2 T\bar{Y}\mu+T\mu^2)) -\frac{1}{v^2}(\mu^2-2\mu m_0))\\
+                          &=\exp(-\frac{1}{2}((\frac{T}{\sigma^2} + \frac{1}{v^2})\mu^2 -2\mu(\frac{T\bar{Y}}{\sigma^2} + \frac{m_0}{v^2})))                   
+\end{align}$$
+
+If we stare at this expression long enough, then we (hopefully) will see that it is the kernel of a Normal distribution. To determine the mean and variance, note that if $\mu\sim N(\hat{\mu},D_\mu)$ then
+
+$$p(\mu|\mathbf{y},\sigma^2) \propto \exp(-\frac{1}{2 D_\mu}(\mu^2-2\mu\hat{\mu}))$$
+
+Thus, $\hat{\mu}=D_\mu(\frac{T\bar{Y}}{\sigma^2} + \frac{m_0}{v^2})$ and $D_{\mu}=(\frac{T}{\sigma^2} + \frac{1}{v^2})^{-1}$.
+
+**Second block:**
+
+$$\begin{align}
+p(\sigma^2|\mathbf{Y},\mu) &\propto p(\mathbf{Y}|\theta) p(\sigma^2)\\
+                       &= (\sigma^2)^{-(\frac{T}{2}+\nu_0+1)}\exp(-\frac{1}{\sigma^2}(S_0+\frac{1}{2}\sum_{t=1}^{T}(\Delta Y_t-\mu)^2)
+\end{align}$$
+
+Thus, the conditional posterior for is an inverse-Gamma distribution with scale parameter $\nu = \frac{T}{2}+\nu_0+1$ and shape parameter $S = S_0+\frac{1}{2}\sum_{t=1}^{T}(\Delta Y_t-\mu)^2$. 
+
+"""
+
+# ╔═╡ 2e1e99e6-fa99-49fa-9ff8-5936afc25227
+begin
+	## Gibbs Sampler for the random walk with drift model
+	## Priors
+	# Prior for mu
+	pri_m = 0;
+	pri_v2 = 10;
+	pri_mu = Normal(pri_m,sqrt(pri_v2));
+	
+	# Prior for sig2
+	pri_nu = 3;
+	pri_S = 1*(pri_nu-1); # sets E(pri_sig2) = 1
+	pri_sig2 = InverseGamma(pri_S,pri_S);
+	
+	## Gibbs Sampler
+	# Controls
+	nburn = 1000;
+	ndraws = nburn + 10000;
+	
+	# Storage
+	s_mu = zeros(ndraws-nburn,1);
+	s_sig2 = zeros(ndraws-nburn,1);
+	
+	# Deterministic terms
+	ybar = mean(Dy);
+	post_nu = pri_nu + T/2;
+end;
+
+# ╔═╡ 28cfbc9f-4f66-4d3c-b440-2fc01d7324b8
+# Initial conditions
+let MC_mu = mean(Dy), MC_sig2 = var(Dy)
+# Markov chain
+    for loop in 1:ndraws
+    # Draw mu
+        post_v2 = 1/(T/MC_sig2 + 1/pri_v2);
+        post_m = post_v2*(T*ybar/MC_sig2 + pri_m/pri_v2);
+        MC_mu = rand(Normal(post_m,post_v2));
+
+    # Draw sig2
+        post_S = pri_S +0.5*sum((Dy.-MC_mu).^2);
+        MC_sig2 = rand(InverseGamma(post_nu,post_S));
+
+    # Store
+        if loop > nburn
+            count = loop - nburn;
+            s_mu[count] = MC_mu;
+            s_sig2[count] = MC_sig2;
+        end
+    end
+end
+
+# ╔═╡ f3658270-c1b4-4801-9f46-fd80f288e1b1
+begin
+	## Summarize results
+	# Trace plots
+	x₂ = collect(1:(ndraws-nburn))
+	p₁ = plot(x₂,s_mu, title = "Markov chain: μ", label="Draws");
+	p₂ = plot(x₂,s_sig2, title = "Markov chain: σ2", label="Draws");
+	
+	# Compute posterior mean using Monte Carlo Integration
+	post_mu = mean(s_mu);
+	post_sig2 = mean(s_sig2);
+	
+	true_mu, post_mu, true_sig2, post_sig2
+end
+
+# ╔═╡ 402c10b5-eca6-45aa-87c9-e0f7901517e3
+begin
+	# Plot posterior distribution for mu
+	histogram(s_mu, normalize=:pdf, title = "Posterior: μ", label="Empirical distribution")
+	p₃ = plot!([post_mu], seriestype="vline", label="MC mean")
+	
+	# Plot posterior distribution for sig2
+	histogram(s_sig2, normalize=:pdf, title = "Posterior: σ2", label="Empirical distribution")
+	p₄ = plot!([post_sig2], seriestype="vline", label="MC mean")
+	
+	plot(p₁,p₂,p₃,p₄,layout = (2,2),legend = false)
+end
+
+# ╔═╡ 12b0f50a-dc87-4474-9daf-be30667a357b
+md""" We can also do this in `Turing.jl`, but I haven't had time to do it. If you want to play around with Turing, then this might be a nice example to try.  """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2480,7 +2716,22 @@ version = "0.9.1+5"
 # ╟─a370cec5-904c-43fc-94b0-523100b1fd54
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
+# ╟─5373a12c-4732-4d1c-9c71-d113d5c6a5b3
+# ╟─02422bf4-ec7f-4428-8067-3091e2a70ba4
 # ╟─56be261f-fc7c-4a27-8d18-54cbb00c149b
-# ╟─676bed44-b4f0-4117-aa4e-649dae752bad
+# ╟─a6e68438-0bba-4add-8fe9-815ebfbebedb
+# ╟─3d8bf98f-5a0e-4f28-a2fe-c7f832b1850b
+# ╠═2d1cb903-a130-4d66-a03f-f965f4b12d8d
+# ╟─1c165b82-0a76-4897-8c22-31ed5f103cff
+# ╠═6cc5a39c-d404-4c41-bb21-6787abc7895f
+# ╟─fc921837-304f-4e55-aa45-fbc05717f654
+# ╟─b7dbca52-3027-46ff-8a45-e0e430fcb924
+# ╟─12c4db07-d4c9-43bc-a284-9964f19ce917
+# ╟─cdb75867-520c-4527-9d3b-a963f370c900
+# ╠═2e1e99e6-fa99-49fa-9ff8-5936afc25227
+# ╠═28cfbc9f-4f66-4d3c-b440-2fc01d7324b8
+# ╠═f3658270-c1b4-4801-9f46-fd80f288e1b1
+# ╠═402c10b5-eca6-45aa-87c9-e0f7901517e3
+# ╟─12b0f50a-dc87-4474-9daf-be30667a357b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

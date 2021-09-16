@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.0
 
 using Markdown
 using InteractiveUtils
@@ -938,7 +938,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[LogExpFunctions]]
@@ -1012,6 +1012,10 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
 version = "1.3.5+0"
+
+[[OpenBLAS_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
+uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 
 [[OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1377,6 +1381,10 @@ git-tree-sha1 = "5982a94fcba20f02f42ace44b9894ee2b140fe47"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
+[[libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+
 [[libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
@@ -1417,7 +1425,7 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═09a9d9f9-fa1a-4192-95cc-81314582488b
+# ╟─09a9d9f9-fa1a-4192-95cc-81314582488b
 # ╟─41eb90d1-9262-42b1-9eb2-d7aa6583da17
 # ╟─aa69729a-0b08-4299-a14c-c9eb2eb65d5c
 # ╟─000021af-87ce-4d6d-a315-153cecce5091

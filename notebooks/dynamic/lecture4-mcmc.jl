@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.0
 
 using Markdown
 using InteractiveUtils
@@ -151,9 +151,6 @@ Here is a link to an [interactive gallery](https://chi-feng.github.io/mcmc-demo/
 
 In the sections that follow we will first provide a nice narrative that helps establish the idea behind the Metropolis algorithm. In our discussion we will also touch on the idea of Markov chains, which are an essential part of the simulation process.
 """
-
-# ╔═╡ 47971296-f3b4-429a-9d5e-86e901cc2dcb
-
 
 # ╔═╡ 491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
 md" ### King Markov 👑 and advisor Metropolis 🧙🏻"
@@ -599,6 +596,9 @@ md" ### Metropolis algorithm "
 # ╔═╡ 9e9af560-3898-4bb2-8aa7-0e660f738a72
 md" The Metropolis algorithm is one of the most celebrated algorithms of the 20th century and has been influential in many disciplines. From our previous example we know everything we need to know to understand the Metropolis algorithm more formally. In this section we will write out the algorithm in full and also provide the code to show how we can explore the posterior probability distribution space using this method. "
 
+# ╔═╡ c71cc346-e48e-4066-8145-f1aee47c4322
+md""" Suppose that we want to sample the parameter vector $\theta$ from the posterior distribution $p(\theta \mid y)$, but it is not possible to draw directly from the distribution. One way to do this is to construct a Markov chain of samples from a transition density (also known as the proposal distribution). This density satisfies the Markov property, in which the current state only depends on the previous state. Under certain conditions, this Markov chain will converge in distribution to the true posterior distribution (see the next section for a discussion) for a large enough set of draws. """
+
 # ╔═╡ c3046dbc-e894-4194-aa54-4f4f28f1066b
 md"""
 
@@ -672,27 +672,27 @@ which is the same as the probability of transition from $\theta_a$ to $\theta_b$
 md""" #### Practical implementation # 1 """
 
 # ╔═╡ 2ea2563b-0a28-42f4-ac43-f12f8d3bcfa7
-md""" In this section we are using code from [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/4_MCMC.ipynb). For this example """
+md""" In this section we are using code from [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/4_MCMC.ipynb). For this example we will look at the Metropolis-Hastings algorithm, which is essentially the same as the Metropolis algorithm. The **Metropolis-Hastings** algorithm is a extension of the Metropolis algorithm that incorporates a non-symmertic proposal distribution.  
+
+**Example**: Suppose that we want to sample obtain random samples from
+$$f(x) = \frac{1}{2}\exp(-|x|)$$.
+
+Since the support of this function is the entire real line, we can use the standard Normal distribution $N(0,1)$ as a transition density. This is done in the following Julia code. The following example illustrates the independence chain MH algorithm. Another option that is frequently encountered is the Random Walk MH algorithm. """
 
 # ╔═╡ 60bf263c-013c-4e6e-9bbe-2b9683f6eb83
 begin
 	## Independence chain MH algorithm
 	## Create functions
+	
 	# Target distribution
-	function p(x)
-		exp(-abs(x))/(2);
-	end
+	p(x) = exp(-abs(x))/(2);
 		
 	# Proposal distribution
-	function q(x)
-		pdf(Normal(0,1),x);
-	end
+	J(x) = pdf(Normal(0,1),x);
 		
-	# Acceptance probability
-	function a(x,y)
-		min(1, p(x)*q(y)/(p(y)*q(x)));
-	end
-end
+	# Acceptance ratio
+	r(x,y) = min(1, p(x)*J(y)/(p(y)*J(x)));
+end;
 
 # ╔═╡ 155dc645-a2a5-49ec-a836-95f25eed9a88
 begin
@@ -702,35 +702,45 @@ begin
 	## Independence chain MH sampler
 	# Set-up
 	D = 10000; # number of draws in Markov chain
-	x = zeros(D); # storage vector
-	x[1] = -5; # initial condition
+	θ = zeros(D); # storage vector
+	θ[1] = -5; # initial condition
 	
 	#Markov chain
 	for d in 2:D
 	#1. Sample candidate
-	    xc = rand(Normal(0,1));
+	    θ_c = rand(Normal(0,1));
 	#2. Update
-	    alp = a(xc,x[d-1]);
+	    alp = r(θ_c, θ[d-1]);
 	    u = rand(Uniform(0,1));
 	    if alp >= u
-	        x[d] = xc;
+	        θ[d] = θ_c;
 	    else
-	        x[d] = x[d-1];
+	        θ[d] = θ[d-1];
 	    end
 	end
 	
 	## Summary
-	p1 = plot(x[2500:10000], title = "Markov chain of draws", legend = false);
-	p2 = histogram(x, title = "Empirical distribution", legend = false, alpha = 0.5);
+	p1 = plot(θ[2500:10000], title = "Markov chain of draws", legend = false, lc = :steelblue);
+	p2 = histogram(θ, title = "Empirical distribution", legend = false, alpha = 0.5, color = :steelblue);
 end
 
 # ╔═╡ 7087ac52-c5ae-4398-b4d5-00955b742d84
 p1
 
-# ╔═╡ 3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
+# ╔═╡ 1e519151-e4e7-46e8-814a-c80ef77ff1e1
 md"""
 
 #### Practical implementation # 2
+
+"""
+
+# ╔═╡ 9e7350e2-cd06-4fb5-88c2-1888748dc136
+md""" This section still needs to be done, probably for next year. However it implements the Random Walk Metropolis-Hastings algorithm """
+
+# ╔═╡ 3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
+md"""
+
+#### Practical implementation # 3
 
 """
 
@@ -878,20 +888,6 @@ begin
 	    label="90% HPD")
 end
 
-# ╔═╡ a4f22ac0-db21-4e0d-8540-8e56761d42dc
-md"""
-
-### Metropolis-Hastings algorithm
-
-"""
-
-# ╔═╡ fb9c25ae-8e95-43d5-a731-d32a6833941b
-md"""
-
-The **Metropolis-Hastings** algorithm is a extension of the Metropolis algorithm that incorporates a non-symmertic proposal distribution. This makes the math a bit more tricky, but the ideas essentially stay the same. 
-
-"""
-
 # ╔═╡ 1234563c-fb5b-42ea-8f5b-abf8adf34e26
 md"""
 
@@ -900,9 +896,6 @@ md"""
 
 # ╔═╡ a370cec5-904c-43fc-94b0-523100b1fd54
 md""" If we have time in class we will have a quick discussion on parallel programming with MCMC methods. In the case of these methods it is often possible to leverage parallel computation to reduce the time it takes to map the posterior distribution. """
-
-# ╔═╡ 676bed44-b4f0-4117-aa4e-649dae752bad
-md" In the last lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. "
 
 # ╔═╡ c22518e2-6cac-451c-bacc-15346dda54a4
 md""" ## Gibbs sampling """
@@ -927,26 +920,8 @@ Don't worry too much about it for now. We will cover it multiple times throughou
 # ╔═╡ 56be261f-fc7c-4a27-8d18-54cbb00c149b
 md""" ### Random walk with drift model """
 
-# ╔═╡ b759867e-59bd-44c7-9041-afc2b4deaf88
-# Translate this code from Python. Check the repository on Kevin Murphy's site. 
-
-function gibbs(xs, zs, kv, π, μ, σ, n_iterations)
-    x_hist = np.zeros(n_iterations)
-    z_hist = np.zeros(n_iterations)
-    x_hist[0] = xs
-    z_hist[0] = zs
-
-    for s in 1:n_iterations
-        pz = norm(μ, σ).pdf(xs) * π
-        pz = pz / pz.sum()
-        zs = np.random.choice(kv, p=pz)
-        xs = norm(μ[zs], σ[zs]).rvs()
-        x_hist[s] = xs
-        z_hist[s] = zs
-	end
-    
-    return x_hist, z_hist
-end;
+# ╔═╡ 676bed44-b4f0-4117-aa4e-649dae752bad
+md" In the last lecture we will cover the Hamiltonian Monte Carlo method, which is becoming increasingly popular in many disciplines, including economics. Once you have covered HMC you are getting to the more modern implentations of MCMC methods. There is still some way to go before you get to the bleeding edge of MCMC methods, but I don't think many economists are at this forefront yet. "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1601,7 +1576,7 @@ uuid = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 version = "7.1.1"
 
 [[LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[LogExpFunctions]]
@@ -2350,6 +2325,10 @@ git-tree-sha1 = "acc685bcf777b2202a904cdcb49ad34c2fa1880c"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.14.0+4"
 
+[[libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+
 [[libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "7a5780a0d9c6864184b3a2eeeb833a0c871f00ab"
@@ -2412,7 +2391,6 @@ version = "0.9.1+5"
 # ╟─d2fcc16f-075e-44d1-83ee-d9ab2372bfc7
 # ╟─17382827-e3fc-4038-aa47-9db30f7f45ae
 # ╟─26de0997-9548-49b5-9642-b401c6c42c41
-# ╠═47971296-f3b4-429a-9d5e-86e901cc2dcb
 # ╟─491b1cbf-bc99-4a31-9c2b-f2a8d0dc37c6
 # ╟─5f8c67ac-c5c7-4999-8d22-417d8199ddac
 # ╟─76853f63-4969-4823-a16b-d1033af26a2c
@@ -2473,6 +2451,7 @@ version = "0.9.1+5"
 # ╟─ec1270ca-5943-4fe7-8017-6904c72673f0
 # ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 # ╟─9e9af560-3898-4bb2-8aa7-0e660f738a72
+# ╟─c71cc346-e48e-4066-8145-f1aee47c4322
 # ╟─c3046dbc-e894-4194-aa54-4f4f28f1066b
 # ╟─aad23932-c61e-4308-956b-c2d64d85ac93
 # ╟─32b7f7aa-0a56-4cee-87a7-339826fa5c1e
@@ -2480,7 +2459,9 @@ version = "0.9.1+5"
 # ╟─2ea2563b-0a28-42f4-ac43-f12f8d3bcfa7
 # ╠═60bf263c-013c-4e6e-9bbe-2b9683f6eb83
 # ╠═155dc645-a2a5-49ec-a836-95f25eed9a88
-# ╟─7087ac52-c5ae-4398-b4d5-00955b742d84
+# ╠═7087ac52-c5ae-4398-b4d5-00955b742d84
+# ╟─1e519151-e4e7-46e8-814a-c80ef77ff1e1
+# ╟─9e7350e2-cd06-4fb5-88c2-1888748dc136
 # ╟─3e88a1c5-c1b7-4f1e-b615-a02b6b40de6e
 # ╟─1970bc03-ff14-4819-86a6-0a8b802a9f8e
 # ╟─24e07f29-a534-4bdc-b26d-353484aad92b
@@ -2495,14 +2476,11 @@ version = "0.9.1+5"
 # ╟─364377f1-3528-4e4a-99d1-91b96c546346
 # ╟─492d4b83-e736-4ca4-92d0-2bdb7973b85f
 # ╟─b1bc647a-32f1-4ec8-a60e-f8e43e95be2d
-# ╟─a4f22ac0-db21-4e0d-8540-8e56761d42dc
-# ╟─fb9c25ae-8e95-43d5-a731-d32a6833941b
 # ╟─1234563c-fb5b-42ea-8f5b-abf8adf34e26
 # ╟─a370cec5-904c-43fc-94b0-523100b1fd54
-# ╟─676bed44-b4f0-4117-aa4e-649dae752bad
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
 # ╟─56be261f-fc7c-4a27-8d18-54cbb00c149b
-# ╟─b759867e-59bd-44c7-9041-afc2b4deaf88
+# ╟─676bed44-b4f0-4117-aa4e-649dae752bad
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

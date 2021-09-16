@@ -749,12 +749,12 @@ md"""
 
 For this course it is more likely that we will be using Gibbs sampling. However, let us show a representation of the Metropolis algorithm. The code is sourced from [José Eduardo Storopoli](https://storopoli.io/Bayesian-Julia/pages/5_MCMC/). It incorporates some good programming principles, so it is worthwhile going through it in more detail. This example is a bit more complicated, so if you are having trouble following the steps it isn't a problem. 
 
-We use an example where we want to explore the multivariate normal distribution of two random variables $X$ and $Y$, where $\mu_{X}=\mu_{Y}=0$ and $\sigma_{X}=\sigma_{Y}=1$. This gives us, 
+We use an example where we want to explore the multivariate normal distribution of two random variables $\theta_1$ and $\theta_2$, where $\mu_{\theta_1}=\mu_{\theta_2}=0$ and $\sigma_{\theta_1}=\sigma_{\theta_2}=1$. This gives us, 
 
 $$\begin{gathered}
 {\left[\begin{array}{c}
-X \\
-Y
+\theta_1 \\
+\theta_2
 \end{array}\right] \sim \text { Multivariate Normal }\left(\left[\begin{array}{l}
 0 \\
 0
@@ -765,16 +765,16 @@ Y
 \end{array}\right)
 \end{gathered}$$
 
-In this example we want to assign a value to $\rho$ which gives the correlation between the two variables. The code below is a Metropolis sampler for the example above. The proposal distributions for $X$ and $Y$ are given as, 
+In this example we want to assign a value to $\rho$ which gives the correlation between the two variables. The code below is a Metropolis sampler for the example above. The proposal distributions for $\theta_1$ and $\theta_2$ are given as, 
 
 $$\begin{aligned}
-&X \sim \text { Uniform }\left(X-\frac{\text { width }}{2}, X+\frac{\text { width }}{2}\right) \\
-&Y \sim \text { Uniform }\left(Y-\frac{\text { width }}{2}, Y+\frac{\text { width }}{2}\right)
+&\theta_1 \sim \text { Uniform }\left(\theta_1-\frac{\text { width }}{2}, \theta_1+\frac{\text { width }}{2}\right) \\
+&\theta_2 \sim \text { Uniform }\left(\theta_2-\frac{\text { width }}{2}, \theta_2+\frac{\text { width }}{2}\right)
 \end{aligned}$$
 
 It is easier to work with probability logs than absolute values, so we compute $r$ as follows, 
 
-$\begin{aligned} r=& \frac{ \left.\text { PDF ( Multivariate Normal }\left(\left[\begin{array}{l}x_{\text {proposed }} \\ y_{\text {proposed }}\end{array}\right]\right) \mid \text { Multivariate Normal }\left(\left[\begin{array}{c}\mu_{X} \\ \mu_{Y}\end{array}\right], \mathbf{\Sigma}\right)\right)}{ \left.\text { PDF (Multivariate Normal }\left(\left[\begin{array}{l}x_{\text {current }} \\ y_{\text {current }}\end{array}\right]\right) \mid \text { Multivariate Normal }\left(\left[\begin{array}{c}\mu_{X} \\ \mu_{Y}\end{array}\right], \mathbf{\Sigma}\right)\right)} \\ &=\frac{P D F_{\text {proposed }}}{P D F_{\text {current }}} \\ &=\exp \left(\log \left(\mathrm{PDF}_{\text {proposed }}\right)-\log \left(\mathrm{PDF}_{\text {current }}\right)\right) \end{aligned}$
+$\begin{aligned} r=& \frac{ \left.\text { PDF ( Multivariate Normal }\left(\left[\begin{array}{l}{\theta_1}_{\text {proposed }} \\ {\theta_2}_{\text {proposed }}\end{array}\right]\right) \mid \text { Multivariate Normal }\left(\left[\begin{array}{c}\mu_{\theta_1} \\ \mu_{\theta_2}\end{array}\right], \mathbf{\Sigma}\right)\right)}{ \left.\text { PDF (Multivariate Normal }\left(\left[\begin{array}{l}{\theta_1}_{\text {current }} \\ {\theta_2}_{\text {current }}\end{array}\right]\right) \mid \text { Multivariate Normal }\left(\left[\begin{array}{c}\mu_{\theta_1} \\ \mu_{\theta_2}\end{array}\right], \mathbf{\Sigma}\right)\right)} \\ &=\frac{P D F_{\text {proposed }}}{P D F_{\text {current }}} \\ &=\exp \left(\log \left(\mathrm{PDF}_{\text {proposed }}\right)-\log \left(\mathrm{PDF}_{\text {current }}\right)\right) \end{aligned}$
 
 """
 
@@ -918,6 +918,55 @@ The basic algorithm is simple and can be illustrated in a few steps. This algori
 $\begin{aligned} \theta_{1}^{t} & \sim p\left(\theta_{1} \mid \theta_{2}^{0}, \ldots, \theta_{n}^{0}\right) \\ \theta_{2}^{t} & \sim p\left(\theta_{2} \mid \theta_{1}^{t-1}, \ldots, \theta_{n}^{0}\right) \\ \quad &: \\ \theta_{n}^{t} & \sim p\left(\theta_{n} \mid \theta_{1}^{t-1}, \ldots, \theta_{n-1}^{t-1}\right) \end{aligned}$ 
 
 """
+
+# ╔═╡ 12819f3d-bed0-4af6-82d8-3be5e6c79b3a
+md""" We can showcase the idea behind Gibbs sampling with a simple case. Assume that you have a model that gives a bivariate Normal posterior (similar to the example in the previous section),
+
+$$\begin{equation}
+\theta = \left(\begin{array}{l}
+\theta_{1} \\
+\theta_{2}
+\end{array}\right) \sim N\left(\left[\begin{array}{l}
+0 \\
+0
+\end{array}\right],\left[\begin{array}{ll}
+1 & \rho \\
+\rho & 1
+\end{array}\right]\right)
+\end{equation}$$ 
+
+where $|\rho| < 1$ is the known posterior correlation between $\theta_1$ and $\theta_2$. 
+
+The first thing we want to write a program that uses Monte Carlo integration to calculate the posterior means and standard deviations of $\theta_1$ and $\theta_2$.
+
+"""
+
+# ╔═╡ d6e39812-f1c2-494e-a48a-04be4a7ba6a1
+
+
+# ╔═╡ 918f3cd0-f6f9-4d23-9f5e-1ef21617e852
+md""" Next we will use Gibbs sampling to calculate the posterior means and standard deviations of $\theta_1$ and $\theta_2$ """
+
+# ╔═╡ 39ad43fb-e99e-42d4-a29f-b8f2d78af896
+
+
+# ╔═╡ 54c1d150-b8ff-4e95-ad03-6a0f2124e495
+md""" Now we can set $\rho$ and compare the results from the above calculations for the posterior means and standard deviations, while increasing the number of draws. This allows us to compare accuracy of the algorithms. """
+
+# ╔═╡ acef097a-7e53-4177-813a-4f69ad83ff42
+
+
+# ╔═╡ 2662a1e1-2135-4d3f-8cb8-65d38f944971
+md""" How does the correlation between the two parameters of interest affect the performance of the Gibbs sampler?  """
+
+# ╔═╡ ac6f7203-3758-4f20-bd64-9110e8846326
+md""" Finally, plot the results of the Gibbs sampler against Monte Carlo integration to see how an increase inthe number of draws affects the accuracy of the method.  """
+
+# ╔═╡ 9bcaa31b-6a45-4dd3-b8b8-0ed55b7dd6e5
+
+
+# ╔═╡ 2446e3cf-7a7f-4675-99c0-114352d4384d
+md""" #### Detailed algorithm """
 
 # ╔═╡ 02422bf4-ec7f-4428-8067-3091e2a70ba4
 md"""
@@ -2717,6 +2766,16 @@ version = "0.9.1+5"
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
 # ╟─5373a12c-4732-4d1c-9c71-d113d5c6a5b3
+# ╟─12819f3d-bed0-4af6-82d8-3be5e6c79b3a
+# ╠═d6e39812-f1c2-494e-a48a-04be4a7ba6a1
+# ╟─918f3cd0-f6f9-4d23-9f5e-1ef21617e852
+# ╠═39ad43fb-e99e-42d4-a29f-b8f2d78af896
+# ╟─54c1d150-b8ff-4e95-ad03-6a0f2124e495
+# ╠═acef097a-7e53-4177-813a-4f69ad83ff42
+# ╟─2662a1e1-2135-4d3f-8cb8-65d38f944971
+# ╟─ac6f7203-3758-4f20-bd64-9110e8846326
+# ╠═9bcaa31b-6a45-4dd3-b8b8-0ed55b7dd6e5
+# ╟─2446e3cf-7a7f-4675-99c0-114352d4384d
 # ╟─02422bf4-ec7f-4428-8067-3091e2a70ba4
 # ╟─56be261f-fc7c-4a27-8d18-54cbb00c149b
 # ╟─a6e68438-0bba-4add-8fe9-815ebfbebedb

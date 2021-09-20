@@ -103,17 +103,16 @@ md""" Today we will cover the following topics
 md" ## Monte Carlo methods overview "
 
 # ╔═╡ bd0dc0fd-63bc-492b-bba1-a3746ea4ec22
-md" In the first part of the lecture we will deal independent Monte Carlo methods in the form of importance and rejection sampling before we move on to Markov chain Monte Carlo methods. 
+md"  
+Monte Carlo methods were used even before computers, with Buffon, De Forest, Darwin, Galton, Pearson and Gosset working with these methods during the 18th and 19th century. The term Monte Carlo method was a term proposed by Metropolis, von Neumann or Ulam at the end of the 1940s. They worked together on the atomic bomb project. 
 
-Monte Carlo methods were used even before computers, with people like Buffon, De Forest, Darwin, Galton, Pearson and Gosset working with these methods during the 18th and 19th century. The term Monte Carlo method was a term proposed by Metropolis, von Neumann or Ulam at the end of the 1940s. They worked together on the atomic bomb project. 
-
-Bayesians started to have enough cheap computation time in 1990s so Monte Carlo methods became popular, with the BUGS project starting 1989 (last OpenBUGS release 2014), innovations by Gelfand and Smith in 1999 and the initial release of Stan in 2012. More recently, for Julia, there was the release of the `Turing.jl` package, which shares some of the features of Stan. 
+Bayesians started to have enough cheap computation time in 1990s so Monte Carlo methods became popular, with the BUGS (Bayesian inference Using Gibbs Sampling) project starting in 1989 with the last OpenBUGS release in 2014. Recent developments have resulted in the initial release of Stan in 2012, a probabilistic programming language. More recently, for Julia, there was the release of the `Turing.jl` package, which shares some of the features of Stan. 
 
 With Monte Carlo methods one simulates draws from the target distribution. These draws can be treated as any observations and a collection of draws is considered a sample. One can use these draws, for example, to compute means, deviations, quantiles to draw histograms to marginalize, etc.
 
-Monte Carlo = simulation methods. Evaluation points are selected stochastically (randomly). With deterministic methods (e.g. grid) evaluation points are selected by some deterministic rule. Good deterministic methods converge faster (need less function evaluations). 
+Monte Carlo refers to simulation methods. Evaluation points are selected stochastically (randomly). With deterministic methods (e.g. grid) evaluation points are selected by some deterministic rule. Good deterministic methods converge faster and need fewer function evaluations. 
 
-Grid sampling is prone to curse of dimensionality. Say we have 10 parameters. if we don't know beforehand where the posterior mass is need to choose wide box for the grid and need to have enough grid points to get some of them where essential mass is (e.g. 50 or 1000 grid points per dimension). This means 50$^{10} \approx$ 1e17 grid points and 1000$^{10} \approx$ 1e30 grid points. Using R and an average computer, we can compute the density of a normal distribution about 20 million times per second. Evaluation in 1e17 grid points would take 150 years. Evaluation in 1e30 grid points would take 1 500 billion years!
+The problem with grid sampling is that it is prone to the curse of dimensionality. Say we have 10 parameters. If we don't know beforehand where the posterior mass is then we need to choose a wide box for the grid and need to have enough grid points to get some of them where essential mass is (e.g. 50 or 1000 grid points per dimension). This means 50$^{10} \approx$ 1e17 grid points and 1000$^{10} \approx$ 1e30 grid points. Using R and an average computer, we can compute the density of a normal distribution about 20 million times per second. Evaluation in 1e17 grid points would take 150 years. Evaluation in 1e30 grid points would take 1 500 billion years!
 
 "
 
@@ -121,7 +120,7 @@ Grid sampling is prone to curse of dimensionality. Say we have 10 parameters. if
 md" ## Indirect sampling "
 
 # ╔═╡ d2fcc16f-075e-44d1-83ee-d9ab2372bfc7
-md""" From the previous lecture we saw that direct sampling from the posterior is possible in some cases. This method is also preferred if we know the shape of the distribution since draws are iid. However, we are often in the situation where we don't have access to the posterior distribution. In this case we must use **indirect sampling**. The main methods for this approach are
+md""" From the previous lecture we saw that direct sampling from the posterior is possible in some cases. This method is also preferred if we know the shape of the distribution since draws are independent and identically distributed (i.i.d). However, we are often in the situation where we don't have access to the posterior distribution. In this case we must use **indirect sampling**. The main methods for this approach are
 
 1. Importance sampling
 2. Markov chain Monte Carlo (MCMC)
@@ -156,7 +155,7 @@ In the sections that follow we will first provide a nice narrative that helps es
 md" ### King Markov 👑 and advisor Metropolis 🧙🏻"
 
 # ╔═╡ 5f8c67ac-c5c7-4999-8d22-417d8199ddac
-md" For a good description of the problem, watch the [video](https://www.youtube.com/watch?v=v-j0UmWf3Us) by Richard McElreath. He wrote a book called **Statistical Rethinking**, which is aimed at social scientists and is much less mathy than a lot of the Bayesian textbooks out there. All the code is also available in R. "
+md" For a good description of the problem, watch the [video](https://www.youtube.com/watch?v=v-j0UmWf3Us) by Richard McElreath. He wrote a book called **Statistical Rethinking**, which is aimed at social scientists and is much less math driven than a lot of the Bayesian textbooks out there. All the code is also available in R. There is also a [project](https://github.com/StatisticalRethinkingJulia) to code up all the material of the book in Julia using Turing and Stan.  "
 
 # ╔═╡ 76853f63-4969-4823-a16b-d1033af26a2c
 md" > Narrative for this section taken directly from [this book](https://rpruim.github.io/Kruschke-Notes/markov-chain-monte-carlo-mcmc.html#quick-intro-to-markov-chains). Code was originally written in R. "
@@ -236,11 +235,11 @@ A Markov chain $\{X_{t}\}$ on the state space $S$ is a sequence of random variab
 
 The Markov property is a memorylessness property. For any date $t$ and any state $x_{j} \in S$ we have that, 
 
-$p(X_{t+1} = x_{j} | X_t ) = p(X_{t+1} = x_{j} | X_t, X_{t-1}, \ldots)$
+$p(X_{t+1} = x_{j} \mid X_t ) = p(X_{t+1} = x_{j} \mid X_t, X_{t-1}, \ldots)$
 
 The dynamics of the Markov chain are fully determined by the set of values 
 
-$P(x_{i}, x_{j}) = p(X_{t+1} = x_{j} | X_{t} = x_{i})$
+$P(x_{i}, x_{j}) = p(X_{t+1} = x_{j} \mid X_{t} = x_{i})$
 
 By construction $P(x_{i}, x_{j})$ is the probability of going from $x_{i}$ to $x_{j}$ in one unit of time. It is important to note that $P(x_{i}, \cdot)$ is the conditional distribution of $X_{t+1}$ given $X_{t} = x_{i}$. We can view $P$ as a stochastic matrix where 
 
@@ -381,7 +380,7 @@ Our goal is to find $\psi_{t+1}$ given information on $\psi_t$ and the stochasti
 
 Pick any $x_{j} \in S$. The law of total probability tells us that,
 
-$p(X_{t+1} = x_{j}) = \sum_{x_{i} \in S} p(X_{t+1} | x_{j}) \cdot p(X_{t} = x_{i})$
+$p(X_{t+1} = x_{j}) = \sum_{x_{i} \in S} p(X_{t+1} \mid x_{j}) \cdot p(X_{t} = x_{i})$
 
 This shows that to get the probability of being at $x_{j}$ tomorrow, we account for all the ways in which this can happen and then sum those probabilities. 
 
@@ -900,6 +899,9 @@ md""" If we have time in class we will have a quick discussion on parallel progr
 # ╔═╡ c22518e2-6cac-451c-bacc-15346dda54a4
 md""" ## Gibbs sampling (WIP) """
 
+# ╔═╡ c7401978-aead-42ff-a8ee-333336afde2b
+md""" **NB**: Still experimenting with some material in this section. Not ready for class. """
+
 # ╔═╡ 0de3f161-b749-491e-ae32-4b04d5d8f851
 md""" We will cover Gibbs sampling in future sessions, so we provide a quick summary of the procedure here. It will be a crucial method for VARs and TVP-VARs. The reason to use Gibbs sampling is because of the low acceptance rate that is often encounted in the Metropolis algorithm. With this method all proposals are accepted. This algorithm excels when we have a multidimensional sample space. 
 
@@ -999,7 +1001,7 @@ function gibbs_sampler(r₁, ρ₁, r₀ = 100)
 end;
 
 # ╔═╡ 4ab65a54-d7e9-4949-a494-91886f8ee1e7
-replications = (@bind r₁ Slider(2000:100:10000, show_value = true, default=2000))
+replications = (@bind r₁ Slider(2000:100:100000, show_value = true, default=2000))
 
 # ╔═╡ 9ccd3d2d-f178-4dd5-96ab-a63e9f97a3ab
 rho = (@bind ρ₁ Slider(0:0.01:0.99, show_value = true, default=0.1))
@@ -1008,16 +1010,28 @@ rho = (@bind ρ₁ Slider(0:0.01:0.99, show_value = true, default=0.1))
 md""" Now we can set $\rho$ and compare the results from the above calculations for the posterior means and standard deviations, while increasing the number of draws. This allows us to compare accuracy of the algorithms. """
 
 # ╔═╡ acef097a-7e53-4177-813a-4f69ad83ff42
+begin
+	# Mean measures for Monte Carlo integration
+	
+	MC_θ = monte_carlo(r₁, ρ₁)[1] ./ r₁
+	MC_θ2 = monte_carlo(r₁, ρ₁)[2] ./ r₁
+	MC_θsd = sqrt.(MC_θ2 .- MC_θ .^2)
+end
 
+# ╔═╡ 70a1198f-05e5-40f0-8f95-c0056c55cf05
+begin
+	# Mean measures for Monte Carlo integration
+	
+	gibbs_θ = gibbs_sampler(r₁, ρ₁)[1] ./ r₁
+	gibbs_θ2 = gibbs_sampler(r₁, ρ₁)[2] ./ r₁
+	gibbs_θsd = sqrt.(Complex.(gibbs_θ2 .- gibbs_θ .^2))
+end
 
 # ╔═╡ 2662a1e1-2135-4d3f-8cb8-65d38f944971
 md""" How does the correlation between the two parameters of interest affect the performance of the Gibbs sampler?  """
 
 # ╔═╡ ac6f7203-3758-4f20-bd64-9110e8846326
 md""" Finally, plot the results of the Gibbs sampler against Monte Carlo integration to see how an increase inthe number of draws affects the accuracy of the method.  """
-
-# ╔═╡ 9bcaa31b-6a45-4dd3-b8b8-0ed55b7dd6e5
-
 
 # ╔═╡ 2446e3cf-7a7f-4675-99c0-114352d4384d
 md""" #### Detailed algorithm """
@@ -1941,9 +1955,9 @@ version = "4.13.1"
 
 [[MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
-git-tree-sha1 = "c253236b0ed414624b083e6b72bfe891fbd2c7af"
+git-tree-sha1 = "5455aef09b40e5020e1520f551fa3135040d4ed0"
 uuid = "856f044c-d86e-5d09-b602-aeab76dc8ba7"
-version = "2021.1.1+1"
+version = "2021.1.1+2"
 
 [[MLJModelInterface]]
 deps = ["Random", "ScientificTypesBase", "StatisticalTraits"]
@@ -2818,6 +2832,7 @@ version = "0.9.1+5"
 # ╟─1234563c-fb5b-42ea-8f5b-abf8adf34e26
 # ╟─a370cec5-904c-43fc-94b0-523100b1fd54
 # ╟─c22518e2-6cac-451c-bacc-15346dda54a4
+# ╟─c7401978-aead-42ff-a8ee-333336afde2b
 # ╟─0de3f161-b749-491e-ae32-4b04d5d8f851
 # ╟─5373a12c-4732-4d1c-9c71-d113d5c6a5b3
 # ╟─12819f3d-bed0-4af6-82d8-3be5e6c79b3a
@@ -2825,12 +2840,12 @@ version = "0.9.1+5"
 # ╟─918f3cd0-f6f9-4d23-9f5e-1ef21617e852
 # ╠═7bca38d2-3918-4cc6-9869-983cda421aee
 # ╠═4ab65a54-d7e9-4949-a494-91886f8ee1e7
-# ╠═9ccd3d2d-f178-4dd5-96ab-a63e9f97a3ab
+# ╟─9ccd3d2d-f178-4dd5-96ab-a63e9f97a3ab
 # ╟─54c1d150-b8ff-4e95-ad03-6a0f2124e495
 # ╠═acef097a-7e53-4177-813a-4f69ad83ff42
+# ╠═70a1198f-05e5-40f0-8f95-c0056c55cf05
 # ╟─2662a1e1-2135-4d3f-8cb8-65d38f944971
 # ╟─ac6f7203-3758-4f20-bd64-9110e8846326
-# ╠═9bcaa31b-6a45-4dd3-b8b8-0ed55b7dd6e5
 # ╟─2446e3cf-7a7f-4675-99c0-114352d4384d
 # ╟─02422bf4-ec7f-4428-8067-3091e2a70ba4
 # ╟─56be261f-fc7c-4a27-8d18-54cbb00c149b

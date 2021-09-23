@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, StaticArrays, Statistics, StatsPlots, Turing, UrlDownload
+using BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, Statistics, StatsPlots, Turing, UrlDownload
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -51,7 +51,7 @@ overflow-x: hidden;
 html"""
 <style>
   main {
-    max-width: 800px;
+    max-width: 850px;
   }
 </style>
 """
@@ -62,7 +62,7 @@ md" # Introduction "
 # ╔═╡ a681c4c5-1451-44d6-be27-f9003340883f
 md"""
 
-> These lecture notes draw heavily from the notes of [Joshua Chen](https://joshuachan.org/papers/BayesMacro.pdf) and [Gary Koop](https://sites.google.com/site/garykoop/) 
+> These lecture notes draw heavily from the notes of [Joshua Chen](https://joshuachan.org/papers/BayesMacro.pdf), [Gary Koop](https://sites.google.com/site/garykoop/) and [Jamie Cross](https://github.com/Jamie-L-Cross/Bayes/blob/master/5_Linear_Regression_Normal.ipynb) 
 
 """
 
@@ -165,7 +165,7 @@ The model in question is
 
 $$\left(y_{n} \mid \mu, \sigma^{2}\right) \sim \mathcal{N}\left(\mu, \sigma^{2}\right), \quad n=1, \ldots, N$$
 
-where both $\mu$ and $\sigma^{2}$ are now unknown. We assume the same prior for $\mu: \mathcal{N}\left(\mu_{0}, \sigma_{0}^{2}\right)$.
+where both $\mu$ and $\sigma^{2}$ are now unknown. We assume the following prior for $\mu: \mathcal{N}\left(\mu_{0}, \sigma_{0}^{2}\right)$.
 
 As for $\sigma^{2}$, which takes only positive values, a convenient prior is the **inverse-gamma prior**. It turns out that this prior is conjugate for the likelihood of the model.
 
@@ -209,7 +209,7 @@ p\left(\mu, \sigma^{2} \mid \mathbf{y}\right) & \propto p\left(\mu, \sigma^{2}, 
 
 # ╔═╡ 14f11fc0-dc9b-4b77-b2da-ae534b911cd6
 md"""
-Even though we have an explicit expression for the joint posterior density, it is not obvious how we can compute analytically various quantities of interest, such as, $\mathbb{E}(\mu \mid \mathbf{y})$, the posterior mean of $\mu$ or $\operatorname{Var}\left(\sigma^{2} \mid \mathbf{y}\right)$, the posterior variance of $\sigma^{2}$. One way forward is to use Monte Carlo simulation to approximate those quantities.
+Even though we have an explicit expression for the joint posterior density, it is not obvious how we can compute analytically various quantities of interest, such as, $\mathbb{E}(\mu \mid \mathbf{y})$, the posterior mean of $\mu$ or $\operatorname{Var}\left(\sigma^{2} \mid \mathbf{y}\right)$, the posterior variance of $\sigma^{2}$. One way forward is to use Monte Carlo simulation to approximate those quantities. 
 """
 
 # ╔═╡ d92d80ef-256c-443a-a81c-8d5f02e01e66
@@ -220,7 +220,7 @@ md"""
 
 # ╔═╡ 48c98f0d-d880-4abc-91d3-6c79be5fcf8a
 md"""
-As an example, to approximate $\operatorname{Var}\left(\sigma^{2} \mid \mathbf{y}\right)$, we first obtain draws from the posterior distribution $\left(\mu, \sigma^{2} \mid \mathbf{y}\right), \operatorname{say},\left(\mu^{(1)}, \sigma^{2(1)}\right), \ldots,\left(\mu^{(R)}, \sigma^{2(R)}\right) .$ Then, we compute
+Generally, if we wanted to approximate for example $\operatorname{Var}\left(\sigma^{2} \mid \mathbf{y}\right)$, we first obtain draws from the posterior distribution $\left(\mu, \sigma^{2} \mid \mathbf{y}\right), \operatorname{say},\left(\mu^{(1)}, \sigma^{2(1)}\right), \ldots,\left(\mu^{(R)}, \sigma^{2(R)}\right) .$ Then, we compute
 
 $$\frac{1}{R} \sum_{r=1}^{R}\left(\sigma^{2(r)}-\bar{\sigma}^{2}\right)^{2}$$
 
@@ -234,11 +234,11 @@ Operationally, we start from an initial state $\Theta^{(0)}$. Then, we repeat th
 
 Given the current state $\Theta=\Theta^{(r)}$, generate $\mathbf{Y}=\left(\mathbf{Y}_{1}, \ldots, \mathbf{Y}_{n}\right)$ as follows:
 
-(a) Draw $\mathbf{Y}_{1} \sim p\left(\mathbf{y}_{1} \mid \boldsymbol{\theta}_{2}, \ldots, \boldsymbol{\theta}_{n}\right)$.
+1. Draw $\mathbf{Y}_{1} \sim p\left(\mathbf{y}_{1} \mid \boldsymbol{\theta}_{2}, \ldots, \boldsymbol{\theta}_{n}\right)$.
 
-(b) Draw $\mathbf{Y}_{i} \sim p\left(\mathbf{y}_{i} \mid \mathbf{Y}_{1}, \ldots, \mathbf{Y}_{i-1}, \boldsymbol{\theta}_{i+1}, \ldots, \boldsymbol{\theta}_{n}\right), i=2, \ldots, n-1$
+2. Draw $\mathbf{Y}_{i} \sim p\left(\mathbf{y}_{i} \mid \mathbf{Y}_{1}, \ldots, \mathbf{Y}_{i-1}, \boldsymbol{\theta}_{i+1}, \ldots, \boldsymbol{\theta}_{n}\right), i=2, \ldots, n-1$
 
-(c) Draw $\mathbf{Y}_{n} \sim p\left(\mathbf{y}_{n} \mid \mathbf{Y}_{1}, \ldots, \mathbf{Y}_{n-1}\right)$ 
+3. Draw $\mathbf{Y}_{n} \sim p\left(\mathbf{y}_{n} \mid \mathbf{Y}_{1}, \ldots, \mathbf{Y}_{n-1}\right)$ 
 
 It is important to note that the Markov chain $\Theta^{(1)}, \Theta^{(2)}, \ldots$ does not converge to a fixed vector of constants. Rather, it is the distribution of $\Theta^{(r)}$ that converges to the target distribution.
 
@@ -261,7 +261,7 @@ To derive the first conditional distribution, note that given $\sigma^{2}$, this
 
 $$\begin{aligned}
 p\left(\mu \mid \mathbf{y}, \sigma^{2}\right) & \propto p(\mu) p\left(\mathbf{y} \mid \mu, \sigma^{2}\right) \\
-& \propto \mathrm{e}^{\left[-\frac{1}{2}\left(\left(\frac{1}{\sigma_{0}^{2}}+\frac{N}{\sigma^{2}}\right) \mu^{2}-2 \mu\left(\frac{\mu_{0}}{\sigma_{0}^{2}}+\frac{N \bar{y}}{\sigma^{2}}\right)\right)\right]}
+& \propto \mathrm{exp}{\left[-\frac{1}{2}\left(\left(\frac{1}{\sigma_{0}^{2}}+\frac{N}{\sigma^{2}}\right) \mu^{2}-2 \mu\left(\frac{\mu_{0}}{\sigma_{0}^{2}}+\frac{N \bar{y}}{\sigma^{2}}\right)\right)\right]}
 \end{aligned}$$
 
 Hence, $\left(\mu \mid \mathbf{y}, \sigma^{2}\right) \sim \mathcal{N}\left(\widehat{\mu}, D_{\mu}\right)$, where
@@ -324,12 +324,12 @@ begin
 	T 		= 500
 	β 		= [1.0 5.0]
 	β_0 	= [0.0 0.0]
-end
+end;
 
 # ╔═╡ 1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
 function data_gen(μ, σ2, N)
     μ .+ sqrt(σ2) .* randn(N, 1)
-end
+end;
 
 # ╔═╡ 0980d7a1-129b-4724-90fb-b46e3088d2d6
 data_gen(μ, σ2, N);
@@ -351,11 +351,11 @@ function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
 
         if i > burnin
             isave = i .- burnin
-            store_θ[isave, :] = @SVector [μ_1, σ2_1]
+            store_θ[isave, :] = [μ_1, σ2_1]
         end
     end
     mean(store_θ[:, 1]), mean(store_θ[:, 2])
-end
+end;
 
 # ╔═╡ 343202b3-23b5-4600-b912-7db4ab58deaf
 post_gibbs = gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1) # posterior mean of μ and σ^2
@@ -409,9 +409,11 @@ To start, suppose we have data on a dependent variable $y_{t}$ for $t=1, \ldots,
 
 $$y_{t}=\beta_{1}+x_{2, t} \beta_{2}+\cdots+x_{k, t} \beta_{k}+\varepsilon_{t}$$
 
-where $\varepsilon_{1}, \ldots, \varepsilon_{T}$ are assumed to be iid $\mathcal{N}\left(0, \sigma^{2}\right), 1, x_{2, t}, \ldots, x_{k, t}$ are the $k$ regressors and $\beta_{1}, \ldots, \beta_{k}$ are the associated regression coefficients.
+where $\varepsilon_{1}, \ldots, \varepsilon_{T}$ are assumed to be iid $\mathcal{N}\left(0, \sigma^{2}\right)$, and $x_{1, t}, x_{2, t}, \ldots, x_{k, t}$ are the $k$ regressors (explanatory variables) and $\beta_{1}, \ldots, \beta_{k}$ are the associated regression coefficients.
 
-To derive the likelihood, it is more convenient to write this in matrix notation. In particular, we stack the observations over $t=1, \ldots, T$ so that each row represents the observation at time $t$. Let $\mathbf{y}=\left(y_{1}, \ldots, y_{T}\right)^{\prime}$ and $\boldsymbol{\beta}=\left(\beta_{1}, \ldots, \beta_{k}\right)^{\prime} .$ Then, rewrite the whole system of $T$ equations as:
+Note that in this construction we set $x_{1, t} = 1$ for all $t = 1, \ldots, T$ to allow for an intercept. In addition, if we replace the $x_{i, t}$ values to be lags of the dependent variable then this would be an autoregressive model. 
+
+To derive the likelihood, it is more convenient to write this in matrix notation. In particular, we stack the observations over $t=1, \ldots, T$ so that each row represents the observation at time $t$. Let $\mathbf{y}=\left(y_{1}, \ldots, y_{T}\right)^{\prime}$ and $\boldsymbol{\beta}=\left(\beta_{1}, \ldots, \beta_{k}\right)^{\prime} .$ Finally, we have that $\varepsilon$ is a $T \times 1$ vector that is stacked in the same way as $\mathbf{Y}$. Then, rewrite the whole system of $T$ equations as:
 
 $$\left(\begin{array}{c}
 y_{1} \\
@@ -434,11 +436,13 @@ y_{T}
 \varepsilon_{T}
 \end{array}\right)$$
 
-Or more succinctly,
+Make sure the dimensions above make sense to you. For our example, $\mathbf{y}$ is a $T \times 1$ vector, $\mathbf{X}$ is a $T \times k$ matrix, $\boldsymbol{\beta}$ is a $k \times 1$ vector and $\varepsilon$ is a $T \times 1$ vector.
+
+Our system can be written more succinctly as,
 
 $$\mathbf{y}=\mathbf{X} \boldsymbol{\beta}+\varepsilon$$
 
-Since we assume that $\varepsilon_{1}, \ldots, \varepsilon_{T}$ are iid $\mathcal{N}\left(0, \sigma^{2}\right), \varepsilon$ has a multivariate normal distribution with mean vector $\mathbf{0}_{T}$ and covariance matrix $\sigma^{2} \mathbf{I}_{T}$, where $\mathbf{0}_{T}$ is a $T \times 1$ vector of zeros and $\mathbf{I}_{T}$ is the $T \times T$ identity matrix. That is,
+Since we assume that $\varepsilon_{1}, \ldots, \varepsilon_{T}$ are iid $\mathcal{N}\left(0, \sigma^{2}\right), \varepsilon$ has a multivariate normal distribution with mean vector $\mathbf{0}_{T}$ and covariance matrix $\mathbf{\Sigma} = \sigma^{2} \mathbf{I}_{T}$, where $\mathbf{0}_{T}$ is a $T \times 1$ vector of zeros and $\mathbf{I}_{T}$ is the $T \times T$ identity matrix. That is,
 
 $$\varepsilon \sim \mathcal{N}\left(0, \sigma^{2} \mathbf{I}_{T}\right)$$
 
@@ -449,14 +453,16 @@ Now we move on to the derivation of the likelihood function.
 # ╔═╡ 9ffed7a8-f8d3-4c1a-affa-5d6646683829
 md"""
 
-### Derivation of likelihood function 
+### Estimation
 
 """
 
 # ╔═╡ 993c9137-d708-4feb-8a85-51d85c38fc8d
 md"""
 
-Recall that the likelihood function is defined as the joint density of the data given the parameters. In our case, the likelihood function is the joint density of y given $\boldsymbol{\beta}$ and $\sigma^{2}$. To derive the likelihood of the normal linear regression model, we use two useful results. First, an affine transformation -i.e., a linear transformation followed by a translation-of a normal random vector is also a normal random vector. Now, $\mathbf{y}$ is an affine transformation of $\varepsilon$, which is assumed to have a multivariate normal distribution. Thus, $\mathbf{y}$ also has a normal distribution. Since a normal distribution is uniquely determined by its mean vector and covariance matrix, it suffices to compute the mean and covariance matrix of $\mathbf{y}$.
+The first thing that we do in the estimation procedure is derive the likelihood function. This function is defined as the joint density of the data given the parameters. In our case, the likelihood function is the joint density of $\mathbf{y}$ given $\boldsymbol{\beta}$ and $\sigma^{2}$. To derive the likelihood of the normal linear regression model, we use two useful results. 
+
+First, an affine transformation, i.e. a linear transformation followed by a translation of a normal random vector, is also a normal random vector. You can find a discussion on this results [here](https://math.stackexchange.com/questions/332441/affine-transformation-applied-to-a-multivariate-gaussian-random-variable-what). Now, $\mathbf{y}$ is an affine transformation of $\varepsilon$, which is assumed to have a multivariate normal distribution. Thus, $\mathbf{y}$ also has a normal distribution. Since a normal distribution is uniquely determined by its mean vector and covariance matrix, it suffices to compute the mean and covariance matrix of $\mathbf{y}$.
 
 This brings us to the next useful result: suppose $\mathbf{u}$ has a mean vector $\boldsymbol{\mu}_{\mathrm{u}}$ and covariance matrix $\boldsymbol{\Sigma}_{\mathbf{u}}$. Let $\mathbf{v}=\mathbf{A} \mathbf{u}+\mathbf{c}$ for constant matrices $\mathbf{A}$ and $\mathbf{c} .$ Then the mean vector and covariance matrix of $\mathbf{v}$ are given by
 
@@ -470,55 +476,114 @@ Putting it all together, we have
 
 $$\left(\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}\right) \sim \mathcal{N}\left(\mathbf{X} \boldsymbol{\beta}, \sigma^{2} \mathbf{I}_{T}\right)$$
 
-and the likelihood function is given by:
+This means that estimating the linear regression model is the same as estimating the parameters of a multivariate Nomral distribution with unknown mean and covariance. In order to estimate the model parameters with Bayesian methods we need to apply Bayes' rule. 
+
+$$\begin{align}
+p(\boldsymbol{\beta},\sigma^2|\mathbf{y}) \propto p(\mathbf{y}|\boldsymbol{\beta},\sigma^2)p(\boldsymbol{\beta},\sigma^2)
+\end{align}$$
+
+The posterior is comprised of the likelihood function $p(\mathbf{y}|\boldsymbol{\beta},\sigma^2)$ and the joint prior distribution $p(\boldsymbol{\beta},\sigma^2)$. 
+
+"""
+
+# ╔═╡ dcf7adfb-0d6e-4459-a3cc-6a20cc632c72
+md"""
+
+#### Likelihood function 
+
+"""
+
+# ╔═╡ a541e83e-22c5-48c7-9beb-705d26f602ee
+md""" 
+
+
+For this model the likelihood function is then given by:
 
 $$\begin{aligned}
 p\left(\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}\right) &=\left|2 \pi \sigma^{2} \mathbf{I}_{T}\right|^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}\left(\sigma^{2} \mathbf{I}_{T}\right)^{-1}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})} \\
 &=\left(2 \pi \sigma^{2}\right)^{-\frac{T}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})}
 \end{aligned}$$
 
-where $|\cdot|$ denotes the determinant. Also note that the second equality follows from the result that for an $n \times n$ matrix $\mathbf{A}$ and scalar $c,|c \mathbf{A}|=c^{n}|\mathbf{A}|$ 
+where $|\cdot|$ denotes the determinant. Also note that the second equality follows from the result that for an $n \times n$ matrix $\mathbf{A}$ and scalar $c,|c \mathbf{A}|=c^{n}|\mathbf{A}|$. In our example this means that $|\sigma^{2} \mathbf{I}_{t}| = (\sigma^{2})^{T}$. For this equation we also have that $\sigma^{2} \mathbf{I}_{t} = \frac{1}{\sigma^{2}}$.
 
 """
 
 # ╔═╡ 5b442d42-b6ff-4677-afff-a00cfdb00fbc
 md""" 
 
-### Independent priors
+#### Priors
 """
 
 # ╔═╡ 8a8dea4a-3f49-4095-a1a0-d4d3c803c171
 md"""
 
-The model parameters are $\boldsymbol{\beta}$ and $\sigma^{2}$. Here we consider a convenient prior that assumes prior independence between $\boldsymbol{\beta}$ and $\sigma^{2}$, i.e., $p\left(\boldsymbol{\beta}, \sigma^{2}\right)=p(\boldsymbol{\beta}) p\left(\sigma^{2}\right) .$ In particular, we consider
+In specifying priors we need to take a stance on the dependence between the model parameters $\boldsymbol{\beta}$ and $\sigma^{2}$. 
 
-$$\boldsymbol{\beta} \sim \mathcal{N}\left(\boldsymbol{\beta}_{0}, \mathbf{V}_{\boldsymbol{\beta}}\right), \quad \sigma^{2} \sim \mathcal{I} G\left(\nu_{0}, S_{0}\right)$$
+If we believe that the regression coefficients might depend on the error variance, i.e. $p(\boldsymbol{\beta},\sigma^2)=p(\boldsymbol{\beta}|\sigma^2)p(\sigma^2)$, then it turns out (see [Chapter 2 of Koop's Bayesian Econometrics](https://www.amazon.com/Bayesian-Econometrics-Gary-Koop/dp/0470845678)) that the natural conjugate prior for $\boldsymbol{\beta}$ and $\sigma^2$ is the [Normal-Gamma distribution](https://en.wikipedia.org/wiki/Normal-gamma_distribution) denoted by
 
-with prior densities
+$$\boldsymbol{\beta},\sigma^2 \sim NG(m_0,v_0,\nu_0,S_0)$$
+
+in which $m_0,v_0,\nu_0$ and $S_0$ are hyperparameters. 
+
+If we believe that the regression coefficients and the error variance are independent, i.e. $p(\boldsymbol{\beta},\sigma^2)=p(\boldsymbol{\beta})p(\sigma^2)$, then it's convenient to specify the following conjugate priors
+1. Multivariate Normal prior for $\boldsymbol{\beta}$, i.e. $\boldsymbol{\beta}\sim N(\mathbf{m}_0,\mathbf{V}_0)$
+2. Inverse-Gamma prior for $\sigma^2$, i.e. $\sigma^2\sim IG(\nu_0,S_0)$
+
+The explicit prior densities are given by, 
 
 $$\begin{aligned}
-p(\boldsymbol{\beta}) &=(2 \pi)^{-\frac{k}{2}}\left|\mathbf{V}_{\boldsymbol{\beta}}\right|^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2}\left(\boldsymbol{\beta}-\boldsymbol{\beta}_{0}\right)^{\prime} \mathbf{V}_{\boldsymbol{\beta}}^{-1}\left(\boldsymbol{\beta}-\boldsymbol{\beta}_{0}\right)} \\
+p(\boldsymbol{\beta}) &=(2 \pi)^{-\frac{k}{2}}\left|\mathbf{V}_{0}\right|^{-\frac{1}{2}} \mathrm{e}^{-\frac{1}{2}\left(\boldsymbol{\beta}-\boldsymbol{m}_{0}\right)^{\prime} \mathbf{V}_{\boldsymbol{0}}^{-1}\left(\boldsymbol{\beta}-\boldsymbol{m}_{0}\right)} \\
 p\left(\sigma^{2}\right) &=\frac{S_{0}^{\nu_{0}}}{\Gamma\left(\nu_{0}\right)}\left(\sigma^{2}\right)^{-\left(\nu_{0}+1\right)} \mathrm{e}^{-\frac{S_{0}}{\sigma^{2}}}
 \end{aligned}$$
+
+We will assume the latter is true.  
 
 """
 
 # ╔═╡ be364d9e-c04d-47fd-ac2f-2be93bdd3f87
 md"""
 
-### Derivation for linear regression (optional)
+#### Posterior
 
 """
 
 # ╔═╡ 4a985421-7513-407a-8edf-01df7b405c55
 md"""
 
-Now, we derive a Gibbs sampler for the normal linear regression. Specifically, we need to derive the two conditional densities $p\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right)$ and $p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$
+To get the posterior, we combine the prior and likelihood
+
+$$\begin{align}
+p(\boldsymbol{\beta},\sigma^2|\mathbf{y}) &\propto p(\mathbf{y}|\boldsymbol{\beta},\sigma^2)p(\boldsymbol{\beta})p(\sigma^2)\\
+                     &\propto \underset{p(\mathbf{y}|\boldsymbol{\beta},\sigma^2)}{\underbrace{(\sigma^2)^{-\frac{T}{2}}\exp(-\frac{1}{2\sigma^2}(\mathbf{y}-\mathbf{X}\boldsymbol{\beta})'(\mathbf{y}-\mathbf{X}\boldsymbol{\beta}))}}\underset{p(\boldsymbol{\beta})}{\underbrace{\exp(-\frac{1}{2}(\boldsymbol{\beta}-\mathbf{m}_0)'\mathbf{V}_0^{-1}(\boldsymbol{\beta}-\mathbf{m}_0))}}\underset{p(\sigma^2)}{\underbrace{(\sigma^2)^{-(\nu_0+1)}\exp(-\frac{S_0}{\sigma^2})}}\\
+                     &\propto (\sigma^2)^{-(\frac{T}{2}\nu_0+1)}\exp(-\frac{1}{2\sigma^2}(S_0 + (\mathbf{y}-\mathbf{X}\boldsymbol{\beta})'(\mathbf{y}-\mathbf{X}\boldsymbol{\beta})) -\frac{1}{2}(\boldsymbol{\beta}-\mathbf{m}_0)'\mathbf{V}_0^{-1}(\boldsymbol{\beta}-\mathbf{m}_0)))\\
+\end{align}$$
+
+This final distribution is an unknown distribution. However, we know that we can use a two-block Gibbs sampler to estimate the parameters of a univariate Normal distribution (from above). Now we need to see whether we can extend this to parameters of a multivariate Normal distribution. 
+
+"""
+
+# ╔═╡ 5b3bd2d1-2697-4516-aa58-99b3d229e5f3
+md"""
+
+#### Gibbs sampling (full derivation)
+
+"""
+
+# ╔═╡ 8cf7fa3c-aaf2-4684-869e-d099218fe6e9
+md"""
+
+Now, we derive a Gibbs sampler for the normal linear regression. Specifically, we need to derive the two conditional densities $p\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right)$ and $p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$. The full conditional distributions are
+
+$p(\boldsymbol{\beta} \mid \mathbf{y},\sigma^2)\propto p(\mathbf{y} \mid \boldsymbol{\beta},\sigma^2)p(\boldsymbol{\beta})$
+$p(\sigma^2 \mid \mathbf{y},\boldsymbol{\beta})\propto p(\mathbf{y} \mid \boldsymbol{\beta},\sigma^2) p(\sigma^2)$
+
+
+**First block:**
 
 First, we can show that the conditional density $p\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right)$ is inverse-gamma:
 
 $$\begin{aligned}
-p\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right) & \propto p\left(\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}\right) p(\boldsymbol{\beta}) p\left(\sigma^{2}\right) \\
+p\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right) & \propto p\left(\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}\right) p\left(\sigma^{2}\right) \\
 & \propto\left(\sigma^{2}\right)^{-\frac{T}{2}} \mathrm{e}^{-\frac{1}{2 \sigma^{2}}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})} \times\left(\sigma^{2}\right)^{-\left(\nu_{0}+1\right)} \mathrm{e}^{-\frac{S_{0}}{\sigma^{2}}} \\
 &=\left(\sigma^{2}\right)^{-\left(\frac{T}{2}+\nu_{0}+1\right)} \mathrm{e}^{-\frac{1}{\sigma^{2}}\left(S_{0}+\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})\right)}
 \end{aligned}$$ 
@@ -526,6 +591,12 @@ p\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right) & \propto p\left(\m
 We recognize this as the kernel of an inverse-gamma density. In fact, we have
 
 $$\left(\sigma^{2} \mid \mathbf{y}, \boldsymbol{\beta}\right) \sim \mathcal{I} G\left(\nu_{0}+\frac{T}{2}, S_{0}+\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})\right)$$
+
+In other words it is the the kernel of an inverse-gamma density with scale parameter $\nu = \frac{T}{2}+\nu_0$ and shape parameter $S = S_0 + (\mathbf{y}-\mathbf{X}\boldsymbol{\beta})'(\mathbf{y}-\mathbf{X}\boldsymbol{\beta})$. Thus
+
+$$\sigma^2 \mid \mathbf{y},\boldsymbol{\beta} \sim \mathcal{I} G(\nu,S)$$
+
+**Second block:** 
 
 Next, we derive the conditional density $p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$. To that end, first note that the likelihood involves the quadratic term $(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})$, which can be expanded as
 
@@ -540,39 +611,44 @@ $$\mathbf{y}^{\prime} \mathbf{X} \boldsymbol{\beta}=\left(\boldsymbol{\beta}^{\p
 
 Similarly, the quadratic term in the prior can be expanded as
 
-$$\left(\boldsymbol{\beta}-\boldsymbol{\beta}_{0}\right)^{\prime} \mathbf{V}_{\boldsymbol{\beta}}^{-1}\left(\boldsymbol{\beta}-\boldsymbol{\beta}_{0}\right)=\boldsymbol{\beta}^{\prime} \mathbf{V}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime} \mathbf{V}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}_{0}+\boldsymbol{\beta}_{0}^{\prime} \mathbf{V}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}_{0}$$
+$$\left(\boldsymbol{\beta}-\boldsymbol{m}_{0}\right)^{\prime} \mathbf{V}_{\boldsymbol{\beta}}^{-1}\left(\boldsymbol{\beta}-\boldsymbol{m}_{0}\right)=\boldsymbol{\beta}^{\prime} \mathbf{V}_{\boldsymbol{0}}^{-1} \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime} \mathbf{V}_{\boldsymbol{0}}^{-1} \boldsymbol{m}_{0}+\boldsymbol{m}_{0}^{\prime} \mathbf{V}_{\boldsymbol{0}}^{-1} \boldsymbol{m}_{0}$$
 
-Finally, the conditional density $p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$ is given by
+For notational convenience, let $\frac{1}{\sigma^{2}} = \Sigma^{-1}$ where $\Sigma = \sigma^{2}\mathbf{I}_{T}$. The conditional density $p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$ is then given by
 
-$$\begin{aligned}
-p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right) & \propto p\left(\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}\right) p(\boldsymbol{\beta}) p\left(\sigma^{2}\right) \\
-& \propto \mathrm{e}^{-\frac{1}{2 \sigma^{2}}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})^{\prime}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta})} \times \mathrm{e}^{-\frac{1}{2}\left(\boldsymbol{\beta}-\boldsymbol{\beta}_{0}\right)^{\prime} \mathbf{V}_{\beta}^{-1}\left(\boldsymbol{\beta}-\boldsymbol{\beta}_{0}\right)} \\
-& \propto \mathrm{e}^{-\frac{1}{2}\left(\boldsymbol{\beta}^{\prime} \mathbf{V}_{\beta}^{-1} \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime} \mathbf{V}_{\beta}^{-1} \boldsymbol{\beta}_{0}\right)} \mathrm{e}^{-\frac{1}{2 \sigma^{2}}\left(\boldsymbol{\beta}^{\prime} \mathbf{X}^{\prime} \mathbf{X} \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime} \mathbf{X}^{\prime} \mathbf{y}\right)} \\
-&=\mathrm{e}^{-\frac{1}{2}\left[\boldsymbol{\beta}^{\prime}\left(\mathbf{V}_{\boldsymbol{\beta}}^{-1}+\frac{1}{\sigma^{2}} \mathbf{X}^{\prime} \mathbf{X}\right) \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime}\left(\mathbf{V}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}_{0}+\frac{1}{\sigma^{2}} \mathbf{X}^{\prime} \mathbf{y}\right)\right]}
-\end{aligned}$$
+$$\begin{align}
+p(\boldsymbol{\beta} \mid \mathbf{y},\sigma^2)&\propto p(\mathbf{y} \mid \boldsymbol{\beta},\sigma^2)p(\boldsymbol{\beta})\\
+                          &\propto\exp(-\frac{1}{2}((\mathbf{y}-\mathbf{X}\boldsymbol{\beta})'\boldsymbol{\Sigma}^{-1}(\mathbf{y}-\mathbf{X}\boldsymbol{\beta}))\exp(-\frac{1}{2}(\boldsymbol{\beta}-\mathbf{m}_0)'\mathbf{V}_0^{-1}(\boldsymbol{\beta}-\mathbf{m}_0))\\
+                          &\propto\exp(-\frac{1}{2}((\boldsymbol{\beta}'\mathbf{X}'\boldsymbol{\Sigma}^{-1}\mathbf{X}\boldsymbol{\beta}-2\boldsymbol{\beta}'\mathbf{X}'\boldsymbol{\Sigma}^{-1}\mathbf{y}))\exp(-\frac{1}{2}(\boldsymbol{\beta}'\mathbf{V}_0^{-1}\boldsymbol{\beta}-2\boldsymbol{\beta}'\mathbf{V}_0^{-1}\mathbf{m}_0))\\
+                          &=\exp(-\frac{1}{2}(\boldsymbol{\beta}'(\mathbf{X}'\boldsymbol{\Sigma}^{-1}\mathbf{X}+\mathbf{V}_0^{-1})\boldsymbol{\beta}-2\boldsymbol{\beta}'(\mathbf{X}'\boldsymbol{\Sigma}^{-1}\mathbf{y} + \mathbf{V}_0^{-1}\mathbf{m}_0))\\
+\end{align}$$
 
-Since the exponent is quadratic in $\boldsymbol{\beta}, p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$ is a multivariate normal density, say,
+Since the exponent is quadratic in $\boldsymbol{\beta}, p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right)$ is a multivariate normal density, 
 
-$$\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}\right) \sim \mathcal{N}\left(\widehat{\boldsymbol{\beta}}, \mathbf{D}_{\boldsymbol{\beta}}\right)$$
+$$\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2} \sim \mathcal{N}\left(\widehat{\boldsymbol{\beta}}, \mathbf{D}_{\boldsymbol{\beta}}\right)$$
 
 for some mean vector $\widehat{\boldsymbol{\beta}}$ and covariance matrix $\mathbf{D}_{\beta}$. Next, we derive explicit expressions for $\widehat{\boldsymbol{\beta}}$ and $\mathbf{D}_{\boldsymbol{\beta}}$
 
 The kernel of $\mathcal{N}\left(\widehat{\boldsymbol{\beta}}, \mathbf{D}_{\boldsymbol{\beta}}\right)$ is simply
 
-$$\mathrm{e}^{-\frac{1}{2}\left(\boldsymbol{\beta}^{\prime} \mathbf{D}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime} \mathbf{D}_{\boldsymbol{\beta}}^{-1} \widehat{\boldsymbol{\beta}}\right)}$$
+$$p(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2}) \propto \mathrm{exp}\left({-\frac{1}{2}\left(\boldsymbol{\beta}^{\prime} \mathbf{D}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}-2 \boldsymbol{\beta}^{\prime} \mathbf{D}_{\boldsymbol{\beta}}^{-1} \widehat{\boldsymbol{\beta}}\right)}\right)$$
 
 Comparing this with the kernel in a previous expression, we have that 
 
-$$\mathbf{D}_{\boldsymbol{\beta}}=\left(\mathbf{V}_{\boldsymbol{\beta}}^{-1}+\frac{1}{\sigma^{2}} \mathbf{X}^{\prime} \mathbf{X}\right)^{-1}, \quad \widehat{\boldsymbol{\beta}}=\mathbf{D}_{\beta}\left(\mathbf{V}_{\boldsymbol{\beta}}^{-1} \boldsymbol{\beta}_{0}+\frac{1}{\sigma^{2}} \mathbf{X}^{\prime} \mathbf{y}\right)$$
+$$\mathbf{D}_{\boldsymbol{\beta}}=\left(\mathbf{V}_{0}^{-1}+\frac{1}{\sigma^{2}} \mathbf{X}^{\prime} \mathbf{X}\right)^{-1}, \quad \widehat{\boldsymbol{\beta}}=\mathbf{D}_{\beta}\left(\mathbf{V}_{0}^{-1} \boldsymbol{m}_{0}+\frac{1}{\sigma^{2}} \mathbf{X}^{\prime} \mathbf{y}\right)$$
 
 Even though one can use the built-in functionality in _Julia_ to sample from $\mathcal{N}(\boldsymbol{\mu}, \mathbf{\Sigma})$, it is instructive to see how it can be done by simply transforming independent standard normal random variables.
+
+
+
+
+
 
 """
 
 # ╔═╡ 0999d280-3d93-4a0d-a487-215a3f068fee
 md""" 
 
-### Sampling from the Normal distribution
+### Sampling from a Multivariate Normal distribution
 
 """
 
@@ -593,10 +669,13 @@ Finally, we summarize the the Gibbs sampler for the linear regression model.
 
 """
 
+# ╔═╡ 18a650b2-cfea-400c-863a-d98895ea59db
+
+
 # ╔═╡ c5c4da02-8b6b-4318-b625-ce4f31703c79
 md"""
 
-### Gibbs Sampler for the Linear Regression Model
+### Gibbs Sampler for Regression
 
 """
 
@@ -610,6 +689,20 @@ Pick some initial values $\boldsymbol{\beta}^{(0)}=\mathbf{a}_{0}$ and $\sigma^{
 2. Draw $\boldsymbol{\beta}^{(r)} \sim p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2(r)}\right)$ (multivariate normal).
 
 Next we show how to implement this process in Julia. 
+
+"""
+
+# ╔═╡ 78027bca-3034-4d63-989a-aca1ab6b439e
+md"""
+
+### Computational advice 
+
+"""
+
+# ╔═╡ 69091f1b-86e9-45c8-9aad-819e097e6a70
+md"""
+
+When selecting our hyperparameter values, we should note the following., 
 
 """
 
@@ -884,7 +977,6 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 RDatasets = "ce6b1742-4840-55fa-b093-852dadbb1d8b"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
@@ -905,7 +997,6 @@ MLDataUtils = "~0.5.4"
 Plots = "~1.22.0"
 PlutoUI = "~0.7.1"
 RDatasets = "~0.7.5"
-StaticArrays = "~1.2.12"
 StatsBase = "~0.33.10"
 StatsPlots = "~0.14.27"
 Turing = "~0.15.1"
@@ -2511,14 +2602,21 @@ version = "0.9.1+5"
 # ╟─1703eb19-aeca-4ebe-a9b3-18dfbf4efdfe
 # ╟─9ffed7a8-f8d3-4c1a-affa-5d6646683829
 # ╟─993c9137-d708-4feb-8a85-51d85c38fc8d
+# ╟─dcf7adfb-0d6e-4459-a3cc-6a20cc632c72
+# ╟─a541e83e-22c5-48c7-9beb-705d26f602ee
 # ╟─5b442d42-b6ff-4677-afff-a00cfdb00fbc
 # ╟─8a8dea4a-3f49-4095-a1a0-d4d3c803c171
 # ╟─be364d9e-c04d-47fd-ac2f-2be93bdd3f87
 # ╟─4a985421-7513-407a-8edf-01df7b405c55
+# ╟─5b3bd2d1-2697-4516-aa58-99b3d229e5f3
+# ╟─8cf7fa3c-aaf2-4684-869e-d099218fe6e9
 # ╟─0999d280-3d93-4a0d-a487-215a3f068fee
 # ╟─f43f8154-5bd3-4a33-8316-991417549d32
+# ╠═18a650b2-cfea-400c-863a-d98895ea59db
 # ╟─c5c4da02-8b6b-4318-b625-ce4f31703c79
 # ╟─428eb291-d516-4b56-91e7-df3a92cd3a4f
+# ╟─78027bca-3034-4d63-989a-aca1ab6b439e
+# ╟─69091f1b-86e9-45c8-9aad-819e097e6a70
 # ╟─223f4b6f-8321-4142-9dfa-1afe371d40ac
 # ╟─edaf930a-4933-4047-8854-bbb02ea9c39c
 # ╠═c9c8d57b-3010-4056-aaa3-a0354cf456fd

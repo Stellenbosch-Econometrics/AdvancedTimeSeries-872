@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.0
+# v0.16.1
 
 using Markdown
 using InteractiveUtils
@@ -72,7 +72,7 @@ We will recap some of the basics on Bayesian econometrics.
 "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-TableOfContents() # Uncomment to see TOC
+# TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ bbcafd74-97f4-4b8f-bffa-937812d9a2eb
 Random.seed!(0)
@@ -90,6 +90,7 @@ md" Today we will be looking at the following topics,
 - Gibbs sampling routine for our Normal model with unknown $\sigma^{2}$
 - The Bayesian approach to linear regression
 - Gibbs sampling and regression analysis
+- AR model example
 - Regression with `Turing.jl` 
 
 "
@@ -228,11 +229,11 @@ where $\bar{\sigma}^{2}$ is the mean of $\sigma^{2(1)}, \ldots, \sigma^{2(R)}$
 
 Now the problem becomes: How do we sample from the posterior distribution? This brings us to Markov chain Monte Carlo (MCMC) methods, which are a broad class of algorithms for sampling from arbitrary probability distributions. This is achieved by constructing a Markov chain such that its limiting distribution is the desired distribution. Below we discuss one such method, called Gibbs sampling.
 
-Specifically, suppose we wish to sample from the target distribution $p(\boldsymbol{\Theta})=p\left(\boldsymbol{\theta}_{1}, \ldots, \boldsymbol{\theta}_{n}\right)$. A Gibbs sampler constructs a Markov chain $\Theta^{(1)}, \Theta^{(2)}, \ldots$ using the full conditional distributions $p\left(\boldsymbol{\theta}_{i} \mid \boldsymbol{\theta}_{1}, \ldots, \boldsymbol{\theta}_{i-1}, \boldsymbol{\theta}_{i+1}, \ldots, \boldsymbol{\theta}_{n}\right)$ as the transition kernels. Under certain regularity conditions, the limiting distribution of the Markov chain thus constructed is the target distribution.
+Specifically, suppose we wish to sample from the target distribution $p(\boldsymbol{\Theta})=p\left(\boldsymbol{\theta}_{1}, \ldots, \boldsymbol{\theta}_{n}\right)$. A Gibbs sampler constructs a Markov chain $\boldsymbol{\Theta}^{(1)}, \boldsymbol{\Theta}^{(2)}, \ldots$ using the full conditional distributions $p\left(\boldsymbol{\theta}_{i} \mid \boldsymbol{\theta}_{1}, \ldots, \boldsymbol{\theta}_{i-1}, \boldsymbol{\theta}_{i+1}, \ldots, \boldsymbol{\theta}_{n}\right)$ as the transition kernels. Under certain regularity conditions, the limiting distribution of the Markov chain thus constructed is the target distribution.
 
-Operationally, we start from an initial state $\Theta^{(0)}$. Then, we repeat the following steps from $r=1$ to $R$ :
+Operationally, we start from an initial state $\boldsymbol{\Theta}^{(0)}$. Then, we repeat the following steps from $r=1$ to $R$ :
 
-Given the current state $\Theta=\Theta^{(r)}$, generate $\mathbf{Y}=\left(\mathbf{Y}_{1}, \ldots, \mathbf{Y}_{n}\right)$ as follows:
+Given the current state $\boldsymbol{\Theta}=\boldsymbol{\Theta}^{(r)}$, generate $\mathbf{Y}=\left(\mathbf{Y}_{1}, \ldots, \mathbf{Y}_{n}\right)$ as follows:
 
 1. Draw $\mathbf{Y}_{1} \sim p\left(\mathbf{y}_{1} \mid \boldsymbol{\theta}_{2}, \ldots, \boldsymbol{\theta}_{n}\right)$.
 
@@ -240,9 +241,9 @@ Given the current state $\Theta=\Theta^{(r)}$, generate $\mathbf{Y}=\left(\mathb
 
 3. Draw $\mathbf{Y}_{n} \sim p\left(\mathbf{y}_{n} \mid \mathbf{Y}_{1}, \ldots, \mathbf{Y}_{n-1}\right)$ 
 
-It is important to note that the Markov chain $\Theta^{(1)}, \Theta^{(2)}, \ldots$ does not converge to a fixed vector of constants. Rather, it is the distribution of $\Theta^{(r)}$ that converges to the target distribution.
+It is important to note that the Markov chain $\boldsymbol{\Theta}^{(1)}, \boldsymbol{\Theta}^{(2)}, \ldots$ does not converge to a fixed vector of constants. Rather, it is the distribution of $\boldsymbol{\Theta}^{(r)}$ that converges to the target distribution.
 
-In practice, one typically discards the first $R_{0}$ draws to eliminate the effect of the initial state $\Theta^{(0)}$. The discarded draws are often refereed to as the 'burn-in'. There are a number of convergence diagnostics to test if the Markov chain has converged to the limiting distribution. One popular test is the Geweke's convergence diagnostics.
+In practice, one typically discards the first $R_{0}$ draws to eliminate the effect of the initial state $\boldsymbol{\Theta}^{(0)}$. The discarded draws are often refereed to as the 'burn-in'. There are a number of convergence diagnostics to test if the Markov chain has converged to the limiting distribution. One popular test is the Geweke's convergence diagnostics.
 
 """
 
@@ -382,7 +383,7 @@ end
 # ╔═╡ 80e6619b-ac42-453b-8f38-850b2b99d000
 begin
 	surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
-end
+end;
 
 # ╔═╡ 82b96729-33c2-49b0-b908-562faf903a1e
 md"""
@@ -665,12 +666,39 @@ To generate $R$ independent draws from $\mathcal{N}(\boldsymbol{\mu}, \mathbf{\S
 
 4. Repeat Steps 2 and 3 independently $R$ times.
 
-Finally, we summarize the the Gibbs sampler for the linear regression model.
+We can show what this process looks like below. 
 
 """
 
-# ╔═╡ 18a650b2-cfea-400c-863a-d98895ea59db
+# ╔═╡ 6ec571a0-6407-439a-b7f3-fb15085d73bf
+begin
+	## Sample from a Multivariate Normal Distribution
+	# Set up Normal random vector
+	n = 2 # Dimension of Normal random vector 
+	mu = ones(n);
+	A = randn(n, n); 
+	Sig = A' * A; # positive definite matrix
+	
+	# Simulate
+	R = 10000; # Simulation size
+	U = zeros(R, 2); # storage matrix
+	for i in 1:R
+	    U[i,:] = transpose(mu + (cholesky(Sig).L) * rand(Normal(0, 1), n));
+	end
+	
+	# Summary statistics
+	muhat = mean(U, dims=1);
+	Sighat = cov(U);
+end;
 
+# ╔═╡ 3752db0a-3c4f-48e9-89ec-c14927584a1d
+md""" In _Julia_ we could have simply run the following command to sample from this distribution """
+
+# ╔═╡ 6e288af8-8f7d-4d4a-9fc3-4bb7df212e8e
+rand(MvNormal(mu, Sig));
+
+# ╔═╡ fd643db4-ad7f-4203-b7ed-96c730343013
+md""" However, it is computationially more efficient to use the first method.  """
 
 # ╔═╡ c5c4da02-8b6b-4318-b625-ce4f31703c79
 md"""
@@ -689,20 +717,6 @@ Pick some initial values $\boldsymbol{\beta}^{(0)}=\mathbf{a}_{0}$ and $\sigma^{
 2. Draw $\boldsymbol{\beta}^{(r)} \sim p\left(\boldsymbol{\beta} \mid \mathbf{y}, \sigma^{2(r)}\right)$ (multivariate normal).
 
 Next we show how to implement this process in Julia. 
-
-"""
-
-# ╔═╡ 78027bca-3034-4d63-989a-aca1ab6b439e
-md"""
-
-### Computational advice 
-
-"""
-
-# ╔═╡ 69091f1b-86e9-45c8-9aad-819e097e6a70
-md"""
-
-When selecting our hyperparameter values, we should note the following., 
 
 """
 
@@ -779,7 +793,7 @@ function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
         D_β   = (Vβ_0 .+ X' * X/σ2_1) \ I(2)
         β_hat = D_β * (Vβ_0 * β_0' .+ X' * y ./ σ2_1)
 
-        # See the note with respect to algorithm 2.1 for this
+        # Refer to section on sampling from multivariate normal
         C = cholesky(Symmetric(D_β)).L
         β_1 = β_hat .+ C * randn(2,1)
 
@@ -800,6 +814,156 @@ post_gibbs_lin = gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
 
 # ╔═╡ 798e08bc-0866-466a-91d0-59706e7d3cc5
 plot(Normal(post_gibbs_lin[1], abs(post_gibbs_lin[2])), legend = false)
+
+# ╔═╡ 3006d4f8-1cca-4947-8dc6-3b77b278fbb8
+md"""
+
+### Example: Autoregressive model 
+
+"""
+
+# ╔═╡ 22bdce87-a1f2-440b-965a-391148b010ac
+md""" As you know from the first semester, the autoregressive model is a workhorse model in economics and finance. This model is represented by 
+
+$$y_t = \rho_0 + \rho_1 y_{t-1} + \dots + \rho_p y_{t-p} + e_t, \quad e_t\sim N(0,\sigma^2)$$
+
+where $\rho_0$ is an unknown real-valued constant and $\rho_i$ for $i = 1, \ldots, p$ are the **unknown** coefficients and $\sigma^2 \geq 0$ is the **unknown** error variance. The number of lagged terms determines the order of the AR process. We estimate an AR(1) model on simulated data as follows. 
+
+"""
+
+# ╔═╡ 54d73a3a-5804-44cf-b771-7313790129e4
+begin
+	## Simulate Data for AR(1) process
+	true_beta0 = 0;   # true intercept
+	true_beta1 = 0.6; # true AR(1) coefficient
+	true_sig2 = 1;    # true variance
+
+	T_1 = 1000; # no. of dates
+	y0 = true_beta0/(1 - true_beta1); # initial condition
+	y = zeros(T_1); # storage vector
+	
+	y[1] = y0;
+	for t = 2:T_1
+	    y[t] = true_beta0 + true_beta1*y[t-1] + rand(Normal(0,sqrt(true_sig2)));
+	end
+	
+	data_new = y;
+	x_1 = collect(1:1:T_1);
+	plot(x_1, data_new, label="Simulated Data")
+end
+
+# ╔═╡ f539d376-0f23-4667-9b26-25848b5c635a
+begin
+	# Define key variables in linear regression model
+	p = 1;              # AR order
+	y0_new = data_new[1:p];     # Initial conditions
+	y_new = data_new[p+1:end];  # Observations
+	T_new = size(y_new, 1);      # Dates after removing initial conditions
+	X = [ones(T_new) data_new[1:end-1]]; # intercept and first lag
+	
+	x_new = collect(1:1:T_new);
+	plot(x_new, y_new, label="Data")
+	plot!(x_new, X[:,2], label="First lag")
+end
+
+# ╔═╡ 78f29328-9670-4f77-a0d0-4386c6aa71ae
+function Gibbs_AR(X, T, y)
+	# Controls
+	nburn = 1000;
+	ndraws = nburn + 10000;
+
+	# Prior for beta
+	k = size(X,2);                    # number of regressors
+	pri_m = zeros(k);                 # prior mean
+	pri_v = Diagonal(10*ones(k));     # prior covariance
+	pri_beta = MvNormal(pri_m,pri_v); # prior distribution
+
+	# Prior for sig2
+	pri_nu = 3;                           # prior shape parameter  
+	pri_S = 1*(pri_nu-1);                 # prior scale parameter - sets E(pri_sig2) = 1
+	pri_sig2 = InverseGamma(pri_S,pri_S); # prior distribution
+
+	# Storage
+	s_beta = zeros(ndraws-nburn,k);
+	s_sig2 = zeros(ndraws-nburn,1);
+
+	# Deterministic terms in posterior
+	post_nu = pri_nu + T/2;   # posterior shape parameter for sig2 
+	inv_priV = (pri_v)\I(k);  # inverse prior covariance for beta
+	XpX = X'*X; 
+	Xpy = X'*y; 
+
+	# Initial conditions
+	MC_beta = XpX\Xpy;
+	MC_sig2 = (y-X*MC_beta)'*(y-X*MC_beta)/T;
+
+	# Markov chain
+	for loop in 1:ndraws
+	# Draw beta
+    	post_v = (XpX/MC_sig2 + inv_priV)\I(k);
+    	post_m = post_v*(Xpy/MC_sig2 + inv_priV*pri_m);
+    	#MC_beta = post_m + (cholesky(post_v).L)*rand(Normal(0,1),k);
+    	MC_beta = post_m + (cholesky(Hermitian(post_v)).L)*rand(Normal(0,1),k);
+
+		# Draw sig2
+    	post_S = pri_S +0.5*(y-X*MC_beta)'*(y-X*MC_beta);
+    	MC_sig2 = rand(InverseGamma(post_nu,post_S));
+
+		# Store
+    	if loop > nburn
+        	count_loop = loop - nburn;
+        	s_beta[count_loop,:] = transpose(MC_beta);
+        	s_sig2[count_loop] = MC_sig2;
+    	end
+	end
+	
+	## Summarize results
+	# Compute posterior mean using Monte Carlo Integration
+	post_beta = mean(s_beta,dims=1);
+    post_sig2 = mean(s_sig2);
+
+	post_beta, post_sig2, s_beta, s_sig2
+end;
+
+# ╔═╡ 2502b96c-7bdc-4749-b92e-f171f60a4508
+begin
+	nburn = 1000;
+	ndraws = nburn + 10000;
+	
+	post_beta, post_sig2, s_beta, s_sig2 = Gibbs_AR(X, T_new, y_new)
+end;
+
+# ╔═╡ 01b84089-7a99-4bc4-93f4-5259fabde2cb
+begin
+	# Trace plots
+	x_t = collect(1:(ndraws-nburn))
+	p1a = plot(x_t,s_beta[:,1], title = "Markov chain: beta0", legend = false);
+	p1b = plot(x_t,s_beta[:,2], title = "Markov chain: beta1", legend = false);
+	p1c = plot(x_t,s_sig2, title = "Markov chain: sig2", label="posterior draws");
+end;
+
+# ╔═╡ 82fb8ff1-8017-4554-ba79-98045b1fccf3
+begin
+	# Plot marginal posterior distributions
+	x_h = collect(1:(ndraws-nburn));
+	histogram(x_h, s_beta[:,1], normalize=:pdf, title = "Posterior: beta0", legend = false)
+	plot!([true_beta0], seriestype="vline", legend = false)
+	p2a = plot!([post_beta[1]], seriestype="vline", legend = false)
+	
+	histogram(x_h, s_beta[:,2], normalize=:pdf, title = "Posterior: beta1", legend = false)
+	plot!([true_beta1], seriestype="vline", legend = false)
+	p2b = plot!([post_beta[2]], seriestype="vline", legend = false)
+	
+	histogram(x_h, s_sig2, normalize=:pdf, title = "Posterior: sig2", label="Empirical pdf")
+	plot!([true_sig2], seriestype="vline", label="True value")
+	p2c = plot!([post_sig2], seriestype="vline", label="MC mean")
+
+	plot(p2a,p2b,p2c,layout = (1,3), legend = false)
+end
+
+# ╔═╡ 4b4dde8d-e34d-44ac-9010-8ca22feae0e2
+md""" We can extend this example to a moving average model and thereby also the more general class of ARMA models. In the next section we will be looking at how to implement linear regression and ARMA models in `Turing.jl`.
+"""
 
 # ╔═╡ 442f79e7-425b-43fd-a760-099f5005d4b1
 md"""
@@ -1007,7 +1171,7 @@ UrlDownload = "~1.0.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.0-beta4"
+julia_version = "1.7.0-rc1"
 manifest_format = "2.0"
 
 [[deps.AbstractFFTs]]
@@ -2612,11 +2776,12 @@ version = "0.9.1+5"
 # ╟─8cf7fa3c-aaf2-4684-869e-d099218fe6e9
 # ╟─0999d280-3d93-4a0d-a487-215a3f068fee
 # ╟─f43f8154-5bd3-4a33-8316-991417549d32
-# ╠═18a650b2-cfea-400c-863a-d98895ea59db
+# ╠═6ec571a0-6407-439a-b7f3-fb15085d73bf
+# ╟─3752db0a-3c4f-48e9-89ec-c14927584a1d
+# ╠═6e288af8-8f7d-4d4a-9fc3-4bb7df212e8e
+# ╟─fd643db4-ad7f-4203-b7ed-96c730343013
 # ╟─c5c4da02-8b6b-4318-b625-ce4f31703c79
 # ╟─428eb291-d516-4b56-91e7-df3a92cd3a4f
-# ╟─78027bca-3034-4d63-989a-aca1ab6b439e
-# ╟─69091f1b-86e9-45c8-9aad-819e097e6a70
 # ╟─223f4b6f-8321-4142-9dfa-1afe371d40ac
 # ╟─edaf930a-4933-4047-8854-bbb02ea9c39c
 # ╠═c9c8d57b-3010-4056-aaa3-a0354cf456fd
@@ -2629,6 +2794,15 @@ version = "0.9.1+5"
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
 # ╠═9d1361c3-6de1-4326-85f8-4a272856d16b
 # ╠═798e08bc-0866-466a-91d0-59706e7d3cc5
+# ╟─3006d4f8-1cca-4947-8dc6-3b77b278fbb8
+# ╟─22bdce87-a1f2-440b-965a-391148b010ac
+# ╟─54d73a3a-5804-44cf-b771-7313790129e4
+# ╠═f539d376-0f23-4667-9b26-25848b5c635a
+# ╠═78f29328-9670-4f77-a0d0-4386c6aa71ae
+# ╠═2502b96c-7bdc-4749-b92e-f171f60a4508
+# ╟─01b84089-7a99-4bc4-93f4-5259fabde2cb
+# ╟─82fb8ff1-8017-4554-ba79-98045b1fccf3
+# ╟─4b4dde8d-e34d-44ac-9010-8ca22feae0e2
 # ╟─442f79e7-425b-43fd-a760-099f5005d4b1
 # ╟─d5e73cc5-0a28-4a84-ba7e-7d493c53114b
 # ╠═f3109dad-1b97-4f68-babd-65751142486a

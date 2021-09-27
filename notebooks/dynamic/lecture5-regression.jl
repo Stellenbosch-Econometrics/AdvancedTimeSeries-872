@@ -72,7 +72,7 @@ We will recap some of the basics on Bayesian econometrics.
 "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-# TableOfContents() # Uncomment to see TOC
+TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ bbcafd74-97f4-4b8f-bffa-937812d9a2eb
 Random.seed!(0)
@@ -342,7 +342,7 @@ function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
 
     # Start the Gibbs sampling procedure
     for i in 1:nsim + burnin
-        # Sample from μ (refer to Chan notes for the math)
+        # Sample from μ 
         D_μ   = 1 / (1 / σ2_0 .+ N / σ2_1)
         μ_hat = D_μ .* (μ_0 / σ2_0 .+ sum(y) / σ2_1)
         μ_1   = μ_hat .+ sqrt(D_μ) .* randn() # Affine transformation is also normal
@@ -355,14 +355,23 @@ function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
             store_θ[isave, :] = [μ_1, σ2_1]
         end
     end
-    mean(store_θ[:, 1]), mean(store_θ[:, 2])
+    mean(store_θ[:, 1]), mean(store_θ[:, 2]), store_θ
 end;
 
 # ╔═╡ 343202b3-23b5-4600-b912-7db4ab58deaf
-post_gibbs = gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1) # posterior mean of μ and σ^2
+post_gibbs = gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1); # posterior mean of μ and σ^2
 
 # ╔═╡ 3aeab073-c98a-4213-a835-3098233ba90c
-md" Let us see what this looks like when we plot it... "
+md" Let us see what this looks like when we plot the posterior. "
+
+# ╔═╡ afc56ef2-d5d2-4624-9ad9-11f15429607f
+begin
+	x_l = collect(1:(nsim-burnin));
+	histogram(x_l, post_gibbs[3][:,1], normalize=:pdf, legend = false)
+end
+
+# ╔═╡ 41365136-5d0e-4a4e-808f-d0e90a14c5dd
+md""" We can also draw nice contour plots... """
 
 # ╔═╡ 3335094d-a67b-471c-834d-e22089933104
 begin
@@ -380,10 +389,11 @@ begin
 	contour(x₁, y₁, dens_mvnormal, xlabel="X", ylabel="Y", fill=true, fillcolour = :ice)
 end
 
+# ╔═╡ 330bd7cb-7102-41c2-b7a4-f053669960c3
+md""" Or even fancy surface plots """
+
 # ╔═╡ 80e6619b-ac42-453b-8f38-850b2b99d000
-begin
-	surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
-end;
+surface(x₁, y₁, dens_mvnormal, fillcolour = :ice, backgroundinside = :ghostwhite)
 
 # ╔═╡ 82b96729-33c2-49b0-b908-562faf903a1e
 md"""
@@ -738,26 +748,23 @@ As an example, the following code first generates a sample of $T=500$ observatio
 function data_gen2(T, β, σ2)
 	
     X = [ones(T, 1) 1 .+ randn(T, 1)]
-    X * β' .+ sqrt(σ2) .* randn(T, 1)
+    return X * β' .+ sqrt(σ2) .* randn(T, 1)
 end;
 
-# ╔═╡ 9c00a82f-b55b-4644-9d46-06943e8050f6
-samp = data_gen2(T, β, σ2);
+# ╔═╡ bb10296b-1b93-46d9-bd5f-c11a4ed8bcae
+y_dg = data_gen2(T, β, σ2)
 
-# ╔═╡ bf0b1f01-6afe-44af-a4e8-df955745415b
-mean(samp)
+# ╔═╡ bfd8fab5-64fb-4bee-aee6-e9691cc887f8
+mean(y_dg)
 
-# ╔═╡ 14c19187-3641-4b2e-a3e3-dc136711d263
-var(samp)
-
-# ╔═╡ 31f3debd-770c-48bc-995f-427bf924a637
-density(samp)
+# ╔═╡ 1c38646c-b750-4402-bc70-571670cd7acd
+var(y_dg)
 
 # ╔═╡ 000cf50f-d3f8-452b-b661-11545c2ec0c4
 function get_prior(ν_0)
 
-    Vβ_0 = I(2) ./ 100
-    Σ_0  = 1 * (ν_0 - 1)
+    Vβ_0 = I(2) ./ 100 # Prior for beta
+    Σ_0  = 1 * (ν_0 - 1) # Prior for Sig2
 
     return Vβ_0, Σ_0
 end;
@@ -789,31 +796,38 @@ function gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
     # Start the Gibbs sampling procedure
     for i in 1:nsim + burnin
 
-        # Sample from μ (refer to Chan notes for the math)
-        D_β   = (Vβ_0 .+ X' * X/σ2_1) \ I(2)
+        # Sample from beta
+        D_β   = (Vβ_0 .+ X' * X / σ2_1) \ I(2)
         β_hat = D_β * (Vβ_0 * β_0' .+ X' * y ./ σ2_1)
 
         # Refer to section on sampling from multivariate normal
-        C = cholesky(Symmetric(D_β)).L
+        C = cholesky(Hermitian(D_β)).L
         β_1 = β_hat .+ C * randn(2,1)
 
         # Sample from σ2
         e = y - X * β_1
-        sig2 = 1 / rand(Gamma(ν_0 .+ T/2, 1/(Σ_0 + (e' * e / 2)[1])))
+        sig2 = rand(InverseGamma(ν_0 .+ T/2, Σ_0 + (e' * e / 2)[1]))
 
         if i > burnin
             isave = i .- burnin
             store_θ[isave, :] = [β_1' σ2_1]
         end
     end
-    [mean(store_θ[:, 1]), mean(store_θ[:, 2])]
+    mean(store_θ[:, 1]), mean(store_θ[:, 2]), store_θ
 end;
 
 # ╔═╡ 9d1361c3-6de1-4326-85f8-4a272856d16b
-post_gibbs_lin = gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0)
+posterior_beta, posterior_sig2, store_θ  = gibbs_linear(nsim, burnin, T, β, σ2, β_0, ν_0);
 
-# ╔═╡ 798e08bc-0866-466a-91d0-59706e7d3cc5
-plot(Normal(post_gibbs_lin[1], abs(post_gibbs_lin[2])), legend = false)
+# ╔═╡ 01f5e6cd-1efa-49a2-8d0d-b5536bdd7388
+begin
+	x_n = collect(1:(nsim-burnin));
+	pg1 = histogram(x_n, store_θ[:,1], normalize=:pdf, title = "Posterior: Beta", legend = false)
+	
+	pg2 = histogram(x_n, store_θ[:,3], normalize=:pdf, title = "Posterior: Sigma2", legend = false)
+
+	plot(pg1,pg2, layout = (1,2), legend = false)
+end
 
 # ╔═╡ 3006d4f8-1cca-4947-8dc6-3b77b278fbb8
 md"""
@@ -867,7 +881,7 @@ begin
 end
 
 # ╔═╡ 78f29328-9670-4f77-a0d0-4386c6aa71ae
-function Gibbs_AR(X, T, y)
+function gibbs_AR(X, T, y)
 	# Controls
 	nburn = 1000;
 	ndraws = nburn + 10000;
@@ -930,7 +944,7 @@ begin
 	nburn = 1000;
 	ndraws = nburn + 10000;
 	
-	post_beta, post_sig2, s_beta, s_sig2 = Gibbs_AR(X, T_new, y_new)
+	post_beta, post_sig2, s_beta, s_sig2 = gibbs_AR(X, T_new, y_new)
 end;
 
 # ╔═╡ 01b84089-7a99-4bc4-93f4-5259fabde2cb
@@ -2757,8 +2771,11 @@ version = "0.9.1+5"
 # ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
 # ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
 # ╠═343202b3-23b5-4600-b912-7db4ab58deaf
-# ╟─3aeab073-c98a-4213-a835-3098233ba90c
+# ╠═3aeab073-c98a-4213-a835-3098233ba90c
+# ╟─afc56ef2-d5d2-4624-9ad9-11f15429607f
+# ╟─41365136-5d0e-4a4e-808f-d0e90a14c5dd
 # ╟─3335094d-a67b-471c-834d-e22089933104
+# ╟─330bd7cb-7102-41c2-b7a4-f053669960c3
 # ╟─80e6619b-ac42-453b-8f38-850b2b99d000
 # ╟─82b96729-33c2-49b0-b908-562faf903a1e
 # ╟─1f2c9795-0b2c-4a14-9f28-1fef68f6b467
@@ -2785,15 +2802,14 @@ version = "0.9.1+5"
 # ╟─223f4b6f-8321-4142-9dfa-1afe371d40ac
 # ╟─edaf930a-4933-4047-8854-bbb02ea9c39c
 # ╠═c9c8d57b-3010-4056-aaa3-a0354cf456fd
-# ╠═9c00a82f-b55b-4644-9d46-06943e8050f6
-# ╠═bf0b1f01-6afe-44af-a4e8-df955745415b
-# ╠═14c19187-3641-4b2e-a3e3-dc136711d263
-# ╠═31f3debd-770c-48bc-995f-427bf924a637
+# ╠═bb10296b-1b93-46d9-bd5f-c11a4ed8bcae
+# ╠═bfd8fab5-64fb-4bee-aee6-e9691cc887f8
+# ╠═1c38646c-b750-4402-bc70-571670cd7acd
 # ╠═000cf50f-d3f8-452b-b661-11545c2ec0c4
 # ╠═7b70270e-2991-40ee-97a9-082691e68701
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
 # ╠═9d1361c3-6de1-4326-85f8-4a272856d16b
-# ╠═798e08bc-0866-466a-91d0-59706e7d3cc5
+# ╠═01f5e6cd-1efa-49a2-8d0d-b5536bdd7388
 # ╟─3006d4f8-1cca-4947-8dc6-3b77b278fbb8
 # ╟─22bdce87-a1f2-440b-965a-391148b010ac
 # ╟─54d73a3a-5804-44cf-b771-7313790129e4

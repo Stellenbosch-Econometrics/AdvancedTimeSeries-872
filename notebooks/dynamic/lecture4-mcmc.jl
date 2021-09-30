@@ -544,7 +544,8 @@ Let us provide a small code snippet to show how King Markov moves around the arc
 # ╔═╡ f5ba6b1c-c6ea-4bed-8dd1-bc35d0f3d75b
 # Super simple algorithm, mostly for illustrative purposes. 
 function KingMarkovSimple(n, current = 10)
-	
+
+	# initialise the vector
 	positions = zeros(n)
 	
 	for i in 1:n
@@ -584,7 +585,7 @@ end
 md" We would expect that our posterior distribution would be almost like a staircase, with the islands with smaller population being visited less. If we increase the number of iterations this algorithm is allowed to run, we will eventually get to the correct posterior distribution. However, this algorithm can be quite slow. It will explore the posterior space, but it takes quite a long time to do so. "
 
 # ╔═╡ 0c26c6f2-f96f-4bdc-9379-81a76179bd11
-histogram(travels, bins = 10, color = :steelblue, alpha = 0.8, legend = false)
+histogram(travels, bins = 10, color = :steelblue, alpha = 0.8, legend = false, normalize = true)
 
 # ╔═╡ ec1270ca-5943-4fe7-8017-6904c72673f0
 md" Now let us continue to a more formal / general discussion of the Metropolis algorithm. "
@@ -2800,7 +2801,7 @@ version = "0.9.1+5"
 # ╠═59ebf35d-9d62-4268-b33e-bbcc14e8a23d
 # ╟─0e73488b-9981-44dd-b7cc-d314e8f123c1
 # ╟─6791bc6f-ef88-4894-881b-6a89d836efe2
-# ╟─0c26c6f2-f96f-4bdc-9379-81a76179bd11
+# ╠═0c26c6f2-f96f-4bdc-9379-81a76179bd11
 # ╟─ec1270ca-5943-4fe7-8017-6904c72673f0
 # ╟─f7311d0b-a74c-4a15-be37-5dd8e236cf3d
 # ╟─9e9af560-3898-4bb2-8aa7-0e660f738a72

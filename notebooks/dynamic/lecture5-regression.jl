@@ -164,7 +164,7 @@ md"""
 
 The model in question is
 
-$$\left(y_{n} \mid \mu, \sigma^{2}\right) \sim \mathcal{N}\left(\mu, \sigma^{2}\right), \quad n=1, \ldots, N$$
+$$y_{n} \mid \mu, \sigma^{2} \sim \mathcal{N}\left(\mu, \sigma^{2}\right), \quad n=1, \ldots, N$$
 
 where both $\mu$ and $\sigma^{2}$ are now unknown. We assume the following prior for $\mu: \mathcal{N}\left(\mu_{0}, \sigma_{0}^{2}\right)$.
 
@@ -311,8 +311,8 @@ begin
 	# Parameters for first example
 	nsim 	= 10_000
 	burnin 	= 1000
-	μ 		= 3.0
-	σ2 		= 0.1
+	μ 		= 3.0 # True μ
+	σ2 		= 0.1 # True σ2
 	N 		= 100
 	μ_0 	= 0.0
 	σ2_0 	= 100
@@ -369,6 +369,9 @@ begin
 	x_l = collect(1:(nsim-burnin));
 	histogram(x_l, post_gibbs[3][:,1], normalize=:pdf, legend = false)
 end
+
+# ╔═╡ fed7288d-5051-4ed0-babd-8eac00a634d2
+histogram(x_l, post_gibbs[3][:,2], normalize=:pdf, legend = false)
 
 # ╔═╡ 41365136-5d0e-4a4e-808f-d0e90a14c5dd
 md""" We can also draw nice contour plots... """
@@ -485,15 +488,15 @@ $$\mathbb{E} \mathbf{y}=\mathbf{X} \boldsymbol{\beta}, \quad \operatorname{Cov}(
 
 Putting it all together, we have
 
-$$\left(\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}\right) \sim \mathcal{N}\left(\mathbf{X} \boldsymbol{\beta}, \sigma^{2} \mathbf{I}_{T}\right)$$
+$$\mathbf{y} \mid \boldsymbol{\beta}, \sigma^{2}  \sim \mathcal{N}\left(\mathbf{X} \boldsymbol{\beta}, \sigma^{2} \mathbf{I}_{T}\right)$$
 
 This means that estimating the linear regression model is the same as estimating the parameters of a multivariate Nomral distribution with unknown mean and covariance. In order to estimate the model parameters with Bayesian methods we need to apply Bayes' rule. 
 
 $$\begin{align}
-p(\boldsymbol{\beta},\sigma^2|\mathbf{y}) \propto p(\mathbf{y}|\boldsymbol{\beta},\sigma^2)p(\boldsymbol{\beta},\sigma^2)
+p(\boldsymbol{\beta},\sigma^2 \mid \mathbf{y}) \propto p(\mathbf{y} \mid \boldsymbol{\beta},\sigma^2)p(\boldsymbol{\beta},\sigma^2)
 \end{align}$$
 
-The posterior is comprised of the likelihood function $p(\mathbf{y}|\boldsymbol{\beta},\sigma^2)$ and the joint prior distribution $p(\boldsymbol{\beta},\sigma^2)$. 
+The posterior is comprised of the likelihood function $p(\mathbf{y} \mid\boldsymbol{\beta},\sigma^2)$ and the joint prior distribution $p(\boldsymbol{\beta},\sigma^2)$. 
 
 """
 
@@ -916,6 +919,7 @@ function gibbs_AR(X, T, y)
 	# Draw beta
     	post_v = (XpX/MC_sig2 + inv_priV)\I(k);
     	post_m = post_v*(Xpy/MC_sig2 + inv_priV*pri_m);
+		
     	#MC_beta = post_m + (cholesky(post_v).L)*rand(Normal(0,1),k);
     	MC_beta = post_m + (cholesky(Hermitian(post_v)).L)*rand(Normal(0,1),k);
 
@@ -1079,7 +1083,7 @@ begin
 	train_percentage = 0.95
 	s_train = s[1:floor(Int, train_percentage*length(s))]
 	N₂ = length(s_train)
-end
+end;
 
 # ╔═╡ 536ecb71-f33f-402d-8d6f-16291aa9530f
 md" We can test for stationarity with a Dickey Fuller test. "
@@ -1135,7 +1139,13 @@ md" For the sake of argument, let us say that we can then model with with an AR(
         # Observe likelihood.
         x[t] ~ Normal(x_hat[t], 1)
     end
-end;
+end
+
+# ╔═╡ afeba532-4045-4e75-acc3-b8c78b397e5e
+chain_ARIMA011 = sample(ARIMA011(s_train), NUTS(0.6), 500)
+
+# ╔═╡ fa948b6e-c84b-410e-9361-098241d2b60e
+plot(chain_ARIMA011)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2771,8 +2781,9 @@ version = "0.9.1+5"
 # ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
 # ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
 # ╠═343202b3-23b5-4600-b912-7db4ab58deaf
-# ╠═3aeab073-c98a-4213-a835-3098233ba90c
+# ╟─3aeab073-c98a-4213-a835-3098233ba90c
 # ╟─afc56ef2-d5d2-4624-9ad9-11f15429607f
+# ╠═fed7288d-5051-4ed0-babd-8eac00a634d2
 # ╟─41365136-5d0e-4a4e-808f-d0e90a14c5dd
 # ╟─3335094d-a67b-471c-834d-e22089933104
 # ╟─330bd7cb-7102-41c2-b7a4-f053669960c3
@@ -2809,7 +2820,7 @@ version = "0.9.1+5"
 # ╠═7b70270e-2991-40ee-97a9-082691e68701
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
 # ╠═9d1361c3-6de1-4326-85f8-4a272856d16b
-# ╠═01f5e6cd-1efa-49a2-8d0d-b5536bdd7388
+# ╟─01f5e6cd-1efa-49a2-8d0d-b5536bdd7388
 # ╟─3006d4f8-1cca-4947-8dc6-3b77b278fbb8
 # ╟─22bdce87-a1f2-440b-965a-391148b010ac
 # ╟─54d73a3a-5804-44cf-b771-7313790129e4
@@ -2846,5 +2857,7 @@ version = "0.9.1+5"
 # ╟─596fdda0-0d0e-4e45-8fa2-5618122a08b6
 # ╟─e680e488-f1e2-4da8-8ef4-612f60cd030b
 # ╠═7eecc27c-5af0-42d4-96f6-2a689e945e7f
+# ╠═afeba532-4045-4e75-acc3-b8c78b397e5e
+# ╠═fa948b6e-c84b-410e-9361-098241d2b60e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

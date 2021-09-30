@@ -78,14 +78,14 @@ Vector autoregressions (VARs) have been widely used for macroeconomic forecastin
 
 Despite the empirical success of the standard constant-coefficient and homoscedastic VAR, there is a lot of recent work in extending these conventional VARs to models with time-varying regression coefficients and stochastic volatility. These extensions are motivated by the widely observed structural instabilities and time-varying volatility in a variety of macroeconomic time series.
 
-In this chapter we will study a few of these more flexible VARs, including the timevarying parameter (TVP) VAR and VARs with stochastic volatility. An excellent review paper that covers many of the same topics is Koop and Korobilis (2010). We will begin with a basic VAR.
+In some of the future lectures we will study a few of these more flexible VARs, including the timevarying parameter (TVP) VAR and VARs with stochastic volatility. An excellent review paper that covers many of the same topics is Koop and Korobilis (2010). We will, however, begin with a basic VAR.
 
 """
 
 # ╔═╡ 77fde8ac-f019-4b4c-9d03-9a9c0d7ca2a0
 md"""
 
-### Basic VAR
+### Basic (reduced form) VAR
 """
 
 # ╔═╡ 7e0462d4-a307-465b-ae27-737431ecb565
@@ -93,28 +93,35 @@ md"""
 
 Suppose $\mathbf{y}_{t}=\left(y_{1 t}, \ldots, y_{n t}\right)^{\prime}$ is a vector of dependent variables at time $t$. Consider the following $\operatorname{VAR}(p)$ :
 
-$$\mathbf{y}_{t}=\mathbf{b}+\mathbf{A}_{1} \mathbf{y}_{t-1}+\cdots+\mathbf{A}_{p} \mathbf{y}_{t-p}+\varepsilon_{t}$$
+$$\mathbf{y}_{t}=\mathbf{b}+\mathbf{A}_{1} \mathbf{y}_{t-1}+\cdots+\mathbf{A}_{p} \mathbf{y}_{t-p}+\boldsymbol{\varepsilon}_{t}$$
 
-where $\mathbf{b}$ is an $n \times 1$ vector of intercepts, $\mathbf{A}_{1}, \ldots, \mathbf{A}_{p}$ are $n \times n$ coefficient matrices and $\varepsilon_{t} \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$. In other words, $\operatorname{VAR}(p)$ is simply a multiple-equation regression where the regressors are the lagged dependent variables.
+where $\mathbf{b} = \left(b_{1}, \ldots, b_{n}\right)^{\prime}$ is an $n \times 1$ vector of intercepts , $\mathbf{A}_{1}, \ldots, \mathbf{A}_{p}$ are $n \times n$ matrices of autoregressive coefficients and $\boldsymbol{\varepsilon}_{t} = \left(\varepsilon_{1 t}, \ldots, \varepsilon_{n t}\right)^{\prime} \sim \mathcal{N}(\mathbf{0}, \mathbf{\Sigma})$. In other words, $\operatorname{VAR}(p)$ is simply a multiple-equation regression where the regressors are the lagged dependent variables.
+
+Each equation in this system has $k = np + 1$ regressors, and the total system has $nk = n(np + 1)$ coefficients.
 
 To fix ideas, consider a simple example with $n=2$ variables and $p=1$ lag. Then the equation above can be written explicitly as:
 
-$$\left(\begin{array}{l}
+$$\underset{\mathbf{y}_t}{\underbrace{\left(\begin{array}{l}
 y_{1 t} \\
 y_{2 t}
-\end{array}\right)=\left(\begin{array}{l}
+\end{array}\right)}}=\underset{\mathbf{b}}{\underbrace{\left(\begin{array}{l}
 b_{1} \\
 b_{2}
-\end{array}\right)+\left(\begin{array}{ll}
+\end{array}\right)}}
++
+\underset{\mathbf{A}}{\underbrace{\left(\begin{array}{ll}
 A_{1,11} & A_{1,12} \\
 A_{1,21} & A_{1,22}
-\end{array}\right)\left(\begin{array}{l}
-y_{1(t-1)} \\
-y_{2(t-1)}
-\end{array}\right)+\left(\begin{array}{c}
+\end{array}\right)}}
+\underset{\mathbf{y}_{t-1}}{\underbrace{\left(\begin{array}{l}
+y_{1,t-1} \\
+y_{2,t-1}
+\end{array}\right)}}
++
+\underset{\boldsymbol{\varepsilon}_t}{\underbrace{\left(\begin{array}{c}
 \varepsilon_{1 t} \\
 \varepsilon_{2 t}
-\end{array}\right)$$
+\end{array}\right)}}$$
 
 where
 
@@ -135,7 +142,7 @@ The model runs from $t=1, \ldots, T$, and it depends on the $p$ initial conditio
 
 
 # ╔═╡ a34d8b43-152c-42ff-ae2c-1d439c538c8a
-md""" ### Likelihood """
+md""" ### Link to linear regression """
 
 # ╔═╡ 01213f94-8dee-4475-b307-e8b18806d453
 md"""
@@ -487,10 +494,7 @@ end;
 md""" Code seems to be running, good sign. Now I just need to fix the data and plot the IRFs for this session. """
 
 # ╔═╡ abe69a74-74ff-4cc5-9a93-90bd36c48e8a
-begin
-	gr(size = (800, 600))
-	plot(bvar(data)[:, 2], legend = false) # Figure out how to insert a line here
-end
+plot(bvar(data)[:, 2], legend = false) # Figure out how to insert a line here
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -952,9 +956,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
-git-tree-sha1 = "c253236b0ed414624b083e6b72bfe891fbd2c7af"
+git-tree-sha1 = "5455aef09b40e5020e1520f551fa3135040d4ed0"
 uuid = "856f044c-d86e-5d09-b602-aeab76dc8ba7"
-version = "2021.1.1+1"
+version = "2021.1.1+2"
 
 [[MacroTools]]
 deps = ["Markdown", "Random"]

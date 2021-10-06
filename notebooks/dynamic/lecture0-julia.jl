@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.1
 
 using Markdown
 using InteractiveUtils
@@ -276,15 +276,6 @@ g(1, a = 2) # positional and keyword arguments
 # ╔═╡ aeb41add-1dbe-4214-9bf8-1ff807e5ce75
 
 
-# ╔═╡ b75a03b7-53fd-4e13-ae01-abc54e2e9dc3
-begin
-	countries = ("Japan", "Korea", "China")
-	cities = ("Tokyo", "Seoul", "Beijing")
-	for (country, city) in zip(countries, cities)
-	    println("The capital of $country is $city")
-	end
-end
-
 # ╔═╡ 6563768a-6e36-45d6-b686-9734f3603d22
 begin
 	countries = ("Japan", "Korea", "China")
@@ -292,6 +283,15 @@ begin
 	for (i, country) in enumerate(countries)
 	    city = cities[i]
 	    println("The capital of $hello is $city")
+	end
+end
+
+# ╔═╡ b75a03b7-53fd-4e13-ae01-abc54e2e9dc3
+begin
+	countries = ("Japan", "Korea", "China")
+	cities = ("Tokyo", "Seoul", "Beijing")
+	for (country, city) in zip(countries, cities)
+	    println("The capital of $country is $city")
 	end
 end
 
@@ -415,7 +415,7 @@ uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [[LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[LogExpFunctions]]
@@ -449,6 +449,10 @@ uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 
 [[NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+
+[[OpenBLAS_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
+uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 
 [[OpenSpecFun_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
@@ -588,6 +592,10 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 [[Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+
+[[libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
 
 [[nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]

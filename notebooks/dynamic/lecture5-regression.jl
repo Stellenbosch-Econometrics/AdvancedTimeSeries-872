@@ -256,7 +256,7 @@ md"""
 # ╔═╡ d3ceb4ea-6d45-4545-be09-8446f103c2e5
 md"  
 
-Now, after this discussion of Gibbs sampling, we return to the estimation of the two parameter normal model. To construct a Gibbs sampler to draw from the posterior distribution $p\left(\mu, \sigma^{2} \mid \mathbf{y}\right)$, we need to derive two conditional distributions: $p\left(\mu \mid \mathbf{y}, \sigma^{2}\right)$ and $p\left(\sigma^{2} \mid \mathbf{y}, \mu\right)$
+Now, after this discussion of Gibbs sampling, we return to the estimation of the two parameter normal model. To construct a Gibbs sampler to draw from the posterior distribution $p\left(\mu, \sigma^{2} \mid \mathbf{y}\right)$, we need to derive two conditional distributions: $p\left(\mu \mid \mathbf{y}, \sigma^{2}\right)$ and $p\left(\sigma^{2} \mid \mathbf{y}, \mu\right)$.
 
 To derive the first conditional distribution, note that given $\sigma^{2}$, this is the same normal model with known variance discussed in last section. Thus, using the same derivation before, we have
 
@@ -282,7 +282,7 @@ Is this a known distribution? It turns out that this is an inverse-gamma distrib
 $$\left(\sigma^{2} \mid \mathbf{y}, \mu\right) \sim \mathcal{I} G\left(\nu_{0}+\frac{N}{2}, S_{0}+\frac{1}{2} \sum_{n=1}^{N}\left(y_{n}-\mu\right)^{2}\right)$$
 
 
-To summarize, the Gibbs sampler for the two-parameter model is given as below. Pick some initial values $\mu^{(0)}=a_{0}$ and $\sigma^{2(0)}=b_{0}>0 .$ Then, repeat the following steps from $r=1$ to $R$ :
+To summarize, the Gibbs sampler for the two-parameter model is given as below. Pick some initial values $\mu^{(0)}$ and $\sigma^{2(0)}>0 .$ Then, repeat the following steps from $r=1$ to $R$ :
 
 1. Draw $\mu^{(r)} \sim p\left(\mu \mid \mathbf{y}, \sigma^{2(r-1)}\right)$.
 
@@ -309,22 +309,22 @@ As an illustration, the following code first generates a dataset of $N=100$ obse
 # ╔═╡ b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
 begin
 	# Parameters for first example
-	nsim 	= 10_000
-	burnin 	= 1000
-	μ 		= 3.0 # True μ
-	σ2 		= 0.1 # True σ2
-	N 		= 100
-	μ_0 	= 0.0
-	σ2_0 	= 100
-	ν_0 	= 3.0
-	Σ_0 	= 0.5
-	μ_1 	= 0.0
-	σ2_1 	= 1.0
+	nsim = 10_000
+	burnin = 1000
+	μ = 3.0 # True μ
+	σ2 = 0.1 # True σ2
+	N = 100
+	μ_0 = 0.0
+	σ2_0 = 100
+	ν_0 = 3.0
+	Σ_0 = 0.5
+	μ_1 = 0.0 # Initial mu for Gibbs sampler
+	σ2_1 = 1.0 # Initial sigma for Gibbs sampler
 	
 	# Additional parameters for second example
-	T 		= 500
-	β 		= [1.0 5.0]
-	β_0 	= [0.0 0.0]
+	T = 500
+	β = [1.0 5.0]
+	β_0 = [0.0 0.0]
 end;
 
 # ╔═╡ 1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
@@ -333,7 +333,13 @@ function data_gen(μ, σ2, N)
 end;
 
 # ╔═╡ 0980d7a1-129b-4724-90fb-b46e3088d2d6
-data_gen(μ, σ2, N);
+new_data = data_gen(μ, σ2, N)
+
+# ╔═╡ bf12f6f6-f9a7-4d04-a5ac-1da94f03f8c3
+histogram(new_data)
+
+# ╔═╡ 60db2099-116d-40e1-a89e-1df33075b6d3
+zeros(nsim, 2)
 
 # ╔═╡ 0919cb0d-ba03-49c8-b2b9-53a467c39f87
 function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
@@ -342,13 +348,13 @@ function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
 
     # Start the Gibbs sampling procedure
     for i in 1:nsim + burnin
-        # Sample from μ 
+        # Sample μ 
         D_μ   = 1 / (1 / σ2_0 .+ N / σ2_1)
         μ_hat = D_μ .* (μ_0 / σ2_0 .+ sum(y) / σ2_1)
         μ_1   = μ_hat .+ sqrt(D_μ) .* randn() # Affine transformation is also normal
 
-        # Sample from σ2
-        σ2_1  = 1/rand(Gamma(ν_0 .+ N/2, 1/(Σ_0 .+ sum((y .- μ_1).^2) / 2)))
+        # Sample σ2
+        σ2_1  = rand(InverseGamma(ν_0 .+ N/2, 1/(Σ_0 .+ sum((y .- μ_1).^2) / 2)))
 
         if i > burnin
             isave = i .- burnin
@@ -2779,11 +2785,13 @@ version = "0.9.1+5"
 # ╠═b94db7f0-9f38-4761-a3c3-4d6fc4729ae9
 # ╠═1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
 # ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
+# ╠═bf12f6f6-f9a7-4d04-a5ac-1da94f03f8c3
+# ╠═60db2099-116d-40e1-a89e-1df33075b6d3
 # ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
 # ╠═343202b3-23b5-4600-b912-7db4ab58deaf
 # ╟─3aeab073-c98a-4213-a835-3098233ba90c
 # ╟─afc56ef2-d5d2-4624-9ad9-11f15429607f
-# ╠═fed7288d-5051-4ed0-babd-8eac00a634d2
+# ╟─fed7288d-5051-4ed0-babd-8eac00a634d2
 # ╟─41365136-5d0e-4a4e-808f-d0e90a14c5dd
 # ╟─3335094d-a67b-471c-834d-e22089933104
 # ╟─330bd7cb-7102-41c2-b7a4-f053669960c3

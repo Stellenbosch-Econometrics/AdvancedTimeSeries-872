@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ c4cccb7a-7d16-4dca-95d9-45c4115cfbf0
-using BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StatsBase, Statistics, StatsPlots, Turing, UrlDownload
+using BenchmarkTools, CSV, DataFrames, Distances, Distributions, HypothesisTests, HTTP, KernelDensity, LinearAlgebra, MCMCChains, MLDataUtils, Plots, PlutoUI, Random,  RDatasets, StateSpaceModels, Statistics, StatsBase, StatsPlots, Turing, UrlDownload
 
 # ╔═╡ 09a9d9f9-fa1a-4192-95cc-81314582488b
 html"""
@@ -72,7 +72,7 @@ We will recap some of the basics on Bayesian econometrics.
 "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-TableOfContents() # Uncomment to see TOC
+#TableOfContents() # Uncomment to see TOC
 
 # ╔═╡ bbcafd74-97f4-4b8f-bffa-937812d9a2eb
 Random.seed!(0)
@@ -556,7 +556,7 @@ p(\boldsymbol{\beta}) &=(2 \pi)^{-\frac{k}{2}}\left|\mathbf{V}_{0}\right|^{-\fra
 p\left(\sigma^{2}\right) &=\frac{S_{0}^{\nu_{0}}}{\Gamma\left(\nu_{0}\right)}\left(\sigma^{2}\right)^{-\left(\nu_{0}+1\right)} \mathrm{e}^{-\frac{S_{0}}{\sigma^{2}}}
 \end{aligned}$$
 
-We will assume the latter is true.  
+We will assume the latter is true (i.e., that parameters are independent).  
 
 """
 
@@ -838,10 +838,85 @@ begin
 	plot(pg1,pg2, layout = (1,2), legend = false)
 end
 
+# ╔═╡ 442f79e7-425b-43fd-a760-099f5005d4b1
+md"""
+
+## Regression with `Turing.jl`
+
+"""
+
+# ╔═╡ d5e73cc5-0a28-4a84-ba7e-7d493c53114b
+md"""
+
+We will be doing a quick regression using a dataset from the `RDatasets` package. You can pick whatever you find interesting. I wanted it to be related to economics in some way, so I chose the `Ecdat` dataset, which is supposed to be relevant for econometrics  
+
+"""
+
+# ╔═╡ f3109dad-1b97-4f68-babd-65751142486a
+ic_data = RDatasets.dataset("Ecdat", "Icecream")
+
+# ╔═╡ 692704dd-4be7-4c51-a421-2273f2b0711b
+md" First we split the dataset into two subsets. One for the training model and the other for evaluation. "
+
+# ╔═╡ 8d35cc9d-e37a-4a42-83af-8f48ffa67252
+# Split our dataset 70%/30% into training/test sets.
+trainset, testset = splitobs(shuffleobs(ic_data), 0.7)
+
+# ╔═╡ 71172cf3-be3e-416b-a35f-9ba724c528f0
+md" Convert everything to matrix form, not DataFrames. "
+
+# ╔═╡ bd6bcc2d-dd6d-4140-a62f-61a0c27bcda1
+begin
+	# Turing requires data in matrix form.
+	target = :Cons
+	train = Matrix(select(trainset, Not(target)))
+	test = Matrix(select(testset, Not(target)))
+	train_target = trainset[:, target]
+	test_target = testset[:, target]
+	
+	# Standardize the features.
+	μ₂, σ₂ = rescale!(train; obsdim = 1)
+	rescale!(test, μ₂, σ₂; obsdim = 1)
+	
+	# Standardize the targets.
+	μtarget, σtarget = rescale!(train_target; obsdim = 1)
+	rescale!(test_target, μtarget, σtarget; obsdim = 1);
+end
+
+# ╔═╡ 0b23e994-d1c7-466e-bb40-e8b1db183885
+md""" #### Model specification """
+
+# ╔═╡ 8c803ed9-051b-45a0-8e8a-c3754b0a1f10
+# Bayesian linear regression.
+@model function linear_regression(x, y)
+    # Set variance prior.
+    σ₂ ~ truncated(Normal(0, 100), 0, Inf)
+    
+    # Set intercept prior.
+    intercept ~ Normal(0, sqrt(3))
+    
+    # Set the priors on our coefficients.
+    nfeatures = size(x, 2)
+    coefficients ~ MvNormal(nfeatures, sqrt(10))
+    
+    # Calculate all the mu terms.
+    mu = intercept .+ x * coefficients
+    y ~ MvNormal(mu, sqrt(σ₂))
+end;
+
+# ╔═╡ 7cf8df8f-aa2d-41f9-95b7-b50fc191cb9d
+model = linear_regression(train, train_target);
+
+# ╔═╡ 7967b6e7-8391-4489-9e36-fe281dfe3fcc
+chain = sample(model, NUTS(0.65), 2_000);
+
+# ╔═╡ beaa1dfc-e2a7-4125-a45e-bfba93f8f02a
+plot(chain)
+
 # ╔═╡ 3006d4f8-1cca-4947-8dc6-3b77b278fbb8
 md"""
 
-### Example: Autoregressive model 
+## Autoregressive model 
 
 """
 
@@ -986,90 +1061,16 @@ begin
 end
 
 # ╔═╡ 4b4dde8d-e34d-44ac-9010-8ca22feae0e2
-md""" We can extend this example to a moving average model and thereby also the more general class of ARMA models. In the next section we will be looking at how to implement linear regression and ARMA models in `Turing.jl`.
+md""" We can extend this example to a moving average model and thereby also the more general class of ARMA models. In the next section we will be looking at how to forecast an ARIMA model in Julia. This isn't a Bayesian approach, just something that you might find interesting.
 """
 
-# ╔═╡ 442f79e7-425b-43fd-a760-099f5005d4b1
-md"""
+# ╔═╡ 7eaf829b-7398-4026-8eae-d84cbbb80fe0
+md""" ### ARIMA forecasting with `StateSpaceModels.jl` """
 
-## Regression with `Turing.jl`
+# ╔═╡ 5a4eb3d4-ccde-4b88-bc45-75fe85c6bdb1
+md""" Generally if you are going to be doing ARIMA type forecasts I would recommend the `forecast` package in R. It has a lot of nice functionality. This is obviously not a Bayesian package, but not everything you do has to be Bayesian. If you want to go with a Bayesian approach I suggest the `bsts` or `bayesforecast` pacakges in R. We might have some time to go through these packages in class, for those students who are thinking of perhaps doing a basic forecasting model for their project. 
 
-"""
-
-# ╔═╡ d5e73cc5-0a28-4a84-ba7e-7d493c53114b
-md"""
-
-We will be doing a quick regression using a dataset from the `RDatasets` package. You can pick whatever you find interesting. I wanted it to be related to economics in some way, so I chose the `Ecdat` dataset, which is supposed to be relevant for econometrics  
-
-"""
-
-# ╔═╡ f3109dad-1b97-4f68-babd-65751142486a
-ic_data = RDatasets.dataset("Ecdat", "Icecream")
-
-# ╔═╡ 692704dd-4be7-4c51-a421-2273f2b0711b
-md" First we split the dataset into two subsets. One for the training model and the other for evaluation. "
-
-# ╔═╡ 8d35cc9d-e37a-4a42-83af-8f48ffa67252
-# Split our dataset 70%/30% into training/test sets.
-trainset, testset = splitobs(shuffleobs(ic_data), 0.7)
-
-# ╔═╡ 71172cf3-be3e-416b-a35f-9ba724c528f0
-md" Convert everything to matrix form, not DataFrames. "
-
-# ╔═╡ bd6bcc2d-dd6d-4140-a62f-61a0c27bcda1
-begin
-	# Turing requires data in matrix form.
-	target = :Cons
-	train = Matrix(select(trainset, Not(target)))
-	test = Matrix(select(testset, Not(target)))
-	train_target = trainset[:, target]
-	test_target = testset[:, target]
-	
-	# Standardize the features.
-	μ₂, σ₂ = rescale!(train; obsdim = 1)
-	rescale!(test, μ₂, σ₂; obsdim = 1)
-	
-	# Standardize the targets.
-	μtarget, σtarget = rescale!(train_target; obsdim = 1)
-	rescale!(test_target, μtarget, σtarget; obsdim = 1);
-end
-
-# ╔═╡ 0b23e994-d1c7-466e-bb40-e8b1db183885
-md""" #### Model specification """
-
-# ╔═╡ 8c803ed9-051b-45a0-8e8a-c3754b0a1f10
-# Bayesian linear regression.
-@model function linear_regression(x, y)
-    # Set variance prior.
-    σ₂ ~ truncated(Normal(0, 100), 0, Inf)
-    
-    # Set intercept prior.
-    intercept ~ Normal(0, sqrt(3))
-    
-    # Set the priors on our coefficients.
-    nfeatures = size(x, 2)
-    coefficients ~ MvNormal(nfeatures, sqrt(10))
-    
-    # Calculate all the mu terms.
-    mu = intercept .+ x * coefficients
-    y ~ MvNormal(mu, sqrt(σ₂))
-end;
-
-# ╔═╡ 7cf8df8f-aa2d-41f9-95b7-b50fc191cb9d
-model = linear_regression(train, train_target);
-
-# ╔═╡ 7967b6e7-8391-4489-9e36-fe281dfe3fcc
-chain = sample(model, NUTS(0.65), 2_000);
-
-# ╔═╡ beaa1dfc-e2a7-4125-a45e-bfba93f8f02a
-plot(chain)
-
-# ╔═╡ 89353f76-27d3-4675-8867-d4edf0dab9a5
-md"""
-
-### ARIMA model in `Turing.jl`
-
-"""
+A nice package in `Julia` that allows you to do ARIMA type models is `StateSpaceModels.jl`. I will make a quick reference below to state space models below, but this is something that we would ideally like to cover in a lecture on its own. State space modelling is also a precursor to the work on TVP-VARs and the Kalman filter. However, due to time considerations, we won't be able to do all of the work indicated. """
 
 # ╔═╡ 34307b89-0a10-4339-9356-fd21fd877e95
 md" So we have looked at a basic regression model. What if we want to do an ARIMA type model, like modelling an AR(1) process? How would we go about doing this? Let us look at some financial data in this example. Ice cream data might not have been the best bet for real econometric analysis. "
@@ -1123,35 +1124,20 @@ end
 # ╔═╡ e680e488-f1e2-4da8-8ef4-612f60cd030b
 md" For the sake of argument, let us say that we can then model with with an AR(0, 1, 1) model."
 
-# ╔═╡ 7eecc27c-5af0-42d4-96f6-2a689e945e7f
-@model ARIMA011(x) = begin
-    T = length(x)
-
-    # Set up error vector.
-    ϵ = Vector(undef, T)
-    x_hat = Vector(undef, T)
-
-    θ ~ Uniform(-5, 5)
-
-    # Treat the first x_hat as a parameter to estimate.
-    x_hat[1] ~ Normal(550, 220)
-    ϵ[1] = x[1] - x_hat[1]
-
-    for t in 2:T
-        # Predicted value for x.
-        x_hat[t] = x[t-1] - θ * ϵ[t-1]
-        # Calculate observed error.
-        ϵ[t] = x[t] - x_hat[t]
-        # Observe likelihood.
-        x[t] ~ Normal(x_hat[t], 1)
-    end
+# ╔═╡ b8adc2e6-2e1c-4f00-a92f-81a110b123e9
+begin
+	arima_model = SARIMA(s_diff; order = (0, 1, 1))
+	StateSpaceModels.fit!(arima_model)
 end
 
-# ╔═╡ afeba532-4045-4e75-acc3-b8c78b397e5e
-chain_ARIMA011 = sample(ARIMA011(s_train), NUTS(0.6), 500)
+# ╔═╡ 6b56be36-2951-4562-be94-ad263b155082
+results(arima_model)
 
-# ╔═╡ fa948b6e-c84b-410e-9361-098241d2b60e
-plot(chain_ARIMA011)
+# ╔═╡ a1411a18-3c64-46b1-b752-e3af0265eaf9
+forec = forecast(arima_model, 24)
+
+# ╔═╡ 99ebe7a6-35c1-46ce-9d73-685d451741f7
+plot(arima_model, forec; legend = false)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1171,6 +1157,7 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 RDatasets = "ce6b1742-4840-55fa-b093-852dadbb1d8b"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StateSpaceModels = "99342f36-827c-5390-97c9-d7f9ee765c78"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
@@ -1191,6 +1178,7 @@ MLDataUtils = "~0.5.4"
 Plots = "~1.22.0"
 PlutoUI = "~0.7.1"
 RDatasets = "~0.7.5"
+StateSpaceModels = "~0.5.19"
 StatsBase = "~0.33.10"
 StatsPlots = "~0.14.27"
 Turing = "~0.15.1"
@@ -1581,6 +1569,11 @@ git-tree-sha1 = "c6033cc3892d0ef5bb9cd29b7f2f0331ea5184ea"
 uuid = "f5851436-0d7a-5f13-b9de-f02708fd171a"
 version = "3.3.10+0"
 
+[[deps.FastClosures]]
+git-tree-sha1 = "acebe244d53ee1b461970f8910c235b259e772ef"
+uuid = "9aa1b823-49e4-5ca5-8b0f-3971ec8bab6a"
+version = "0.3.2"
+
 [[deps.FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
 git-tree-sha1 = "3c041d2ac0a52a12a27af2782b34900d9c3ee68c"
@@ -1743,6 +1736,12 @@ git-tree-sha1 = "3cc368af3f110a767ac786560045dceddfc16758"
 uuid = "8197267c-284f-5f27-9208-e0e47529a953"
 version = "0.5.3"
 
+[[deps.Intervals]]
+deps = ["Dates", "Printf", "RecipesBase", "Serialization", "TimeZones"]
+git-tree-sha1 = "323a38ed1952d30586d0fe03412cde9399d3618b"
+uuid = "d8418881-c3e1-53bb-8760-2df7ec849ed5"
+version = "1.5.0"
+
 [[deps.InvertedIndices]]
 git-tree-sha1 = "bee5f1ef5bf65df56bdd2e40447590b272a5471f"
 uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
@@ -1900,9 +1899,21 @@ git-tree-sha1 = "7f3efec06033682db852f8b3bc3c1d2b0a0ab066"
 uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
+[[deps.LineSearches]]
+deps = ["LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "Printf"]
+git-tree-sha1 = "f27132e551e959b3667d8c93eae90973225032dd"
+uuid = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
+version = "7.1.1"
+
 [[deps.LinearAlgebra]]
 deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[[deps.LinearOperators]]
+deps = ["FastClosures", "LinearAlgebra", "Printf", "SparseArrays", "TimerOutputs"]
+git-tree-sha1 = "12a8ce0c3ef28df3cb372ca7ae964345251fb12d"
+uuid = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
+version = "1.3.1"
 
 [[deps.LogDensityProblems]]
 deps = ["ArgCheck", "BenchmarkTools", "DiffResults", "DocStringExtensions", "Random", "Requires", "TransformVariables", "UnPack"]
@@ -1977,6 +1988,12 @@ version = "0.3.0"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
+[[deps.MatrixEquations]]
+deps = ["LinearAlgebra", "LinearOperators", "Random", "Test"]
+git-tree-sha1 = "e51dab3dda4d5215214f136088c1dc5cc51c239e"
+uuid = "99c1a7ee-ab34-5fd5-8076-27c950a045f4"
+version = "1.5.0"
+
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "Random", "Sockets"]
 git-tree-sha1 = "1c38e51c3d08ef2278062ebceade0e46cefc96fe"
@@ -2021,6 +2038,12 @@ deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsBase"]
 git-tree-sha1 = "8d958ff1854b166003238fe191ec34b9d592860a"
 uuid = "6f286f6a-111f-5878-ab1e-185364afe411"
 version = "0.8.0"
+
+[[deps.NLSolversBase]]
+deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
+git-tree-sha1 = "144bab5b1443545bc4e791536c9f1eacb4eed06a"
+uuid = "d41bc354-129a-5804-8e4c-c37616107c6c"
+version = "7.8.1"
 
 [[deps.NNlib]]
 deps = ["Adapt", "ChainRulesCore", "Compat", "LinearAlgebra", "Pkg", "Requires", "Statistics"]
@@ -2092,6 +2115,12 @@ git-tree-sha1 = "13652491f6856acfd2db29360e1bbcd4565d04f1"
 uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
 version = "0.5.5+0"
 
+[[deps.Optim]]
+deps = ["Compat", "FillArrays", "LineSearches", "LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
+git-tree-sha1 = "7863df65dbb2a0fa8f85fcaf0a41167640d2ebed"
+uuid = "429524aa-4258-5aef-a3af-852621145aeb"
+version = "1.4.1"
+
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "51a08fb14ec28da2ec7a927c4337e4332c2a4720"
@@ -2161,11 +2190,23 @@ git-tree-sha1 = "45ce174d36d3931cd4e37a47f93e07d1455f038d"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 version = "0.7.1"
 
+[[deps.Polynomials]]
+deps = ["Intervals", "LinearAlgebra", "OffsetArrays", "RecipesBase"]
+git-tree-sha1 = "0b15f3597b01eb76764dd03c3c23d6679a3c32c8"
+uuid = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
+version = "1.2.1"
+
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
 git-tree-sha1 = "a193d6ad9c45ada72c14b731a318bedd3c2f00cf"
 uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 version = "1.3.0"
+
+[[deps.PositiveFactorizations]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "17275485f373e6673f7e7f97051f703ed5b15b20"
+uuid = "85a6dd25-e78a-55b7-8502-1745935b8125"
+version = "0.2.4"
 
 [[deps.Preferences]]
 deps = ["TOML"]
@@ -2311,6 +2352,12 @@ git-tree-sha1 = "0b4b7f1393cff97c33891da2a0bf69c6ed241fda"
 uuid = "6c6a2e73-6563-6170-7368-637461726353"
 version = "1.1.0"
 
+[[deps.SeasonalTrendLoess]]
+deps = ["Statistics"]
+git-tree-sha1 = "839dcd8152dc20663349781f7a7e8cf3d3009673"
+uuid = "42fb36cb-998a-4034-bf40-4eee476c43a1"
+version = "0.1.0"
+
 [[deps.SentinelArrays]]
 deps = ["Dates", "Random"]
 git-tree-sha1 = "54f37736d8934a12a200edea2f9206b03bdf3159"
@@ -2329,6 +2376,11 @@ version = "0.7.1"
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
+
+[[deps.ShiftedArrays]]
+git-tree-sha1 = "22395afdcf37d6709a5a0766cc4a5ca52cb85ea0"
+uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
+version = "1.0.0"
 
 [[deps.Showoff]]
 deps = ["Dates", "Grisu"]
@@ -2360,6 +2412,12 @@ deps = ["Setfield", "Test"]
 git-tree-sha1 = "edef25a158db82f4940720ebada14a60ef6c4232"
 uuid = "171d559e-b47b-412a-8079-5efa626c420e"
 version = "0.1.13"
+
+[[deps.StateSpaceModels]]
+deps = ["Distributions", "LinearAlgebra", "MatrixEquations", "Optim", "OrderedCollections", "Polynomials", "Printf", "RecipesBase", "SeasonalTrendLoess", "ShiftedArrays", "SparseArrays", "Statistics", "StatsBase"]
+git-tree-sha1 = "f5d6f4bef1400bb480b70d388f1526f1f89ae7c5"
+uuid = "99342f36-827c-5390-97c9-d7f9ee765c78"
+version = "0.5.19"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
@@ -2462,6 +2520,12 @@ deps = ["Dates", "Future", "LazyArtifacts", "Mocking", "Pkg", "Printf", "Recipes
 git-tree-sha1 = "6c9040665b2da00d30143261aea22c7427aada1c"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 version = "1.5.7"
+
+[[deps.TimerOutputs]]
+deps = ["ExprTools", "Printf"]
+git-tree-sha1 = "7cb456f358e8f9d102a8b25e8dfedf58fa5689bc"
+uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
+version = "0.5.13"
 
 [[deps.Tracker]]
 deps = ["Adapt", "DiffRules", "ForwardDiff", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Printf", "Random", "Requires", "SpecialFunctions", "Statistics"]
@@ -2829,15 +2893,7 @@ version = "0.9.1+5"
 # ╠═791939ae-3e00-4d6b-968c-5a82a78f55f8
 # ╠═9d1361c3-6de1-4326-85f8-4a272856d16b
 # ╟─01f5e6cd-1efa-49a2-8d0d-b5536bdd7388
-# ╟─3006d4f8-1cca-4947-8dc6-3b77b278fbb8
-# ╟─22bdce87-a1f2-440b-965a-391148b010ac
-# ╟─54d73a3a-5804-44cf-b771-7313790129e4
-# ╠═f539d376-0f23-4667-9b26-25848b5c635a
-# ╠═78f29328-9670-4f77-a0d0-4386c6aa71ae
-# ╠═2502b96c-7bdc-4749-b92e-f171f60a4508
 # ╟─01b84089-7a99-4bc4-93f4-5259fabde2cb
-# ╟─82fb8ff1-8017-4554-ba79-98045b1fccf3
-# ╟─4b4dde8d-e34d-44ac-9010-8ca22feae0e2
 # ╟─442f79e7-425b-43fd-a760-099f5005d4b1
 # ╟─d5e73cc5-0a28-4a84-ba7e-7d493c53114b
 # ╠═f3109dad-1b97-4f68-babd-65751142486a
@@ -2850,7 +2906,16 @@ version = "0.9.1+5"
 # ╠═7cf8df8f-aa2d-41f9-95b7-b50fc191cb9d
 # ╠═7967b6e7-8391-4489-9e36-fe281dfe3fcc
 # ╠═beaa1dfc-e2a7-4125-a45e-bfba93f8f02a
-# ╟─89353f76-27d3-4675-8867-d4edf0dab9a5
+# ╟─3006d4f8-1cca-4947-8dc6-3b77b278fbb8
+# ╟─22bdce87-a1f2-440b-965a-391148b010ac
+# ╟─54d73a3a-5804-44cf-b771-7313790129e4
+# ╟─f539d376-0f23-4667-9b26-25848b5c635a
+# ╠═78f29328-9670-4f77-a0d0-4386c6aa71ae
+# ╠═2502b96c-7bdc-4749-b92e-f171f60a4508
+# ╟─82fb8ff1-8017-4554-ba79-98045b1fccf3
+# ╟─4b4dde8d-e34d-44ac-9010-8ca22feae0e2
+# ╟─7eaf829b-7398-4026-8eae-d84cbbb80fe0
+# ╟─5a4eb3d4-ccde-4b88-bc45-75fe85c6bdb1
 # ╟─34307b89-0a10-4339-9356-fd21fd877e95
 # ╠═d81f725d-a250-44e8-98ba-5c0efecdb19c
 # ╠═dfbe27b2-bfdd-40e9-a63c-3115c308de75
@@ -2864,8 +2929,9 @@ version = "0.9.1+5"
 # ╟─9b5622fa-9caf-4f54-a15d-f8b731dc842b
 # ╟─596fdda0-0d0e-4e45-8fa2-5618122a08b6
 # ╟─e680e488-f1e2-4da8-8ef4-612f60cd030b
-# ╠═7eecc27c-5af0-42d4-96f6-2a689e945e7f
-# ╠═afeba532-4045-4e75-acc3-b8c78b397e5e
-# ╠═fa948b6e-c84b-410e-9361-098241d2b60e
+# ╠═b8adc2e6-2e1c-4f00-a92f-81a110b123e9
+# ╠═6b56be36-2951-4562-be94-ad263b155082
+# ╠═a1411a18-3c64-46b1-b752-e3af0265eaf9
+# ╠═99ebe7a6-35c1-46ce-9d73-685d451741f7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

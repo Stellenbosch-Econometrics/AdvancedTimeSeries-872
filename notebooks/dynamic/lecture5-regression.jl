@@ -842,6 +842,12 @@ md"""
 
 """
 
+# ╔═╡ b58c1e30-da22-4ff2-93e7-6c2bf2e3a7e3
+md""" Let us start with trying to replicate our linear regression from the previous section in `Turing.jl`. """
+
+# ╔═╡ 5e9d778f-dd29-46ca-85ee-0eb2b4e4d027
+
+
 # ╔═╡ d5e73cc5-0a28-4a84-ba7e-7d493c53114b
 md"""
 
@@ -2935,6 +2941,8 @@ version = "0.9.1+5"
 # ╟─01f5e6cd-1efa-49a2-8d0d-b5536bdd7388
 # ╟─01b84089-7a99-4bc4-93f4-5259fabde2cb
 # ╟─442f79e7-425b-43fd-a760-099f5005d4b1
+# ╟─b58c1e30-da22-4ff2-93e7-6c2bf2e3a7e3
+# ╠═5e9d778f-dd29-46ca-85ee-0eb2b4e4d027
 # ╟─d5e73cc5-0a28-4a84-ba7e-7d493c53114b
 # ╠═f3109dad-1b97-4f68-babd-65751142486a
 # ╟─692704dd-4be7-4c51-a421-2273f2b0711b

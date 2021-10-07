@@ -348,7 +348,8 @@ function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
         # Sample μ 
         D_μ   = 1 / (1 / σ2_0 .+ N / σ2_1)
         μ_hat = D_μ .* (μ_0 / σ2_0 .+ sum(y) / σ2_1)
-        μ_1   = μ_hat .+ sqrt(D_μ) .* randn() # Affine transformation is also normal
+        μ_1   = μ_hat .+ sqrt(D_μ) .* randn() # Affine transformation is also normal (more MATLAB)
+		#μ_1 = rand(Normal(μ_hat, D_μ)) # Julian
 
         # Sample σ2
         σ2_1  = rand(InverseGamma(ν_0 .+ N/2, 1/(Σ_0 .+ sum((y .- μ_1).^2) / 2)))
@@ -846,7 +847,15 @@ md"""
 md""" Let us start with trying to replicate our linear regression from the previous section in `Turing.jl`. """
 
 # ╔═╡ 5e9d778f-dd29-46ca-85ee-0eb2b4e4d027
+@model linear_regression_1(X, y) = begin
+    #priors
+    α ~ Normal(mean(y), 2.5 * std(y))
+    β ~ Normal(TDist(3), predictors)
+    σ ~ InverseGamma(2)
 
+    #likelihood
+    y ~ MvNormal(α .+ X * β, σ)
+end;
 
 # ╔═╡ d5e73cc5-0a28-4a84-ba7e-7d493c53114b
 md"""
@@ -884,7 +893,7 @@ begin
 	# Standardize the targets.
 	μtarget, σtarget = rescale!(train_target; obsdim = 1)
 	rescale!(test_target, μtarget, σtarget; obsdim = 1);
-end
+end;
 
 # ╔═╡ 0b23e994-d1c7-466e-bb40-e8b1db183885
 md""" #### Model specification """
@@ -1107,7 +1116,7 @@ chs = sample(model_new,NUTS(), 10_000)
 plot(chs)
 
 # ╔═╡ d66073c1-1de0-4532-8686-d56255350193
-md""" Let us look at one last thing for this section with respect to ARIMA models. """
+md""" Let us look at one last thing for this section with respect to ARIMA models. The purpose here is to show you how to load data and manipulate with the DataFrames package. """
 
 # ╔═╡ 7eaf829b-7398-4026-8eae-d84cbbb80fe0
 md""" ### ARIMA forecasting with `StateSpaceModels.jl` """
@@ -1173,7 +1182,7 @@ md" For the sake of argument, let us say that we can then model with with an AR(
 
 # ╔═╡ b8adc2e6-2e1c-4f00-a92f-81a110b123e9
 begin
-	arima_model = SARIMA(s_diff; order = (0, 1, 1))
+	arima_model = SARIMA(s_diff; order = (0, 0, 1))
 	StateSpaceModels.fit!(arima_model)
 end
 
@@ -2968,7 +2977,7 @@ version = "0.9.1+5"
 # ╠═1e62adf7-17ba-4f2d-b401-c3822d266d81
 # ╠═78156e4d-e593-4e8c-8d4b-6567a3671aff
 # ╠═48a26331-e569-4f15-b271-9a2a3b640878
-# ╠═d66073c1-1de0-4532-8686-d56255350193
+# ╟─d66073c1-1de0-4532-8686-d56255350193
 # ╟─7eaf829b-7398-4026-8eae-d84cbbb80fe0
 # ╟─5a4eb3d4-ccde-4b88-bc45-75fe85c6bdb1
 # ╟─34307b89-0a10-4339-9356-fd21fd877e95

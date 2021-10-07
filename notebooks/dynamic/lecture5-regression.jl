@@ -338,9 +338,6 @@ new_data = data_gen(μ, σ2, N)
 # ╔═╡ bf12f6f6-f9a7-4d04-a5ac-1da94f03f8c3
 histogram(new_data)
 
-# ╔═╡ 60db2099-116d-40e1-a89e-1df33075b6d3
-zeros(nsim, 2)
-
 # ╔═╡ 0919cb0d-ba03-49c8-b2b9-53a467c39f87
 function gibbs(nsim, burnin, μ, σ2, N, μ_0, σ2_0, ν_0, Σ_0, μ_1, σ2_1)
     y = data_gen(μ, σ2, N) # Generated data
@@ -1061,19 +1058,63 @@ begin
 end
 
 # ╔═╡ 4b4dde8d-e34d-44ac-9010-8ca22feae0e2
-md""" We can extend this example to a moving average model and thereby also the more general class of ARMA models. In the next section we will be looking at how to forecast an ARIMA model in Julia. This isn't a Bayesian approach, just something that you might find interesting.
+md""" We can extend this example to a moving average model and thereby also the more general class of ARMA models.
 """
+
+# ╔═╡ c5d09e13-540d-4993-834b-dd1565a06f1a
+md""" ### Autoregressive model with `Turing.jl` """
+
+# ╔═╡ 8e9d13a9-46f6-406e-b53c-a1f763178b5a
+md""" Instead of necesarilly writing our own routine for the Gibbs sampler, we can use the functionality of `Turing.jl` to generate estimates of the parameters of interest. Consider the following code for the AR(1) case. """
+
+# ╔═╡ 1f9ae2e6-bb0c-45cb-8992-684e14892b36
+@model function ar1(ys=missing)
+    if ys === missing 
+        ys = Vector{Real}(undef, 10) 
+    end
+    n = length(ys)
+
+    # Uninformative priors
+    # alpha ~ Uniform(-2,2)
+    # beta ~ Uniform(-2,2)
+    # sigma ~ Uniform(0,2)
+
+    # Informative priors
+    beta_0 ~ Normal(2,2)
+    beta_1  ~ Normal(2,2)
+    sig2 ~ InverseGamma(2,2)
+
+    ys[1] ~ Normal(beta_0 + beta_1, sig2)
+    for i in 2:n
+        ys[i] ~ Normal(beta_0 + beta_1 * ys[i-1], sig2)
+    end
+
+end;
+
+# ╔═╡ 1e62adf7-17ba-4f2d-b401-c3822d266d81
+model_new  = ar1(y_new)
+
+# ╔═╡ 78156e4d-e593-4e8c-8d4b-6567a3671aff
+chs = sample(model_new,NUTS(), 10_000)
+
+# ╔═╡ 48a26331-e569-4f15-b271-9a2a3b640878
+plot(chs)
+
+# ╔═╡ d66073c1-1de0-4532-8686-d56255350193
+md""" Let us look at one last thing for this section with respect to ARIMA models. """
 
 # ╔═╡ 7eaf829b-7398-4026-8eae-d84cbbb80fe0
 md""" ### ARIMA forecasting with `StateSpaceModels.jl` """
 
 # ╔═╡ 5a4eb3d4-ccde-4b88-bc45-75fe85c6bdb1
-md""" Generally if you are going to be doing ARIMA type forecasts I would recommend the `forecast` package in R. It has a lot of nice functionality. This is obviously not a Bayesian package, but not everything you do has to be Bayesian. If you want to go with a Bayesian approach I suggest the `bsts` or `bayesforecast` pacakges in R. We might have some time to go through these packages in class, for those students who are thinking of perhaps doing a basic forecasting model for their project. 
+md""" Generally if you are going to be doing ARIMA forecasts I would recommend the `forecast` package in R. It has a lot of nice functionality. This is not a Bayesian package, but not everything you do has to be Bayesian. 
 
-A nice package in `Julia` that allows you to do ARIMA type models is `StateSpaceModels.jl`. I will make a quick reference below to state space models below, but this is something that we would ideally like to cover in a lecture on its own. State space modelling is also a precursor to the work on TVP-VARs and the Kalman filter. However, due to time considerations, we won't be able to do all of the work indicated. """
+If you want to go with a Bayesian approach one normally has to frame the model in a state space setting. I will make a quick reference below to state space models in another lecture. State space modelling is also a precursor to the work on TVP-VARs and the Kalman filter. However, due to time considerations, we won't be able to do all of the work indicated.
+
+I suggest the `bsts` or `bayesforecast` pacakges in R for the purpose of Bayesian structural time series modelling."""
 
 # ╔═╡ 34307b89-0a10-4339-9356-fd21fd877e95
-md" So we have looked at a basic regression model. What if we want to do an ARIMA type model, like modelling an AR(1) process? How would we go about doing this? Let us look at some financial data in this example. Ice cream data might not have been the best bet for real econometric analysis. "
+md" Let us look at some financial data for our next example. Ice cream data might not have been the best bet for **real / serious** econometric analysis... Only you can decide if this is the case.  "
 
 # ╔═╡ d81f725d-a250-44e8-98ba-5c0efecdb19c
 df = urldownload("https://raw.githubusercontent.com/inertia7/timeSeries_sp500_R/master/data/data_master_1.csv") |> DataFrame
@@ -2850,7 +2891,6 @@ version = "0.9.1+5"
 # ╠═1a6c859c-e3e7-4ad9-9299-091b6b1d2bbf
 # ╠═0980d7a1-129b-4724-90fb-b46e3088d2d6
 # ╠═bf12f6f6-f9a7-4d04-a5ac-1da94f03f8c3
-# ╠═60db2099-116d-40e1-a89e-1df33075b6d3
 # ╠═0919cb0d-ba03-49c8-b2b9-53a467c39f87
 # ╠═343202b3-23b5-4600-b912-7db4ab58deaf
 # ╟─3aeab073-c98a-4213-a835-3098233ba90c
@@ -2914,6 +2954,13 @@ version = "0.9.1+5"
 # ╠═2502b96c-7bdc-4749-b92e-f171f60a4508
 # ╟─82fb8ff1-8017-4554-ba79-98045b1fccf3
 # ╟─4b4dde8d-e34d-44ac-9010-8ca22feae0e2
+# ╟─c5d09e13-540d-4993-834b-dd1565a06f1a
+# ╟─8e9d13a9-46f6-406e-b53c-a1f763178b5a
+# ╠═1f9ae2e6-bb0c-45cb-8992-684e14892b36
+# ╠═1e62adf7-17ba-4f2d-b401-c3822d266d81
+# ╠═78156e4d-e593-4e8c-8d4b-6567a3671aff
+# ╠═48a26331-e569-4f15-b271-9a2a3b640878
+# ╠═d66073c1-1de0-4532-8686-d56255350193
 # ╟─7eaf829b-7398-4026-8eae-d84cbbb80fe0
 # ╟─5a4eb3d4-ccde-4b88-bc45-75fe85c6bdb1
 # ╟─34307b89-0a10-4339-9356-fd21fd877e95

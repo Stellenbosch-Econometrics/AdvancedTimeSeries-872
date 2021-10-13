@@ -466,7 +466,7 @@ function bvar(data)
     tmp    = ones(k * n, 1)
     tmp[1: p * n + 1 : k * n] .= 1/10
     A      = collect(1:k*n)
-    Vβ     = sparse(A, A, tmp[:, 1]) # This works! I seem to have figured out the sparse array struct. However, is this what we want to use? What is the benefit here?
+    Vβ     = sparse(A, A, tmp[:, 1]) 
     Vβ_d     = Matrix(Vβ) # Dense version
 
     # Working on the lagged matrix (preparation of the data) / method is similar to Korobilis
@@ -532,10 +532,14 @@ function bvar(data)
 end;
 
 # ╔═╡ c21aa46d-08ac-4256-a021-83194bad3a5e
-md""" Code seems to be running, good sign. Now I just need to fix the data and plot the IRFs for this session. """
+md""" This is an example of an impulse response function... """
 
 # ╔═╡ abe69a74-74ff-4cc5-9a93-90bd36c48e8a
-plot(bvar(data)[:, 2], legend = false) # Figure out how to insert a line here
+begin
+	plot(bvar(data)[:, 1], lw = 1.5, label = "GDP") 
+	plot!(bvar(data)[:, 2], lw = 1.5, label = "Inflation") 
+	plot!(bvar(data)[:, 3], lw = 1.5, label = "Repo") 
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """

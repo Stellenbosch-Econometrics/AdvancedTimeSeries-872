@@ -227,6 +227,21 @@ md""" Now we create a block diagonal matrix with $\mathbf{z} = \left[1, \mathbf{
 # ╔═╡ 56ff8382-f0c1-472c-bf85-b34360823a04
 kron(Id2, z)
 
+# ╔═╡ 67f2cc01-074c-410b-859c-b79f670cc74d
+md""" Now that we have some idea what the Kronecker product does, let us move to the `vec` operator. In this case we are just stacking coefficients. Consider an example with a $\mathbf{b}$ vector and $\mathbf{A_1}$ matrix (as above). """
+
+# ╔═╡ 0244ce0e-42e7-4013-bedd-9e618565d43e
+b = randn(1, 2)
+
+# ╔═╡ fa2e2cc2-d103-48d2-88b1-4f62df4f0f3f
+A1 = randn(2, 2)
+
+# ╔═╡ 2e388e43-9fc7-4dd1-8856-0c734ce22cf3
+vec([b; A1])
+
+# ╔═╡ 07eeab9e-dd7b-4ff2-9b0f-6f0d5d9a60ec
+md""" Hopefully these examples provide some intuition. """
+
 # ╔═╡ 538be57f-54e9-45dd-95f5-12e7a3df51a7
 md""" ###  Likelihood contd. """
 
@@ -1629,6 +1644,11 @@ version = "0.9.1+5"
 # ╠═e6248785-88ae-43ad-967e-924b0024bfb6
 # ╟─20c1c904-1a06-48da-b77e-b6a97047163b
 # ╠═56ff8382-f0c1-472c-bf85-b34360823a04
+# ╟─67f2cc01-074c-410b-859c-b79f670cc74d
+# ╠═0244ce0e-42e7-4013-bedd-9e618565d43e
+# ╠═fa2e2cc2-d103-48d2-88b1-4f62df4f0f3f
+# ╠═2e388e43-9fc7-4dd1-8856-0c734ce22cf3
+# ╟─07eeab9e-dd7b-4ff2-9b0f-6f0d5d9a60ec
 # ╟─538be57f-54e9-45dd-95f5-12e7a3df51a7
 # ╟─057a49fa-a68a-4bf0-8b70-7ccd5b8d7931
 # ╟─3efef390-b791-40dd-a950-26dcc84c3485

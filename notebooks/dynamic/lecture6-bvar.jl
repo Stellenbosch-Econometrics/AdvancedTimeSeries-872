@@ -532,14 +532,17 @@ function bvar(data)
 end;
 
 # ╔═╡ c21aa46d-08ac-4256-a021-83194bad3a5e
-md""" This is an example of an impulse response function... """
+md""" IRFs look strange here, but this could simply be reflecting the prize puzzle? Someone have a good explanation? """
 
 # ╔═╡ abe69a74-74ff-4cc5-9a93-90bd36c48e8a
 begin
-	plot(bvar(data)[:, 1], lw = 1.5, label = "GDP") 
-	plot!(bvar(data)[:, 2], lw = 1.5, label = "Inflation") 
+	plot(bvar(data)[:, 1], lw = 1.5, label = "Inflation") 
+	plot!(bvar(data)[:, 2], lw = 1.5, label = "GDP") 
 	plot!(bvar(data)[:, 3], lw = 1.5, label = "Repo") 
 end
+
+# ╔═╡ 878760b6-0a98-4955-b061-6e56ca83dfbf
+md""" Now let us move to an example of a BVAR in R. There are many packages that one could use here. However, I am only going to illustrate one. For your project you could use any package you want. """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1674,6 +1677,7 @@ version = "0.9.1+5"
 # ╟─3bb39875-2f99-4a1f-a7ab-a107b4b95716
 # ╠═9e949115-a728-48ed-8c06-5cc26b6733bf
 # ╟─c21aa46d-08ac-4256-a021-83194bad3a5e
-# ╠═abe69a74-74ff-4cc5-9a93-90bd36c48e8a
+# ╟─abe69a74-74ff-4cc5-9a93-90bd36c48e8a
+# ╟─878760b6-0a98-4955-b061-6e56ca83dfbf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

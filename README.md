@@ -13,8 +13,9 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 4. Markov chain Monte Carlo -- **Final Draft** ✔️
 5. Bayesian linear regression -- **First Draft** ✔️
 6. Bayesian Vector Autoregression (BVARs) -- **Final Draft** ✔️ [Basic R code available]
-7. State space modelling and TVP-VARs -- **Empty** ❌ (Will not cover this year)
-8. Kalman filter -- **Empty** ❌ (Will not cover this year)
+7. Large BVARS -- **Empty** ❌ (Will not cover this year) 
+8. State space modelling and TVP-VARs -- **Empty** ❌ (Will not cover this year)
+9. Kalman filter -- **Empty** ❌ (Will not cover this year)
 
 `R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 
 

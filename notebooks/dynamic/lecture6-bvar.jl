@@ -362,8 +362,8 @@ We first implement the Gibbs sampler. Then, given the posterior draws of $\bolds
 begin
 	# Parameters
 	p = 2            # Number of lags
-	nsim = 2000      # Number of simulation in Gibbs sampler
-	burnin = 10      # Burnin for Gibbs sampler
+	nsim = 20000      # Number of simulation in Gibbs sampler
+	burnin = 1000      # Burnin for Gibbs sampler
 	n_hz = 40        # Horizon for the IRF
 end;
 
@@ -528,17 +528,32 @@ function bvar(data)
         end
     end
     yIR_hat = store_yIR/nsim
-    #return store_beta, store_Sig
+    return yIR_hat, store_beta, store_Sig
 end;
+
+# ╔═╡ 6b411c32-cd3f-4a5c-aa61-6c1aed1665a2
+beta_data = bvar(data)[2];
+
+# ╔═╡ a362a07a-c135-4de5-8637-e892fefb70c4
+begin
+	x_n = collect(1:(nsim - burnin))
+	plt1 = histogram(x_n, beta_data[1,:], normalize=:pdf, title = "Posterior: Beta", legend = false)
+end
+
+# ╔═╡ 1a97b6ab-2e8d-40b3-8550-f9eeee4eab7f
+sigma_data = bvar(data)[3];
 
 # ╔═╡ c21aa46d-08ac-4256-a021-83194bad3a5e
 md""" IRFs look strange here, but this could simply be reflecting the prize puzzle? Someone have a good explanation? """
 
+# ╔═╡ 108d294a-c0f0-4325-860e-3c68fef7f1b5
+irf_data = bvar(data)[1];
+
 # ╔═╡ abe69a74-74ff-4cc5-9a93-90bd36c48e8a
 begin
-	plot(bvar(data)[:, 1], lw = 1.5, label = "Inflation") 
-	plot!(bvar(data)[:, 2], lw = 1.5, label = "GDP") 
-	plot!(bvar(data)[:, 3], lw = 1.5, label = "Repo") 
+	plot(irf_data[:, 1], lw = 1.5, label = "Inflation") 
+	plot!(irf_data[:, 2], lw = 1.5, label = "GDP") 
+	plot!(irf_data[:, 3], lw = 1.5, label = "Repo") 
 end
 
 # ╔═╡ 878760b6-0a98-4955-b061-6e56ca83dfbf
@@ -1676,8 +1691,12 @@ version = "0.9.1+5"
 # ╠═741e914f-4d6d-4249-a324-4dd54fd0f277
 # ╟─3bb39875-2f99-4a1f-a7ab-a107b4b95716
 # ╠═9e949115-a728-48ed-8c06-5cc26b6733bf
+# ╠═6b411c32-cd3f-4a5c-aa61-6c1aed1665a2
+# ╟─a362a07a-c135-4de5-8637-e892fefb70c4
+# ╠═1a97b6ab-2e8d-40b3-8550-f9eeee4eab7f
 # ╟─c21aa46d-08ac-4256-a021-83194bad3a5e
-# ╟─abe69a74-74ff-4cc5-9a93-90bd36c48e8a
+# ╠═108d294a-c0f0-4325-860e-3c68fef7f1b5
+# ╠═abe69a74-74ff-4cc5-9a93-90bd36c48e8a
 # ╟─878760b6-0a98-4955-b061-6e56ca83dfbf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

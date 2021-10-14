@@ -403,8 +403,8 @@ We first implement the Gibbs sampler. Then, given the posterior draws of $\bolds
 begin
 	# Parameters
 	p = 2            # Number of lags (VAR order)
-	nsim = 20000      # Number of simulation in Gibbs sampler
-	burnin = 1000      # Burnin for Gibbs sampler
+	burnin = 5000      # Burnin for Gibbs sampler
+	nsim = burnin + 20000      # Number of simulation in Gibbs sampler
 	n_hz = 40        # Horizon for the IRF
 end;
 
@@ -500,81 +500,77 @@ The main function `bvar` is given next. It first loads the dataset, constructs t
 function bvar(data)
 
 	# Create y
-	data   = data[1:end, :] # data matrix
-    Y0     = data[1:p, :] # initial conditions
-    Y      = data[p + 1:end, :] # observations
-    T      = size(Y, 1)
-    n      = size(Y, 2)
-    y      = reshape(Y', T * n, 1)
-    k      = n * p + 1 # number of coefficients in each equation (21 in total, 3 equations)
+	data = data[1:end, :] # data matrix
+    Y0 = data[1:p, :] # initial conditions
+    Y = data[p + 1:end, :] # observations
+    T = size(Y, 1)
+    n = size(Y, 2)
+    y = reshape(Y', T * n, 1)
+    k = n * p + 1 # number of coefficients in each equation (21 in total, 3 equations)
 
     # Specification of the prior (diffuse prior in this case)
-    ν_0    = n + 3
-    Σ_0    = I(n)
-    β_0    = zeros(n * k, 1) # Best way to initialise with zeros?
-    #β_0    = fill( NaN, n * k, 1) # Alternative?k
+	# Prior for β
+    β_0 = zeros(n * k) # Best way to initialise with zeros?
+
+	# Prior for Σ
+    ν_0 = n + 4
+    Σ_0 = I(n) * (ν_0 - n - 1) # sets E[Σ] = I(n)
 
     # Precision for coefficients and intercepts
-    tmp    = ones(k * n, 1)
-    tmp[1: p * n + 1 : k * n] .= 1/10
-    A      = collect(1:k*n)
-    Vβ     = sparse(A, A, tmp[:, 1]) 
-    Vβ_d     = Matrix(Vβ) # Dense version
+    tmp = 10 * ones(k * n) # Precision for coefficients
+    tmp[1: p * n + 1 : k * n] = ones(n) # Precision for intercepts
+    A = collect(1:k*n)
+    Vβ = sparse(A, A, tmp) 
 
-    # Working on the lagged matrix (preparation of the data) / method is similar to Korobilis
-    tmpY   = [Y0[(end-p+1): end,:]; Y]
-    X_til  = zeros(T, n * p)
+    # Create lagged matrix
+    tmpY = [Y0[(end-p+1): end,:]; Y]
+    X_til = zeros(T, n * p)
 
     for i=1:p
         X_til[:, ((i - 1) * n + 1):i * n] = tmpY[(p - i + 1):end - i,:]
     end
-    X_til  = [ones(T, 1) X_til] # This is the dense X matrix
-    X      = SUR_form(X_til, n) # Creates a sparse regression array...
+    X_til = [ones(T, 1) X_til] # This is the dense X matrix
+    X = SUR_form(X_til, n) # Creates a sparse regression array
 
     # Initialise these arrays (used for storage)
     store_Sig  = zeros(nsim, n, n) # For the sigma values
     store_beta = zeros(nsim, k*n) # For the beta values
     store_yIR  = zeros(n_hz, n) # For the impulse responses
 
-    X_d   = Matrix(X)
-    # Initialise chain
-    β     = (X_d'*X_d) \ Matrix{Float64}(X_d'*y)
-    e     = reshape(y - X_d*β, n, T)
-    Σ     = e*e'/T
+    # Initialise Markov chain
+    β     = Array((X'*X) \ (X'*y))
+    e     = reshape(y - X*β, n, T)
+    Σ     = e*e'./T # sum of squared residuals
 
     iΣ    = Σ\I(n)
-    iΣ    = Symmetric(iΣ)
+    #iΣ    = Symmetric(iΣ)
 
     for isim = 1:nsim + burnin
 
-        # sample beta
-        XiΣ = X_d'*kron(I(T), iΣ)
-        XiΣX = XiΣ*X_d
-        Kβ = Vβ_d + XiΣX
-        β_hat = Kβ\(Vβ_d*β_0 + XiΣ*y)
+        # Sample β from multivariate normal
+        XiΣ = X'*kron(I(T), iΣ)
+        XiΣX = XiΣ*X
+        Kβ = Vβ + XiΣX
+        β_hat = Kβ\(Vβ*β_0 + XiΣ*y)
+		
+        β = β_hat + (cholesky(Hermitian(Kβ)).L)'\rand(Normal(0,1), n * k) 
 
-        Kβ = Symmetric(Kβ)
-        Random.seed!(12)
-        β = β_hat + Kβ'\randn(n*k, 1)
-        # β = β_hat + CKβL'\randn(n*k, 1) # sparse version
-
-        # sample Sig
-        e = reshape(y - X_d*β, n, T)
+        # Sample Σ from InverseWishart
+        e = reshape(y - X*β, n, T)
         Σ = rand(InverseWishart(ν_0 + T, Σ_0 + e*e'))
 
-
         if isim > burnin
-            # store the parameters
+            # Store the parameters
             isave = isim - burnin;
             store_beta[isave,:] = β';
             store_Sig[isave,:,:] = Σ;
 
-            # compute impulse-responses
+            # Compute impulse-responses
             CΣ = cholesky(Σ).L
 
             # 100 basis pts rather than 1 std. dev.
-            shock_d = [0; 0; 1]/Σ[n,n]
-            shock = [0; 0; 1]/CΣ[n,n]
+            shock_d = [0; 0; 1]/Σ[n,n] # standard deviation shock
+            shock = [0; 0; 1]/CΣ[n,n] # 100 basis point shock
             yIR = construct_IR(β, Σ, shock)
             store_yIR = store_yIR + yIR
         end
@@ -584,7 +580,7 @@ function bvar(data)
 end;
 
 # ╔═╡ c21aa46d-08ac-4256-a021-83194bad3a5e
-md""" IRFs look strange here, but this could simply be reflecting the prize puzzle? Someone have a good explanation? """
+md""" What do you think about the IRFs, do they make sense? """
 
 # ╔═╡ 108d294a-c0f0-4325-860e-3c68fef7f1b5
 irf_data = bvar(data)[1];
@@ -595,6 +591,9 @@ begin
 	plot!(irf_data[:, 2], color = :red, style = :dashdot, lw = 1.5, label = "GDP") 
 	plot!(irf_data[:, 3], lw = 1.5, label = "repo rate") 
 end
+
+# ╔═╡ 4e402c6a-4e72-4b3d-999e-39c6c92dae6a
+md""" Just as in the previous lectures, it is possible to compute posterior means using Monte Carlo integration. In addition, we can plot the marginal posterior distributions for the different variables of interest. However, we have done this many times and we will not repeat the process here. You can play around with the output of the `bvar` function to determine if you are able generate histograms of the posterior distributions. """
 
 # ╔═╡ 878760b6-0a98-4955-b061-6e56ca83dfbf
 md""" Now let us move to an example of a BVAR in R. There are many packages that one could use here. However, I am only going to illustrate one. For your project you could use any package you want. """
@@ -1775,6 +1774,7 @@ version = "0.9.1+5"
 # ╟─c21aa46d-08ac-4256-a021-83194bad3a5e
 # ╠═108d294a-c0f0-4325-860e-3c68fef7f1b5
 # ╟─abe69a74-74ff-4cc5-9a93-90bd36c48e8a
+# ╟─4e402c6a-4e72-4b3d-999e-39c6c92dae6a
 # ╟─878760b6-0a98-4955-b061-6e56ca83dfbf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

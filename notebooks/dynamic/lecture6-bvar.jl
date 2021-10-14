@@ -439,12 +439,12 @@ function SUR_form(X, n)
 
     repX = kron(X, ones(n, 1))
     r, c = size(X)
-    idi  = kron((1:r * n), ones(c, 1))
-    idj  = repeat((1:n * c), r, 1)
+    idi = kron((1:r * n), ones(c, 1))
+    idj = repeat((1:n * c), r, 1)
 
     # Some prep for the out return value.
-    d    = reshape(repX', n * r * c, 1)
-    out  = sparse(idi[:, 1], idj[:, 1], d[:, 1])
+    d = reshape(repX', n * r * c, 1)
+    out = sparse(idi[:, 1], idj[:, 1], d[:, 1])
 end;
 
 # ╔═╡ 171c9c8f-a4a9-4aad-8bab-f8f38d36a94b
@@ -457,13 +457,13 @@ for $t=1, \ldots, n_{\mathrm{hz}}$, where $n_{\mathrm{hz}}$ denotes the number o
 # ╔═╡ 741e914f-4d6d-4249-a324-4dd54fd0f277
 function construct_IR(β, Σ, shock)
 
-    n      = size(Σ, 1)
-    CΣ     = cholesky(Σ).L
-    tmpZ1  = zeros(p, n)
-    tmpZ   = zeros(p, n)
-    Yt1    = CΣ * shock
-    Yt     = zeros(n, 1)
-    yIR    = zeros(n_hz,n)
+    n = size(Σ, 1)
+    CΣ = cholesky(Σ).L
+    tmpZ1 = zeros(p, n)
+    tmpZ = zeros(p, n)
+    Yt1 = CΣ * shock
+    Yt = zeros(n, 1)
+    yIR = zeros(n_hz,n)
     yIR[1,:] = Yt1'
 
     for t = 2:n_hz
@@ -533,16 +533,16 @@ function bvar(data)
     X = SUR_form(X_til, n) # Creates a sparse regression array
 
     # Initialise these arrays (used for storage)
-    store_Sig  = zeros(nsim, n, n) # For the sigma values
+    store_Sig = zeros(nsim, n, n) # For the sigma values
     store_beta = zeros(nsim, k*n) # For the beta values
-    store_yIR  = zeros(n_hz, n) # For the impulse responses
+    store_yIR = zeros(n_hz, n) # For the impulse responses
 
     # Initialise Markov chain
-    β     = Array((X'*X) \ (X'*y))
-    e     = reshape(y - X*β, n, T)
-    Σ     = e*e'./T # sum of squared residuals
+    β = Array((X'*X) \ (X'*y))
+    e = reshape(y - X*β, n, T)
+    Σ = e*e'./T # sum of squared residuals
 
-    iΣ    = Σ\I(n)
+    iΣ = Σ\I(n)
     #iΣ    = Symmetric(iΣ)
 
     for isim = 1:nsim + burnin

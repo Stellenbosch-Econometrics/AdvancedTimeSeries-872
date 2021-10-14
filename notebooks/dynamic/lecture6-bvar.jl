@@ -236,6 +236,9 @@ b = randn(1, 2)
 # ╔═╡ fa2e2cc2-d103-48d2-88b1-4f62df4f0f3f
 A1 = randn(2, 2)
 
+# ╔═╡ c9305189-815f-4e01-afda-aab9c555e9d9
+[b; A1]
+
 # ╔═╡ 2e388e43-9fc7-4dd1-8856-0c734ce22cf3
 vec([b; A1])
 
@@ -402,10 +405,10 @@ We first implement the Gibbs sampler. Then, given the posterior draws of $\bolds
 # ╔═╡ 7557b795-839c-41bf-9586-7b2b3972b28d
 begin
 	# Parameters
-	p = 2            # Number of lags (VAR order)
+	p = 4            # Number of lags (VAR order)
 	burnin = 5000      # Burnin for Gibbs sampler
-	nsim = burnin + 20000      # Number of simulation in Gibbs sampler
-	n_hz = 40        # Horizon for the IRF
+	nsim = burnin + 40000  # Number of simulation in Gibbs sampler
+	n_hz = 50        # Horizon for the IRF
 end;
 
 # ╔═╡ 8b97f4dd-31cf-4a55-a72b-66775d79445c
@@ -414,7 +417,7 @@ md""" After specifying the parameters for the model, we load the data that we ar
 # ╔═╡ 5592c6a8-defc-4b6e-a303-813bdbacaffe
 begin
 	# Load the dataset and transform to array / matrix
-	df = urldownload("https://raw.githubusercontent.com/DawievLill/ATS-872/main/data/sa-data.csv") |> DataFrame
+	df = urldownload("https://raw.githubusercontent.com/DawievLill/ATS-872/main/data/sa-data.csv") |> DataFrame 
 end
 
 # ╔═╡ 7b8a3ca2-dbdd-4ddf-bed6-eb649796a9b8
@@ -547,7 +550,8 @@ function bvar(data)
 
     for isim = 1:nsim + burnin
 
-        # Sample β from multivariate normal
+		# Start Gibbs sampling routine
+        # Step 1: Sample β from multivariate Normal
         XiΣ = X'*kron(I(T), iΣ)
         XiΣX = XiΣ*X
         Kβ = Vβ + XiΣX
@@ -555,7 +559,7 @@ function bvar(data)
 		
         β = β_hat + (cholesky(Hermitian(Kβ)).L)'\rand(Normal(0,1), n * k) 
 
-        # Sample Σ from InverseWishart
+        # Step 2: Sample Σ from InverseWishart
         e = reshape(y - X*β, n, T)
         Σ = rand(InverseWishart(ν_0 + T, Σ_0 + e*e'))
 
@@ -1745,6 +1749,7 @@ version = "0.9.1+5"
 # ╟─67f2cc01-074c-410b-859c-b79f670cc74d
 # ╠═0244ce0e-42e7-4013-bedd-9e618565d43e
 # ╠═fa2e2cc2-d103-48d2-88b1-4f62df4f0f3f
+# ╠═c9305189-815f-4e01-afda-aab9c555e9d9
 # ╠═2e388e43-9fc7-4dd1-8856-0c734ce22cf3
 # ╟─07eeab9e-dd7b-4ff2-9b0f-6f0d5d9a60ec
 # ╟─538be57f-54e9-45dd-95f5-12e7a3df51a7

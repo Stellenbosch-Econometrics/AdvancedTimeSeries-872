@@ -402,7 +402,7 @@ We first implement the Gibbs sampler. Then, given the posterior draws of $\bolds
 # ╔═╡ 7557b795-839c-41bf-9586-7b2b3972b28d
 begin
 	# Parameters
-	p = 2            # Number of lags
+	p = 2            # Number of lags (VAR order)
 	nsim = 20000      # Number of simulation in Gibbs sampler
 	burnin = 1000      # Burnin for Gibbs sampler
 	n_hz = 40        # Horizon for the IRF
@@ -417,15 +417,15 @@ begin
 	df = urldownload("https://raw.githubusercontent.com/DawievLill/ATS-872/main/data/sa-data.csv") |> DataFrame
 end
 
+# ╔═╡ 7b8a3ca2-dbdd-4ddf-bed6-eb649796a9b8
+md""" We always like to inspect the data, so we plot it to see if there are potential non-stationarities. """
+
 # ╔═╡ e257ca34-c4e3-4a8a-a4dd-cee0d5580347
 begin
 	plot(df.inf, label = "inflation", color = :steelblue, style = :dash, lw = 1.5)
 	plot!(df.gdp, label = "GDP growth", color = :red, style = :dashdot, lw = 1.5)
-	plot!(df.repo, label = "repo rate", lw = 1.5)
+	plot!(df.repo, label = "repo rate", lw = 1.5, legend = :bottomleft)
 end
-
-# ╔═╡ bc0679b7-7278-47cd-9093-bcb39997079f
-ADFTest(df.inf, Symbol("constant"), 5)
 
 # ╔═╡ 6c697f4b-c928-43c2-9490-27b0f195857c
 data = Matrix(df[:, 1:end]);
@@ -499,9 +499,10 @@ The main function `bvar` is given next. It first loads the dataset, constructs t
 # ╔═╡ 9e949115-a728-48ed-8c06-5cc26b6733bf
 function bvar(data)
 
-	data   = data[1:end, :]
-    Y0     = data[1:4, :]
-    Y      = data[5:end, :]
+	# Create y
+	data   = data[1:end, :] # data matrix
+    Y0     = data[1:p, :] # initial conditions
+    Y      = data[p + 1:end, :] # observations
     T      = size(Y, 1)
     n      = size(Y, 2)
     y      = reshape(Y', T * n, 1)
@@ -582,18 +583,6 @@ function bvar(data)
     return yIR_hat, store_beta, store_Sig
 end;
 
-# ╔═╡ 6b411c32-cd3f-4a5c-aa61-6c1aed1665a2
-beta_data = bvar(data)[2];
-
-# ╔═╡ a362a07a-c135-4de5-8637-e892fefb70c4
-begin
-	x_n = collect(1:(nsim - burnin))
-	plt1 = histogram(x_n, beta_data[1,:], normalize=:pdf, title = "Posterior: Beta", legend = false)
-end
-
-# ╔═╡ 1a97b6ab-2e8d-40b3-8550-f9eeee4eab7f
-sigma_data = bvar(data)[3];
-
 # ╔═╡ c21aa46d-08ac-4256-a021-83194bad3a5e
 md""" IRFs look strange here, but this could simply be reflecting the prize puzzle? Someone have a good explanation? """
 
@@ -609,12 +598,6 @@ end
 
 # ╔═╡ 878760b6-0a98-4955-b061-6e56ca83dfbf
 md""" Now let us move to an example of a BVAR in R. There are many packages that one could use here. However, I am only going to illustrate one. For your project you could use any package you want. """
-
-# ╔═╡ 1e8026f2-67b7-4d50-9a7f-9f4743a8ac81
-md""" ### Example using simulated data """
-
-# ╔═╡ 97bb390b-dae7-46ca-8747-209ec3015eaa
-md""" The following code is from the notes by Jaime Cross """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1780,8 +1763,8 @@ version = "0.9.1+5"
 # ╠═7557b795-839c-41bf-9586-7b2b3972b28d
 # ╟─8b97f4dd-31cf-4a55-a72b-66775d79445c
 # ╠═5592c6a8-defc-4b6e-a303-813bdbacaffe
-# ╠═e257ca34-c4e3-4a8a-a4dd-cee0d5580347
-# ╠═bc0679b7-7278-47cd-9093-bcb39997079f
+# ╟─7b8a3ca2-dbdd-4ddf-bed6-eb649796a9b8
+# ╟─e257ca34-c4e3-4a8a-a4dd-cee0d5580347
 # ╠═6c697f4b-c928-43c2-9490-27b0f195857c
 # ╟─8d0a4b08-5cbf-43a8-91f3-5f448893a4c6
 # ╠═9e3795cf-8695-46c1-9857-728d765caa02
@@ -1789,14 +1772,9 @@ version = "0.9.1+5"
 # ╠═741e914f-4d6d-4249-a324-4dd54fd0f277
 # ╟─3bb39875-2f99-4a1f-a7ab-a107b4b95716
 # ╠═9e949115-a728-48ed-8c06-5cc26b6733bf
-# ╠═6b411c32-cd3f-4a5c-aa61-6c1aed1665a2
-# ╠═a362a07a-c135-4de5-8637-e892fefb70c4
-# ╠═1a97b6ab-2e8d-40b3-8550-f9eeee4eab7f
 # ╟─c21aa46d-08ac-4256-a021-83194bad3a5e
 # ╠═108d294a-c0f0-4325-860e-3c68fef7f1b5
-# ╠═abe69a74-74ff-4cc5-9a93-90bd36c48e8a
+# ╟─abe69a74-74ff-4cc5-9a93-90bd36c48e8a
 # ╟─878760b6-0a98-4955-b061-6e56ca83dfbf
-# ╟─1e8026f2-67b7-4d50-9a7f-9f4743a8ac81
-# ╟─97bb390b-dae7-46ca-8747-209ec3015eaa
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

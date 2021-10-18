@@ -7,7 +7,7 @@ The notebooks folder contains all the `Pluto` notebooks for this class. To get s
 # Rough course outline
 
 0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html) -- **Complete** ✔️
-1. Sampling, random variables and distributions -- [Lecture 1 notebook](https://dawievlill.github.io/pluto-static-export/lecture1-sampling.html)
+1. Sampling, random variables and distributions -- [Lecture #1 Notebook](https://dawievlill.github.io/pluto-static-export/lecture1-sampling.html)
 2. Bayesian thinking (Bernoulli / Binomial) -- **Final Draft** ✔️ [R code available]
 3. Starting with simulation (Normal) -- **Final Draft** ✔️ [R code available]
 4. Markov chain Monte Carlo -- **Final Draft** ✔️

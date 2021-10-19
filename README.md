@@ -9,10 +9,10 @@ The `notebooks/dynamic/` folder contains all the interactive `Pluto` notebooks f
 0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html) -- **Complete** ✔️
 1. Sampling, random variables and distributions -- [Lecture #1 Notebook](https://dawievlill.github.io/pluto-static-export/lecture1-sampling.html)
 2. Bayesian thinking (Bernoulli / Binomial) -- [Lecture #2 Notebook](https://dawievlill.github.io/pluto-static-export/lecture2-bayes.html)
-3. Starting with simulation (Normal) -- **Final Draft** ✔️ [R code available]
-4. Markov chain Monte Carlo -- **Final Draft** ✔️
-5. Bayesian linear regression -- **First Draft** ✔️
-6. Bayesian Vector Autoregression (BVARs) -- **Final Draft** ✔️ [Basic R code available]
+3. Starting with simulation (Normal) -- [Lecture #3 Notebook](https://dawievlill.github.io/pluto-static-export/lecture3-normal.html)
+4. Markov chain Monte Carlo -- [Lecture #4 Notebook](https://dawievlill.github.io/pluto-static-export/lecture4-mcmc.html)
+5. Bayesian linear regression -- [Lecture #5 Notebook](https://dawievlill.github.io/pluto-static-export/lecture5-regression.html)
+6. Bayesian Vector Autoregression (BVARs) -- [Lecture #6 Notebook](https://dawievlill.github.io/pluto-static-export/lecture6-bvar.html)
 7. Large BVARS -- **Empty** ❌ (Will not cover this year) 
 8. State space modelling and TVP-VARs -- **Empty** ❌ (Will not cover this year)
 9. Kalman filter -- **Empty** ❌ (Will not cover this year)

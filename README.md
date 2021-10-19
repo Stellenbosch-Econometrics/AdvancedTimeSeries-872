@@ -2,7 +2,7 @@
 
 These course notes are for the section on Bayesian econometrics. Incomplete, but frequently updated. 
 
-The notebooks folder contains all the `Pluto` notebooks for this class. To get started with Pluto, please visit the [Github page](https://github.com/fonsp/Pluto.jl) or watch this [video](https://www.youtube.com/watch?v=OOjKEgbt8AI)  
+The `notebooks/dynamic/` folder contains all the interactive `Pluto` notebooks for this class. To get started with Pluto, please visit the [Github page](https://github.com/fonsp/Pluto.jl) or watch this [video](https://www.youtube.com/watch?v=OOjKEgbt8AI)  
 
 # Rough course outline
 

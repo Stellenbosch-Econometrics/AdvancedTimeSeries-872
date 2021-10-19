@@ -6,7 +6,7 @@ The `notebooks/dynamic/` folder contains all the interactive `Pluto` notebooks f
 
 # Rough course outline
 
-0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html) -- **Complete** ✔️
+0. Introduction to Julia from [QuantEcon](https://julia.quantecon.org/getting_started_julia/index.html)
 1. Sampling, random variables and distributions -- [Lecture #1 Notebook](https://dawievlill.github.io/pluto-static-export/lecture1-sampling.html)
 2. Bayesian thinking (Bernoulli / Binomial) -- [Lecture #2 Notebook](https://dawievlill.github.io/pluto-static-export/lecture2-bayes.html)
 3. Starting with simulation (Normal) -- [Lecture #3 Notebook](https://dawievlill.github.io/pluto-static-export/lecture3-normal.html)

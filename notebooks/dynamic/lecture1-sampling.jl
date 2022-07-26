@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.3
+# v0.19.10
 
 using Markdown
 using InteractiveUtils
@@ -95,7 +95,7 @@ md" In our introductory session (Lecture 0) we had a brief introduction to Julia
 md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
-TableOfContents() # Uncomment for TOC
+# TableOfContents() # Uncomment for TOC
 
 # ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
 md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."

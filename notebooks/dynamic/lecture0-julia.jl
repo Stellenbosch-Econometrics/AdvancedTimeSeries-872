@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.1
+# v0.17.3
 
 using Markdown
 using InteractiveUtils
@@ -276,6 +276,15 @@ g(1, a = 2) # positional and keyword arguments
 # ╔═╡ aeb41add-1dbe-4214-9bf8-1ff807e5ce75
 
 
+# ╔═╡ b75a03b7-53fd-4e13-ae01-abc54e2e9dc3
+begin
+	countries = ("Japan", "Korea", "China")
+	cities = ("Tokyo", "Seoul", "Beijing")
+	for (country, city) in zip(countries, cities)
+	    println("The capital of $country is $city")
+	end
+end
+
 # ╔═╡ 6563768a-6e36-45d6-b686-9734f3603d22
 begin
 	countries = ("Japan", "Korea", "China")
@@ -283,15 +292,6 @@ begin
 	for (i, country) in enumerate(countries)
 	    city = cities[i]
 	    println("The capital of $hello is $city")
-	end
-end
-
-# ╔═╡ b75a03b7-53fd-4e13-ae01-abc54e2e9dc3
-begin
-	countries = ("Japan", "Korea", "China")
-	cities = ("Tokyo", "Seoul", "Beijing")
-	for (country, city) in zip(countries, cities)
-	    println("The capital of $country is $city")
 	end
 end
 
@@ -371,8 +371,11 @@ uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.8.5"
 
 [[Downloads]]
-deps = ["ArgTools", "LibCURL", "NetworkOptions"]
+deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+
+[[FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -496,7 +499,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[Random]]
-deps = ["Serialization"]
+deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Reexport]]

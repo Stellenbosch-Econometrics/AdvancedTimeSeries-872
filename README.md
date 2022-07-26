@@ -11,11 +11,9 @@ The `notebooks/dynamic/` folder contains all the interactive `Pluto` notebooks f
 2. Bayesian thinking (Bernoulli / Binomial) -- [Lecture #2 Notebook](https://dawievlill.github.io/pluto-static-export/lecture2-bayes.html)
 3. Starting with simulation (Normal) -- [Lecture #3 Notebook](https://dawievlill.github.io/pluto-static-export/lecture3-normal.html)
 4. Markov chain Monte Carlo -- [Lecture #4 Notebook](https://dawievlill.github.io/pluto-static-export/lecture4-mcmc.html)
-5. Working with time series data 
-6. Bayesian linear regression -- [Lecture #5 Notebook](https://dawievlill.github.io/pluto-static-export/lecture5-regression.html)
-7. Bayesian Vector Autoregression (BVARs) -- [Lecture #6 Notebook](https://dawievlill.github.io/pluto-static-export/lecture6-bvar.html)
-8. Time series forecasting 
-9. State space models 
+5. Bayesian linear regression -- [Lecture #5 Notebook](https://dawievlill.github.io/pluto-static-export/lecture5-regression.html)
+6. Bayesian Vector Autoregression (BVARs) -- [Lecture #6 Notebook](https://dawievlill.github.io/pluto-static-export/lecture6-bvar.html)
+7. State space models / Kalman filter 
 
 `R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 
 

@@ -73,18 +73,28 @@ md" # Introduction "
 md" > **Note:** A significant portion of the material for this lecture is based on [Computational Thinking](https://computationalthinking.mit.edu), a live online Julia/Pluto textbook. You should check out the course for some amazing notebooks!  "
 
 # ╔═╡ 000021af-87ce-4d6d-a315-153cecce5091
-md" In our introductory session (Lecture 0) we had a brief introduction to Julia via the QuantEcon website. In this first tutorial we will be looking at some basic ideas such as sampling and random variables. Julia is an amazing language for computational problems and is much faster than R for most practical applications in Bayesian Econometrics. You are welcome to still code in R if you wish. I will steer you in the right direction with resources from last year. However, I think it is worthwhile to learn Julia since the syntax is similar to Python and Matlab. 
+md"In this first lecture we will be looking at some basic ideas such as sampling and random variables. Julia is an amazing language for computational problems and is much faster than R for most practical applications in Bayesian Econometrics. You are welcome to still code in R if you wish. I will steer you in the right direction with resources from previous years. However, I think it is worthwhile to learn Julia since the syntax is similar to Python and Matlab. 
 
 **Note**: In terms of the project that you have to do at the end of the semester, most of you might want to use packages that are available in R, since the ecosystem is more mature and more packages are available. If you want to code up your own routines for your project using Julia, this will be more difficult. However, if you follow the notebooks carefully it should be within your reach. "
 
 # ╔═╡ 49033e09-fd64-4707-916c-9435d3f0a9d2
-md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. "
+md" This notebook we are working with is called a `Pluto` notebook and is useful for educational purposes. If you want to code in an integrated development environment, almost like `Rstudio`, then I recommend `VSCode`. 
+
+If you want to execute a cell, press `Shift` and then `Enter`. 
+
+I will give a quick example of my workflow in class. "
+
+# ╔═╡ 5396aeaa-a725-4e2d-860b-df3a59fbac33
+md" ## Packages "
+
+# ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
+md" Packages used for this notebook are given below. Check them out on **Github** and give a star ⭐."
+
+# ╔═╡ f70559f7-cf7d-40b0-96be-ebaa9ac9c8b1
+md" If you want a table of contents you can uncomment the cell below. "
 
 # ╔═╡ 2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # TableOfContents() # Uncomment for TOC
-
-# ╔═╡ d65de56f-a210-4428-9fac-20a7888d3627
-md" Packages used for this notebook are given above. Check them out on **Github** and give a star ⭐ if you want."
 
 # ╔═╡ da871a80-a6d8-4be2-92bb-c3f10e51efe3
 md" ## Resources "
@@ -107,7 +117,7 @@ md"""
 """
 
 # ╔═╡ be11b67f-d04d-46b1-a935-eedd7e59ede3
-md" There is a book by Gary Koop, called Bayesian Econometrics, that accompanies the course above. However, it is not essential to have the book. I will upload some articles that with similar content. Let us get going with the first lecture, we will start with the idea of random sampling. "
+md" There is a book by Gary Koop, called Bayesian Econometrics, that accompanies the course above. However, it is not essential to have the book. I will upload some articles that with similar content. Let us get going with the first lecture. We will start with the idea of random sampling. "
 
 # ╔═╡ 040c011f-1653-446d-8641-824dc82162eb
 md" ## Random sampling "
@@ -167,7 +177,11 @@ md" **Note**: the output for this function is `true` or `false` instead of `head
 md" A Bernoulli random variable model for a weighted coin, for example, will take value $1$ with probability $p$ and $0$ with probability $(1- p)$. Our Bernoulli function that we wrote provides `true` and `false` values. Let us sample some Bernoulli random variates. "
 
 # ╔═╡ b9cdd1c8-2f8f-48c5-846d-e40cedc949b7
-md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. How would you increase the number of flips in the code above? Play around with the code to see if you can do it. "
+md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. 
+
+#### Question
+
+How would you increase the number of flips in the code above? Play around with the code to see if you can do it. "
 
 # ╔═╡ 370a4ccb-fdb6-4e3f-8004-d6f88f025945
 md" # Probability distributions and types "
@@ -366,7 +380,7 @@ md" Quite interesting, we get a Gaussian again -- the green one at the end is th
 Importantly, the sum of two Gaussians with means $\mu_1$ and $\mu_2$ and variances $\sigma^{2}_{1}$ and $\sigma^{2}_{2}$ is Gaussian with mean $\mu_1 + \mu_2$ and variance $\sigma_1^2 + \sigma_2^2$. "
 
 # ╔═╡ 071d902e-a952-480e-9c21-5a3315162a6a
-md" ### Let's talk about types "
+md" ### Let's talk about types (again) "
 
 # ╔═╡ 54bf4640-fa81-4ef4-978a-a87682dd3401
 md"""
@@ -684,7 +698,7 @@ rand()   # random number between 0 and 1 -- similar to runif() in R
 rand(dcolours) 
 
 # ╔═╡ 71482500-7ca7-4a4e-8635-f29ee6f11ced
-[rand(1:6) for i in 1:10]
+[rand(1:6) for i in 1:10] # Array comprehension in Julia (Google if you dont understand)
 
 # ╔═╡ f882026e-3393-46a7-b284-f0313386f214
 rand(1:6, 10) # This generates an array in the same way as above
@@ -2071,9 +2085,11 @@ version = "0.9.1+5"
 # ╟─c65ae735-b404-4798-97f2-29083e7ae44c
 # ╟─000021af-87ce-4d6d-a315-153cecce5091
 # ╟─49033e09-fd64-4707-916c-9435d3f0a9d2
-# ╠═664eeadd-c661-4be5-ba0e-773a7bf68803
-# ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
+# ╟─5396aeaa-a725-4e2d-860b-df3a59fbac33
 # ╟─d65de56f-a210-4428-9fac-20a7888d3627
+# ╠═664eeadd-c661-4be5-ba0e-773a7bf68803
+# ╟─f70559f7-cf7d-40b0-96be-ebaa9ac9c8b1
+# ╠═2eb626bc-43c5-4d73-bd71-0de45f9a3ca1
 # ╟─da871a80-a6d8-4be2-92bb-c3f10e51efe3
 # ╟─98a8dd21-8dc4-4880-8975-265249f816ce
 # ╟─15dcbe6b-b51e-4472-a8e0-08cbd49d1e8c

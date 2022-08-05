@@ -8,7 +8,7 @@ The `notebooks/dynamic/` folder contains all the interactive `Pluto` notebooks f
 
 0. **[Self Study]** Introduction to Julia from [José Eduardo Storopoli](https://github.com/storopoli/Julia-Workshop)
 1. Sampling, random variables and distributions -- [Lecture #1 Notebook](https://raw.githack.com/DawievLill/AdvancedTimeSeries-872/main/notebooks/static/lecture1-sampling.jl.html)
-2. Bayesian thinking (Bernoulli / Binomial) -- [Lecture #2 Notebook]()
+2. Bayesian thinking (Bernoulli / Binomial) -- [Lecture #2 Notebook](https://raw.githack.com/DawievLill/AdvancedTimeSeries-872/main/notebooks/static/lecture2-bayes.jl.html)
 3. Starting with simulation (Normal) -- [Lecture #3 Notebook]()
 4. Markov chain Monte Carlo -- [Lecture #4 Notebook]()
 5. Bayesian linear regression -- [Lecture #5 Notebook]()

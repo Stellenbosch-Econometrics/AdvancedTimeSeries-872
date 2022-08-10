@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.10
+# v0.17.3
 
 using Markdown
 using InteractiveUtils
@@ -175,30 +175,61 @@ md"""
 """
 
 # ╔═╡ 03288125-5ebd-47d3-9e1a-32e2308dbd51
-md" Consider an economic model that describes an AR($1$) process
+md" Consider an economic model ($M$) that describes an AR($1$) process
 
 $\begin{equation*} y_{t}=\mu+\alpha y_{t-1}+\varepsilon_{t}, \quad \varepsilon_{t} \sim \mathcal{N}\left[0, \sigma^{2}\right] \end{equation*}$ 
 
-where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimate these unkown parameters with methods such as maximum likelihood estimation (MLE), as you did in the first part of the course. So we want to estimate $\theta = \{\mu, \alpha, \sigma^{2}\}$ 
+where $\mu$, $\alpha$ and $\sigma^{2}$ are parameters in a vector $\theta$. In the usual time series econometrics course one would try and estimate these unkown parameters with methods such as maximum likelihood estimation (MLE), as you did in the first part of the course. 
+
+This means that we want to **estimate** $\theta = \{\mu, \alpha, \sigma^{2}\}$. 
 
 Unobserved variables are usually called **parameters** and can be inferred from other variables. $\theta$ represents the unobservable parameter of interest, where $y$ is the observed data. 
 
 Bayesian conclusions about the parameter $\theta$ is made in terms of **probability statements**. Statements are conditional on the observed values of $y$ and can be written $p(\theta \mid y)$: given the data, what do we know about $\theta$? 
 
 **Notation remark**: You will see that we have switched to a small letter $p$ for probability distribution of a random variable. Previously we have used a capital $P$ to relate probability of events. You will often see probability of events written as $\mathbb{P}$ in textbooks as well. 
+"
 
-The Bayesian view is that there may be many possible values for $\theta$ from the population of parameter values $\Theta$. The frequentist view is that only one such a $\theta$ exists and that repeated sampling and greater frequency of observation will reveal this value. In other words, $\theta$ is regarded as a random variable in the Bayesian setting. This means that we have some subjective belief about $\theta$ should be in the Bayesian view and there is uncertainty attached as to what the parameter value actually is. 
+# ╔═╡ d5d387e4-f7c9-45fd-924c-4afa85ed0a05
+md"
+
+### Bayes vs Frequentist
+"
+
+# ╔═╡ fc765758-eb48-47c4-b308-a177f2f25766
+md"
+The Bayesian view is that there may be many possible values for $\theta$ from the population of parameter values $\Theta$. The frequentist view is that only one such a $\theta$ exists and that repeated sampling and greater frequency of observation will reveal this value. In other words, $\theta$ is regarded as a **random variable** in the Bayesian setting. This means that we have some subjective belief about $\theta$ should be in the Bayesian view and there is uncertainty attached as to what the parameter value actually is. 
 
 Bayesians will test initial assertions regarding $\theta$ using data on $y$ to investigate probability of assertions. This provides probability distribution over possible values for $\theta \in \Theta$. 
 
-For our model we start with a numerical formulation of joint beliefs about $y$ and $\theta$ expressed in terms of probability distributions.
+In the Bayesian view of the world, for our model we start with a numerical formulation of joint beliefs about $y$ and $\theta$ expressed in terms of probability distributions.
 
 1. For each $\theta \in \Theta$ the prior distribution $p(\theta)$ describes belief about true population characteristics
 2. For each $\theta \in \Theta$ and $y \in \mathcal{Y}$, our sampling model $p(y \mid \theta)$ describes belief that $y$ would be the outcome of the study if we knew $\theta$ to be true.
 
-Once data is obtained, the last step is to update beliefs about $\theta$. For each $\theta \in \Theta$ our posterior distribution $p(\theta \mid y)$ describes our belief that $\theta$ is the true value having observed the dataset.
+We then combine these components through Bayes' theorem to obtain the posterior distribution of interest. We are informed by the data and our prior about the posterior distribution. 
+"
 
-To make probability statements about $\theta$ given $y$, we begin with a model providing a **joint probability distribution** for $\theta$ and $y$. Joint probability density can be written as product of two densities: the prior $p(\theta)$ and sampling distribution $p(y \mid \theta)$
+# ╔═╡ 0a31e0cf-382e-49f2-bad4-bc4b5a8b1a98
+md" 
+
+### Practical Bayesian estimation
+
+"
+
+# ╔═╡ eed2582d-1ba9-48a1-90bc-a6a3bca139ba
+md" 
+
+Let us now discuss what this means practically for the estimation process. 
+
+We know that $y$ is the set of observations from our data set and we want to estimate a model with the associated parameter vector $\theta$ and likelihood function $p(y \mid \theta)$. In the world of Bayesian statistics we can estimate $\theta$ in two steps. 
+
+1. Before seeing the data we form a prior belief about $\theta$, which we have labelled the prior distribution $p(\theta)$
+2. After seeing the data we form the posterior belief about $\theta$, which is known as the posterior distribution $p(\theta \mid y)$
+
+The question is how do we move from step 1 to step 2? How do we update our beliefs from the prior to posterior? The answer lies with **Bayes' rule**. Let us consider the steps in the construction of Bayes's rule. 
+
+To make probability statements about the parameter given the data ($\theta$ given $y$), we begin with a model providing a **joint probability distribution** for $\theta$ and $y$. Joint probability density can be written as product of two densities: the prior $p(\theta)$ and sampling distribution $p(y \mid \theta)$
 
 $p(\theta, y) = p(\theta)p(y \mid \theta)$
 
@@ -209,16 +240,18 @@ $p(\theta, y) = p(y)p(\theta \mid y)$
 Setting these equations equal and rearranging provides us with Bayes' theorem / rule, as discussed before. 
 
 $p(y)p(\theta \mid y) = p(\theta)p(y \mid \theta) \rightarrow p(\theta \mid y) = \frac{p(y \mid \theta)p(\theta)}{p(y)}$
-"
 
-# ╔═╡ eed2582d-1ba9-48a1-90bc-a6a3bca139ba
-md" We are then left with the following formulation:
+We are then left with the following formulation:
 
 $$\underbrace{p(\theta \mid y)}_{\text {Posterior }}=\frac{\overbrace{p(y \mid \theta)}^{\text {Likelihood }} \cdot \overbrace{p(\theta)}^{\text {Prior }}}{\underbrace{p(y)}_{\text {Normalizing Constant }}}$$ 
 
-We can safely ignore $p(y)$ in Bayes' rule since it does not involve the parameter of interest $(\theta)$, which means we can write 
+The denominator in this expression $p(y)$ is called the marginal likelihood. It is defined by margininalising (integrating) over all possible values of $\theta$. 
 
-$p(\theta|y)\propto p(\theta)p(y|\theta)$
+$p(y) = \int_{\Theta} p(y \mid \theta) p(\theta) d \theta$
+
+While this quantity will be important later in hypothesis testing, we can safely ignore $p(y)$ it for now since it does not involve the parameter of interest $(\theta)$, which means we can write 
+
+$p(\theta|y)\propto p(\theta)p(y \mid \theta)$
 
 The **posterior density** $p(\theta \mid y)$ summarises all we know about $\theta$ after seeing the data, while the **prior density** $p(\theta)$ does not depend on the data (what you know about $\theta$ prior to seeing data). The **likelihood function** $p(y \mid \theta)$ is the data generating process (density of the data conditional on the parameters in the model). "
 
@@ -226,7 +259,7 @@ The **posterior density** $p(\theta \mid y)$ summarises all we know about $\thet
 md" ### Model vs. likelihood "
 
 # ╔═╡ c6d22671-26e8-4ba3-865f-5cd449a6c9be
-md" The following is important to point out, since it can create some confusion (at least I found it confusing at first). The sampling model is shown as $p_{Y}(Y \mid \Theta = \theta) = p(y \mid \theta)$ as a function of $y$ given **fixed** $\theta$ and describes the aleatoric (unknowable) uncertainty.  
+md" The following is important to point out, since it can create some confusion (at least I found it confusing at first). The sampling model is shown as $p_{Y}(Y \mid \Theta = \theta) = p(y \mid \theta)$ as a function of $y$ given **fixed** $\theta$ and describes the aleatoric (unknowable) uncertainty. This is the type of uncertainty that cannot be reduced.
 
 On the other hand, likelihood is given as $p_{\Theta}(Y=y \mid \Theta) = p(y \mid \theta) =L(\theta \mid y)$ which is a function of $\theta$ given **fixed** $y$ and provides information about epistemic (knowable) uncertainty, but is **not a probability distribution** 
 
@@ -305,7 +338,7 @@ md"""
 # ╔═╡ bb535c41-48cb-44fd-989b-a6d3e310406f
 md"""
 
-Let us give a general description of the Bernoulli and Binomial random variables and their relation to each other. We will start with data that has a Bernoulli distribution. In the section on estimating bias in a coin we will work through a specific example. Here we provide the framework.
+Let us give a general description of the Bernoulli and Binomial random variables and their relation to each other. We will start with data that has a Bernoulli distribution.
 
 Consider an experiment (such as tossing a coin) that is repeated $N$ times. Each time we conduct this experiment / trial we can evaluate the outcome as being a success or failure.
 
@@ -2628,6 +2661,9 @@ version = "0.9.1+5"
 # ╟─040c011f-1653-446d-8641-824dc82162eb
 # ╟─7bbecc2b-8c49-458c-8f2e-8792efa62a32
 # ╟─03288125-5ebd-47d3-9e1a-32e2308dbd51
+# ╟─d5d387e4-f7c9-45fd-924c-4afa85ed0a05
+# ╟─fc765758-eb48-47c4-b308-a177f2f25766
+# ╟─0a31e0cf-382e-49f2-bad4-bc4b5a8b1a98
 # ╟─eed2582d-1ba9-48a1-90bc-a6a3bca139ba
 # ╟─0c0d89c0-d70d-42ac-a55c-cd1afbc051ed
 # ╟─c6d22671-26e8-4ba3-865f-5cd449a6c9be

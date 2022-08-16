@@ -774,6 +774,68 @@ end
 # ╔═╡ f004ec01-1e27-4e30-9a53-23a299208846
 md" Initially, with $a = 1$ and $b = 1$ this will be the same as the uniform prior. However, play around with the values on the slider to see how it changes for a different parameterisation of the Beta distribution. "
 
+# ╔═╡ 949ae6bc-315b-48f7-9382-1b0aee462b65
+md" ### Incorporating beliefs
+
+"
+
+# ╔═╡ f1b59139-4205-408b-9ba5-f6f9df5d0de0
+md""" We can incorporate beliefs about the probability of a coin flip showing heads by choosing values of $a$ and $b$. This is referred to as prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. Common practice is to settle on a distributional family and then elicit **hyperparameters** within the family. 
+
+The Beta distribution, for example, is a two parameter family with great flexibility (as we have observed). For different values of the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. One of the things that the researcher might have some information is the expected value of $\theta$.
+
+"""
+
+# ╔═╡ 6a3176dd-587a-4e7d-9649-dff8af789c42
+md" Here are some nice facts about the Beta distribution, you don't need to memorise these. 
+
+$$\begin{equation}
+\begin{array}{ll}
+\text { Notation } & \operatorname{Beta}(a, b) \\
+\hline \text { Parameters } & \begin{array}{l}
+a>0 \text { shape (real) } \\
+b>0 \text { shape (real) }
+\end{array} \\
+\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
+\text { PDF } & \frac{x^{a-1}(1-x)^{b-1}}{\mathrm{~B}(a, b)} \\
+\hline \text { Mean } & \frac{a}{a+b} \\
+\hline \text { Mode } & \frac{a-1}{a+b-2} \text { for } a, b>1 \\
+& 0 \text { for } a=1, b>1 \\
+& 1 \text { for } a>1, b=1 \\
+\hline \text { Variance } & \frac{a b}{(a+b)^{2}(a+b+1)} \\
+\text { Concentration } & \kappa=a+b
+\end{array}
+\end{equation}$$
+"
+
+# ╔═╡ a33f7f60-389f-4d26-9562-c60380eb1888
+md"""
+In the case of the Beta distribution the prior mean is given above as 
+
+$\mathbb{E}(\theta) = \frac{a}{a + b}$
+
+The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
+
+Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
+
+As an example, set $a = b = 2$, then we have 
+
+$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
+
+We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
+
+Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
+
+In summary, the Beta distribution is chosen since it has some of the following aspects, 
+
+1. *Natural support*: Support between $0$ and $1$
+2. *Flexibility*: The PDF can take on several shapes and therefore express various beliefs. 
+3. *Conjugacy*: Results in an analytical posterior distribution. 
+
+We will show the analytical posterior derivation below. 
+
+"""
+
 # ╔═╡ e7669fea-5aff-4522-81bf-3356ce126b1f
 md"""
 
@@ -808,68 +870,37 @@ This indicates that the posterior mean is somewhere between the prior mean and t
 
 """
 
-# ╔═╡ e080bc66-bd47-4599-873b-9bf602d11f8f
-md"""
-### Eliciting a prior 
+# ╔═╡ 102ca26d-a97a-4f1e-85fa-28d54305afbf
+md" ### Alternative derivation "
 
 
+# ╔═╡ ff3d162a-5325-496f-bb50-c119391729ba
+md" An alternative (more compact) derivation from Jamie Cross that uses proportionality and ignores the normalising constant can be found below. 
 
-"""
+$$\begin{align*}
+        p(\theta | \mathbf{y})  &\propto p(\mathbf{y} | \theta) p(\theta)\\
+                                &= \underset{p(\mathbf{y} | \theta)}{\underbrace{\theta^{m} (1-\theta)^{N-m}}} \underset{p(\theta)}{\underbrace{\frac{\theta^{a} (1- \theta)^{b - 1}}{B({a}, {b})}}}\\
+                                &\propto \theta^{m} (1-\theta)^{N-m}  \theta^{a-1} (1- \theta)^{b - 1} \\
+                                &= \theta^{m + a -1} (1 - \theta)^{N-m+ b - 1 } \\
+    \end{align*}$$
 
-# ╔═╡ 7b7c3222-a2c4-48f6-b25f-40d600160a54
-md""" We start our discussion with the idea of prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. Common practice is to settle on a distributional family and then elicit **hyperparameters** within the family.
-
-The Beta distribution, for example, is a two parameter family with great flexibility. For different values of the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. One of the things that the researcher might have some information is the expected value of $\theta$.
-
-"""
-
-# ╔═╡ b71b4749-654e-4aa0-9365-12756c0dc9b9
-md" Here are some nice facts about the Beta distribution, you don't need to memorise these. 
-
-$$\begin{equation}
-\begin{array}{ll}
-\text { Notation } & \operatorname{Beta}(a, b) \\
-\hline \text { Parameters } & \begin{array}{l}
-a>0 \text { shape (real) } \\
-b>0 \text { shape (real) }
-\end{array} \\
-\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
-\text { PDF } & \frac{x^{a-1}(1-x)^{b-1}}{\mathrm{~B}(a, b)} \\
-\hline \text { Mean } & \frac{a}{a+b} \\
-\hline \text { Mode } & \frac{a-1}{a+b-2} \text { for } a, b>1 \\
-& 0 \text { for } a=1, b>1 \\
-& 1 \text { for } a>1, b=1 \\
-\hline \text { Variance } & \frac{a b}{(a+b)^{2}(a+b+1)} \\
-\text { Concentration } & \kappa=a+b
-\end{array}
-\end{equation}$$
+It is perhaps easier to see here that the final expression is a Beta distribution with parameters $a + n$ and $b + N - m$. This then means that $\theta|\mathbf{y} \sim \text{Beta}(a + n, b + N - m)$.
 "
 
-# ╔═╡ 215ff3df-d76d-4471-a0b5-ecea282185a7
-md"""
-In the case of the Beta distribution the prior mean is given above as 
+# ╔═╡ f0de92aa-3bcb-4bad-bb25-9f5c3e4c0b11
+md" ## Posterior analysis "
 
-$\frac{a}{a + b}$
+# ╔═╡ 91c8fa46-b9e7-4db2-8e20-0e6c5006483f
+md" Given the posterior distribution we can now present the results. Three types of results are generally shown in Bayesian analysis, namely, 
 
-The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
+1. Posterior analysis
+2. Hypothesis testing
+3. Prediction
 
-Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
-
-As an example, set $a = b = 2$, then we have 
-
-$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
-
-We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
-
-Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
-In the case of the Beta distribution the prior mean is given above as 
-
-$\frac{a}{a + b}$
-
-"""
+The notes from Jamie Cross go into detail about posterior analysis. We will not cover this in this course, but you are welcome to look at his notes for answers."
 
 # ╔═╡ 92a4aa17-2e2d-45c2-a9a2-803d389077d5
-md" ## Coin toss with `Turing.jl` 🤓"
+md" ## Coin flip with `Turing.jl` 🤓"
 
 # ╔═╡ 33b402b9-29c5-43d3-bb77-9b1a172229bb
 md""" 
@@ -2719,12 +2750,16 @@ version = "0.9.1+5"
 # ╟─43d563ae-a435-417f-83c6-19b3b7d6e6ee
 # ╟─11a5614b-c195-45a8-8be0-b99fda6c60fd
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
+# ╟─949ae6bc-315b-48f7-9382-1b0aee462b65
+# ╟─f1b59139-4205-408b-9ba5-f6f9df5d0de0
+# ╟─6a3176dd-587a-4e7d-9649-dff8af789c42
+# ╟─a33f7f60-389f-4d26-9562-c60380eb1888
 # ╟─e7669fea-5aff-4522-81bf-3356ce126b1f
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
-# ╟─e080bc66-bd47-4599-873b-9bf602d11f8f
-# ╟─7b7c3222-a2c4-48f6-b25f-40d600160a54
-# ╟─b71b4749-654e-4aa0-9365-12756c0dc9b9
-# ╟─215ff3df-d76d-4471-a0b5-ecea282185a7
+# ╟─102ca26d-a97a-4f1e-85fa-28d54305afbf
+# ╟─ff3d162a-5325-496f-bb50-c119391729ba
+# ╟─f0de92aa-3bcb-4bad-bb25-9f5c3e4c0b11
+# ╟─91c8fa46-b9e7-4db2-8e20-0e6c5006483f
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5
 # ╟─33b402b9-29c5-43d3-bb77-9b1a172229bb
 # ╟─0a3ed179-b60b-4740-ab73-b176bba08d84

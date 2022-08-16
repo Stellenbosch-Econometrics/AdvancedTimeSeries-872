@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.3
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -350,23 +350,21 @@ A binary random variable  $y \in \{0, 1\}$, $0 \leq \theta \leq 1$ follows a Ber
 
 $p\left(y \mid \theta\right)=\left\{\begin{array}{cl}\theta & \text { if } y=1 \\ 1-\theta & \text { if } y=0\end{array}\right.$
 
-We combine the equations for the probabilities of success and failure into a single expression 
+This means that $y$ is a Bernoulli random variable with parameter $\theta$, i.e. $y \sim \text{Ber}(\theta)$. We combine the equations for the probabilities of success and failure into a single expression to give the probability mass function (PMF) as 
 
 $p(y \mid \theta) = \theta^{y} (1 - \theta)^{1-y}$
 
-We can also figure out the formula for the likelihood of a whole set of outcomes from **multiple flips**. Denote the outcome fo the $i$th flip as $y_{i}$ and denote the set of outcomes as $\{y_{i}\}$. If we assume outcomes are independent of each other then we can derive the following formula for the probability of set of outcomes
+Now, if we let $\{y_1, \ldots, y_N\}$ denote the set of $N$ independent random variables that each represent the coin showing heads in $N$ independent flips then the join PMF of these flips is given by, 
 
-$\begin{aligned} p(y \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ 
+$\begin{aligned} p(\{y_1, \ldots, y_N\} \mid \theta) &=\prod_{i=1}^{N} p\left(y_{i} \mid \theta\right) \\ 
   =& \prod_{i}^{N} \theta^{y_i}(1-\theta)^{(1-y_i)} \\
   =& \theta^{\sum_{i} {y_i}}(1-\theta)^{\sum_{i}(1-y_i)} \\
   =& \theta^{y}(1-\theta)^{N - y} 
 \end{aligned}$
 
+The likelihood has the same form as the joint PMF above. The model above would be the same regardless of whether we take a Bayesian or frequentist view of the world. The main difference is in the way in which the probabilities are interpreted. 
 
 """
-
-# ╔═╡ 9e7a673e-7cb6-454d-9c57-b6b4f9181b06
-md" Soon we will write some code for this likelihood. It turns out to be the likelihood for a Binomial random variable, which consists of $N$ independent Bernoulli trials."
 
 # ╔═╡ fe8f71b2-4198-4a12-a996-da254d2cc656
 md" ### Binomial random variable "
@@ -461,11 +459,11 @@ Plots.plot(
 md" Naturally, one would want to use a pre-packaged solution to sampling with a binomial random variable. The `Distributions.jl` package contains optimised routines that work faster than our code, but is still a good idea to code some things yourself to fully understand the mechanisms. " 
 
 # ╔═╡ 828166f7-1a69-4952-9e3b-50a99a99789f
-md" #### Estimating bias in a coin  "
+md" ### Worked example: Estimating bias in a coin  "
 
 # ╔═╡ 24c4d724-5911-4534-a5c6-3ab86999df43
 md"""
-For an example lets look at estimating bias in a coin. We observe the number of heads that result from flipping one coin and we estimate its underlying probability of coming up heads. We want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
+For a worked example lets look at estimating bias in a coin. We observe the number of heads that result from flipping one coin and we estimate its underlying probability of coming up heads. We want to create a descriptive model with meaningful parameters. The outcome of a flip will be given by $y$, with $y=1$ indicating heads and $y = 0$ tails. 
 
 We need underlying probability of heads as value of parameter $\theta$. This can be written as $p(y = 1 \mid \theta) = \theta$. The probability that the outcome is heads, given a parameter value of $\theta$, is the value $\theta$. We also need the probability of tails, which is the complement of probability of heads $p(y = 0 \mid \theta) = 1 - \theta$. 
 
@@ -674,95 +672,19 @@ begin
 	plot!(coins_grid, posterior_2, color = :black,lw = 2,  fill = (0, 0.4, :green))
 end
 
-# ╔═╡ 79b45389-fa2a-46df-9869-1992c8afb397
-md"""
-
-Now that we know more about the Binomial random variable, let us get back to our discussion on priors. 
-
-"""
-
-# ╔═╡ cb53475c-cc56-46b3-94b0-3ded33eb18d4
-md"""
-### Eliciting a prior 
-
-
-
-"""
-
-# ╔═╡ 75ef279d-2c7b-4776-b93f-5b28cbc67f63
-md""" We start our discussion with the idea of prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. Common practice is to settle on a distributional family and then elicit **hyperparameters** within the family.
-
-The Beta distribution, for example, is a two parameter family with great flexibility. For different values of the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. One of the things that the researcher might have some information is the expected value of $\theta$.
-
-"""
-
-# ╔═╡ 2844b7a6-002e-4459-9e37-30e3a16c88f0
-md" Here are some nice facts about the Beta distribution, you don't need to memorise these. 
-
-$$\begin{equation}
-\begin{array}{ll}
-\text { Notation } & \operatorname{Beta}(a, b) \\
-\hline \text { Parameters } & \begin{array}{l}
-a>0 \text { shape (real) } \\
-b>0 \text { shape (real) }
-\end{array} \\
-\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
-\text { PDF } & \frac{x^{a-1}(1-x)^{b-1}}{\mathrm{~B}(a, b)} \\
-\hline \text { Mean } & \frac{a}{a+b} \\
-\hline \text { Mode } & \frac{a-1}{a+b-2} \text { for } a, b>1 \\
-& 0 \text { for } a=1, b>1 \\
-& 1 \text { for } a>1, b=1 \\
-\hline \text { Variance } & \frac{a b}{(a+b)^{2}(a+b+1)} \\
-\text { Concentration } & \kappa=a+b
-\end{array}
-\end{equation}$$
-"
-
-# ╔═╡ 68bb2bfb-6643-4f59-9d2b-c59fd1dc3273
-md"""
-In the case of the Beta distribution the prior mean is given above as 
-
-$\frac{a}{a + b}$
-
-The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
-
-Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
-
-As an example, set $a = b = 2$, then we have 
-
-$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
-
-We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
-
-Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
-In the case of the Beta distribution the prior mean is given above as 
-
-$\frac{a}{a + b}$
-
-The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
-
-Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
-
-As an example, set $a = b = 2$, then we have 
-
-$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
-
-We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
-
-Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
-
-"""
-
 # ╔═╡ 5c714d3b-ac72-40dc-ba98-bb2b24435d4c
 md"""
 
-#### Coin flipping contd. 
+## Coin flipping example contd. 
 
 """
 
 # ╔═╡ 573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 md"""
-In our coin flipping model we have derived the posterior credibilities of parameter values given certain priors. Generally, we need a mathematical description of the **prior probability** for each value of the parameter $\theta$ on interval $[0, 1]$. Any relevant probability density function would work, but there are two desiderata for mathematical tractability.
+
+In our original coin flipping model we built the model on the foundation of a joint PMF. Now we need to incorporate prior belief about model parameters $\theta$. 
+
+Generally, we need a mathematical description of the **prior probability** for each value of the parameter $\theta$ on interval $[0, 1]$. Any relevant probability density function would work, but there are two desiderata for mathematical tractability.
 
 1. Product of $p(y \mid \theta)$ and $p(\theta)$ results in same form as $p(\theta)$.
 2. Necesarry for $\int p(y \mid \theta)p(\theta) \text{d} \theta$ to be solvable analytically
@@ -883,6 +805,66 @@ $\underbrace{\frac{m+a}{N+a+b}}_{\text {posterior }}=\underbrace{\frac{m}{N}}_{\
 
 This indicates that the posterior mean is somewhere between the prior mean and the proportion in the data. The more data we have, the less influence of the prior. 
 
+
+"""
+
+# ╔═╡ e080bc66-bd47-4599-873b-9bf602d11f8f
+md"""
+### Eliciting a prior 
+
+
+
+"""
+
+# ╔═╡ 7b7c3222-a2c4-48f6-b25f-40d600160a54
+md""" We start our discussion with the idea of prior elicitation. This is basically extracting a prior distribution from a person, normally an expert. Common practice is to settle on a distributional family and then elicit **hyperparameters** within the family.
+
+The Beta distribution, for example, is a two parameter family with great flexibility. For different values of the parameters $a$ and $b$ we get different functional forms for the distribution. We refer to the parameters as hyperparemeters in Bayesian econometrics. One of the things that the researcher might have some information is the expected value of $\theta$.
+
+"""
+
+# ╔═╡ b71b4749-654e-4aa0-9365-12756c0dc9b9
+md" Here are some nice facts about the Beta distribution, you don't need to memorise these. 
+
+$$\begin{equation}
+\begin{array}{ll}
+\text { Notation } & \operatorname{Beta}(a, b) \\
+\hline \text { Parameters } & \begin{array}{l}
+a>0 \text { shape (real) } \\
+b>0 \text { shape (real) }
+\end{array} \\
+\hline \text { Support } & x \in[0,1] \text { or } x \in(0,1) \\
+\text { PDF } & \frac{x^{a-1}(1-x)^{b-1}}{\mathrm{~B}(a, b)} \\
+\hline \text { Mean } & \frac{a}{a+b} \\
+\hline \text { Mode } & \frac{a-1}{a+b-2} \text { for } a, b>1 \\
+& 0 \text { for } a=1, b>1 \\
+& 1 \text { for } a>1, b=1 \\
+\hline \text { Variance } & \frac{a b}{(a+b)^{2}(a+b+1)} \\
+\text { Concentration } & \kappa=a+b
+\end{array}
+\end{equation}$$
+"
+
+# ╔═╡ 215ff3df-d76d-4471-a0b5-ecea282185a7
+md"""
+In the case of the Beta distribution the prior mean is given above as 
+
+$\frac{a}{a + b}$
+
+The prior mean will, by the fact that the prior is conjugate, also translate to a posterior distribution that has a Beta functional form. Therefore, if you choose the values for $a$ and $b$ properly you are in fact stating something about $\mathbb{E}(\theta)$.
+
+Suppose you believe that $\mathbb{E}(\theta) = 1/2$. This can be obtained by setting $a = b$. 
+
+As an example, set $a = b = 2$, then we have 
+
+$\mathbb{E}(\theta) = \frac{2}{2+2} = 1/2$
+
+We could also choose a completely noninformative prior with $a = b = 1$, which implies that $p(\theta) \propto 1$. This is simply a uniform distribution over the interval $[0, 1]$. Every value for $\theta$ receives the same probability. 
+
+Obviously there are multiple values of $a$ and $b$ will work, play around with the sliders above to see what happens for a choice of different $a$ and $b$ under this restriction for the expected value of $\theta$.
+In the case of the Beta distribution the prior mean is given above as 
+
+$\frac{a}{a + b}$
 
 """
 
@@ -2680,7 +2662,6 @@ version = "0.9.1+5"
 # ╟─6e1de0ff-0fef-48b4-ac5b-0279ea8f2d4d
 # ╟─284d0a23-a329-4ea7-a069-f387e21ba797
 # ╟─bb535c41-48cb-44fd-989b-a6d3e310406f
-# ╟─9e7a673e-7cb6-454d-9c57-b6b4f9181b06
 # ╟─fe8f71b2-4198-4a12-a996-da254d2cc656
 # ╟─7e89eee0-dd19-4fec-b7c0-7783a9ffb83c
 # ╟─f45eb380-7b43-4fd0-af34-89ffd126a63f
@@ -2730,11 +2711,6 @@ version = "0.9.1+5"
 # ╟─4b141ffc-4100-47e3-941a-4e72c784ccf0
 # ╟─219aafcb-17b1-4f5f-9c2b-9b713ba78b18
 # ╟─2833e081-45d6-4f64-8d1e-b3a5895b7952
-# ╟─79b45389-fa2a-46df-9869-1992c8afb397
-# ╟─cb53475c-cc56-46b3-94b0-3ded33eb18d4
-# ╟─75ef279d-2c7b-4776-b93f-5b28cbc67f63
-# ╟─2844b7a6-002e-4459-9e37-30e3a16c88f0
-# ╟─68bb2bfb-6643-4f59-9d2b-c59fd1dc3273
 # ╟─5c714d3b-ac72-40dc-ba98-bb2b24435d4c
 # ╟─573b8a38-5a9b-4d5f-a9f6-00a5255914f0
 # ╟─1ca20976-757f-4e30-94d4-ee1276a614fb
@@ -2745,6 +2721,10 @@ version = "0.9.1+5"
 # ╟─f004ec01-1e27-4e30-9a53-23a299208846
 # ╟─e7669fea-5aff-4522-81bf-3356ce126b1f
 # ╟─a32faf6c-a5bb-4005-ad42-188af732fba5
+# ╟─e080bc66-bd47-4599-873b-9bf602d11f8f
+# ╟─7b7c3222-a2c4-48f6-b25f-40d600160a54
+# ╟─b71b4749-654e-4aa0-9365-12756c0dc9b9
+# ╟─215ff3df-d76d-4471-a0b5-ecea282185a7
 # ╟─92a4aa17-2e2d-45c2-a9a2-803d389077d5
 # ╟─33b402b9-29c5-43d3-bb77-9b1a172229bb
 # ╟─0a3ed179-b60b-4740-ab73-b176bba08d84

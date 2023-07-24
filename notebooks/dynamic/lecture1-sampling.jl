@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.10
+# v0.17.3
 
 using Markdown
 using InteractiveUtils
@@ -159,22 +159,49 @@ md"""
 One way would be to generate random integers between $1$ and $10$ and assign heads to a subset of the possible results with the desired probability, e.g. $1:7$ get heads, and $8:10$ get tails. We will use this same logic later in other examples, so it is important to understand what we are doing here. 
 """
 
+# ╔═╡ 0d46dd99-c614-40a6-9cd0-69b453ec782f
+function simple_weighted_coin()
+	if rand(1:10) ≤ 7
+		"heads"
+	else   
+		"tails"
+	end
+end # Quite verbose, but good for pedagogical purposes. 
+
+# ╔═╡ da3b79da-3d14-405f-80af-d58d04b4f801
+simple_weighted_coin()
+
 # ╔═╡ 18d07eee-60af-4dad-8f4a-9426f5907ad3
 md" Another way to do this might be with a **ternary operator**, see the Julia documentation [here](https://docs.julialang.org/en/v1/manual/control-flow/). "
 
+# ╔═╡ f40f5823-f383-4d6e-a651-91c5a03cbf1e
+simple_weighted_coin2() = rand(1:10) ≤ 7 ? "heads" : "tails" 
+
+# ╔═╡ 2970a6d2-599a-44ce-ab09-d52db64c0c64
+simple_weighted_coin2()
+
 # ╔═╡ 5b54210f-9a7d-447e-9491-f8fbb0892e7f
 md" If we generate a uniform number between $0$ and $1$ and then check if it is less than some probability, this is known as one **Bernoulli trial**. Binomial and Bernoulli random variables will be covered in more detail later in the lecture and also defined more formally in the next lecture. For now you simply need to understand the process. We can construct a simple Bernoulli function that encapsulates this idea.  "
+
+# ╔═╡ e9df057d-3781-4fe1-b0ca-fab08b895ca2
+bernoulli(p) = rand() < p # Takes in a value p between 0 and 1 to compare against
 
 # ╔═╡ 7f8b5d7b-25cf-4464-b01a-e9649001b1a1
 md"""
 p = $(@bind p₁ PlutoUI.Slider(0.0:0.01:1.0, show_value=true, default=0.7))
 """
 
+# ╔═╡ 3d1e1190-2ba6-42ad-9c5b-3c3316fd75a0
+countmap( [bernoulli(p₁) for _ in 1:1000] ) # 10000 iterations, count how many true and false given the value of p
+
 # ╔═╡ bda26511-d961-413a-8389-ad5be48f79fe
 md" **Note**: the output for this function is `true` or `false` instead of `heads` or `tails` in the weighted coin example. "
 
 # ╔═╡ 4c6dd3ba-268e-4fad-b8d1-4bc78f24a46f
 md" A Bernoulli random variable model for a weighted coin, for example, will take value $1$ with probability $p$ and $0$ with probability $(1- p)$. Our Bernoulli function that we wrote provides `true` and `false` values. Let us sample some Bernoulli random variates. "
+
+# ╔═╡ c817e5e6-4cb4-4392-8f7e-e1a4bb009537
+flips = [Int(bernoulli(p₁)) for _ in 1:100];
 
 # ╔═╡ b9cdd1c8-2f8f-48c5-846d-e40cedc949b7
 md" The calculation for the mean is just the proportion of `true` values, which should be roughly equal to our probability parameter. Accuracy increases with the number of flips. 
@@ -456,6 +483,12 @@ md" Now let us show that we can calculate the standard deviation for any random 
 
 We can define this to act on any random variable, even ones that we have not created yet!"
 
+# ╔═╡ ec39a8d0-be30-4c7c-9727-f7cffdd117a9
+Statistics.std(X::RandomVariable) = sqrt(var(X))
+
+# ╔═╡ d3387ea9-032f-4b62-96fe-3965ad187672
+std(G)
+
 # ╔═╡ 9aef8d51-eb5b-4342-8ad5-02e6187b2953
 md" #### Sum of two Gaussians (redux) "
 
@@ -518,6 +551,9 @@ md"""
 md"""
 We can also specify how to sample from a Gaussian distribution. We can re-purpose `rand` for this!
 """
+
+# ╔═╡ 0fcbe952-87af-4c56-a6e8-cf80ada41497
+Base.rand(X::Gaussian) = X.μ + √(X.σ²) * randn()
 
 # ╔═╡ 248e90a9-6c28-4ef2-bd51-112077f93f9c
 md" #### General application "
@@ -615,9 +651,6 @@ end
 # ╔═╡ 5f537343-2d7d-433f-a3aa-b075425fc9e2
 G1 + G2
 
-# ╔═╡ 0fcbe952-87af-4c56-a6e8-cf80ada41497
-Base.rand(X::Gaussian) = X.μ + √(X.σ²) * randn()
-
 # ╔═╡ 6031286a-85c9-4770-b03e-3bf6ddd12451
 md"""
 For example, let's sum two Bernoullis:
@@ -641,6 +674,9 @@ Now we need to define the various functions on this type representing a sum
 
 # ╔═╡ 7469e43a-f963-4228-bbe3-4cffd113cb2b
 Statistics.mean(S::SumOfTwoRandomVariables) = mean(S.X1) + mean(S.X2)
+
+# ╔═╡ 46bb14fb-62b4-402b-8a0b-8096bd2a6289
+mean(flips) 
 
 # ╔═╡ 96787e59-a958-404b-b610-42a28bd0353b
 mean(B)
@@ -667,12 +703,6 @@ Statistics.var(S::SumOfTwoRandomVariables) = var(S.X1) + var(S.X2)
 
 # ╔═╡ 30b5ae33-c009-4ad5-8950-c75a614acde3
 var(G)
-
-# ╔═╡ ec39a8d0-be30-4c7c-9727-f7cffdd117a9
-Statistics.std(X::RandomVariable) = sqrt(var(X))
-
-# ╔═╡ d3387ea9-032f-4b62-96fe-3965ad187672
-std(G)
 
 # ╔═╡ 6dd8ebb3-a23f-4071-becd-94a8de5fd4f7
 mean(B1), var(B1), std(B1)
@@ -717,36 +747,6 @@ toss_counts = countmap(tosses)
 
 # ╔═╡ caeee82e-b854-4b34-b34f-5899e5a9b952
 prob_tail = toss_counts["tail"] / length(tosses) # Determines the probability of a tail. 
-
-# ╔═╡ 0d46dd99-c614-40a6-9cd0-69b453ec782f
-function simple_weighted_coin()
-	if rand(1:10) ≤ 7
-		"heads"
-	else   
-		"tails"
-	end
-end # Quite verbose, but good for pedagogical purposes. 
-
-# ╔═╡ da3b79da-3d14-405f-80af-d58d04b4f801
-simple_weighted_coin()
-
-# ╔═╡ f40f5823-f383-4d6e-a651-91c5a03cbf1e
-simple_weighted_coin2() = rand(1:10) ≤ 7 ? "heads" : "tails" 
-
-# ╔═╡ 2970a6d2-599a-44ce-ab09-d52db64c0c64
-simple_weighted_coin2()
-
-# ╔═╡ e9df057d-3781-4fe1-b0ca-fab08b895ca2
-bernoulli(p) = rand() < p # Takes in a value p between 0 and 1 to compare against
-
-# ╔═╡ 3d1e1190-2ba6-42ad-9c5b-3c3316fd75a0
-countmap( [bernoulli(p₁) for _ in 1:1000] ) # 10000 iterations, count how many true and false given the value of p
-
-# ╔═╡ c817e5e6-4cb4-4392-8f7e-e1a4bb009537
-flips = [Int(bernoulli(p₁)) for _ in 1:100];
-
-# ╔═╡ 46bb14fb-62b4-402b-8a0b-8096bd2a6289
-mean(flips) 
 
 # ╔═╡ b186f0b5-721e-4757-9a4d-a839162b22f2
 rand(B)
@@ -884,8 +884,9 @@ StatsPlots = "~0.15.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.3"
+julia_version = "1.9.2"
 manifest_format = "2.0"
+project_hash = "3af2cc0c159b4cbf1caf0e62cadb83c3470f87d2"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -907,6 +908,7 @@ version = "3.3.3"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
+version = "1.1.1"
 
 [[deps.Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
@@ -945,7 +947,7 @@ uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.8+0"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -1013,6 +1015,7 @@ version = "4.1.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+version = "1.0.5+0"
 
 [[deps.Contour]]
 git-tree-sha1 = "d05d9e7b7aedff4e5b51a029dced05cfb6125781"
@@ -1047,7 +1050,9 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
+git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+version = "1.9.1"
 
 [[deps.DensityInterface]]
 deps = ["InverseFunctions", "Test"]
@@ -1080,6 +1085,7 @@ version = "0.9.1"
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+version = "1.6.0"
 
 [[deps.DualNumbers]]
 deps = ["Calculus", "NaNMath", "SpecialFunctions"]
@@ -1106,7 +1112,7 @@ uuid = "c87230d0-a227-11e9-1b43-d7ebe4e7570a"
 version = "0.4.1"
 
 [[deps.FFMPEG_jll]]
-deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "Pkg", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
+deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Pkg", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
 git-tree-sha1 = "ccd479984c7838684b3ac204b716c89955c76623"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.2+0"
@@ -1347,10 +1353,12 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+version = "0.6.3"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
+version = "7.84.0+0"
 
 [[deps.LibGit2]]
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
@@ -1359,6 +1367,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
+version = "1.10.2+0"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -1412,7 +1421,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[deps.LinearAlgebra]]
-deps = ["Libdl", "libblastrampoline_jll"]
+deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LogExpFunctions]]
@@ -1455,6 +1464,7 @@ version = "1.1.1"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+version = "2.28.2+0"
 
 [[deps.Measures]]
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
@@ -1472,6 +1482,7 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
+version = "2022.10.11"
 
 [[deps.MultivariateStats]]
 deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsBase"]
@@ -1493,6 +1504,7 @@ version = "0.4.11"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+version = "1.2.0"
 
 [[deps.Observables]]
 git-tree-sha1 = "dfd8d34871bc3ad08cd16026c1828e271d554db9"
@@ -1514,10 +1526,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+version = "0.3.21+4"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
+version = "0.8.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1541,6 +1555,11 @@ version = "1.3.2+0"
 git-tree-sha1 = "85f8e6578bf1f9ee0d11e7bb1b1456435479d47c"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.4.1"
+
+[[deps.PCRE2_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
+version = "10.42.0+0"
 
 [[deps.PCRE_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1567,8 +1586,9 @@ uuid = "30392449-352a-5448-841d-b1acce4e97dc"
 version = "0.40.1+0"
 
 [[deps.Pkg]]
-deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
+deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+version = "1.9.2"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Statistics"]
@@ -1676,6 +1696,7 @@ version = "0.3.0+0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -1717,7 +1738,7 @@ uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
 version = "1.0.1"
 
 [[deps.SparseArrays]]
-deps = ["LinearAlgebra", "Random"]
+deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[deps.SpecialFunctions]]
@@ -1740,6 +1761,7 @@ version = "1.0.1"
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+version = "1.9.0"
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
@@ -1775,9 +1797,15 @@ version = "0.6.11"
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
+[[deps.SuiteSparse_jll]]
+deps = ["Artifacts", "Libdl", "Pkg", "libblastrampoline_jll"]
+uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
+version = "5.10.1+6"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+version = "1.0.3"
 
 [[deps.TableOperations]]
 deps = ["SentinelArrays", "Tables", "Test"]
@@ -1800,6 +1828,7 @@ version = "1.7.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+version = "1.10.0"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -2010,6 +2039,7 @@ version = "1.4.0+3"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+version = "1.2.13+0"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2030,8 +2060,9 @@ uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
 [[deps.libblastrampoline_jll]]
-deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+version = "5.8.0+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2054,10 +2085,12 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
+version = "1.48.0+0"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+version = "17.4.0+0"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]

@@ -14,8 +14,8 @@ The `notebooks/dynamic/` folder contains all the interactive `Pluto` notebooks f
 5. Bayesian linear regression -- [Lecture #5 Notebook](https://raw.githack.com/DawievLill/AdvancedTimeSeries-872/main/notebooks/static/lecture5-regression.jl.html)
 6. Bayesian Vector Autoregression (BVARs) -- [Lecture #6 Notebook](https://raw.githack.com/DawievLill/AdvancedTimeSeries-872/main/notebooks/static/lecture6-bvar.jl.html)
 7. State space models / Kalman filter -- [State space models](https://julia.quantecon.org/tools_and_techniques/linear_models.html) and [Kalman filter](https://julia.quantecon.org/tools_and_techniques/kalman.html)
-8. Dynamic factor models
-9. Time varying parameter models
+8. Dynamic factor models and FAVARs
+9. Time varying parameter models (TVP-VARs)
 10. Deep learning for time series analysis
 
 `R` code for many of the lectures will also be uploaded, for those that are more comfortable using `R`. However, the main programming language for this course will be `Julia`. No familiarity with `Julia` is assumed. We will be starting from basic principles. 

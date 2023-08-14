@@ -272,7 +272,7 @@ end
 md" We might want to know what the mean (or expected value) of the process is. We can do this easily by constructing a Bernoulli `type` with certain properties. If you are new to programming, the idea of types will be strange. However, try and follow along with the example to see what the benefit is in creating types.  "
 
 # ╔═╡ 0a98082a-94c3-41d8-a129-4f42e217bcd1
-md" ### Make Bernoulli a type (optional) "
+md" ### Make Bernoulli a type"
 
 # ╔═╡ 5b38607d-6cfc-4fa0-b19f-5bea8ad38b39
 md"
@@ -373,11 +373,13 @@ md" While this section is going to be about the Gaussian distribution, we are al
 
 # ╔═╡ f99c393f-308f-4821-8f5a-ee8ebcf5b77b
 md"""
-The two important parameters for the Gaussian distribution are the mean $\mu$ and standard deviation $\sigma$. We can sample from the Gaussian distribution with mean $0$ and variance $1$ with the `randn()` function. 
+The two important parameters for the Gaussian distribution are the mean $\mu$ and standard deviation $\sigma$. These parmaters are called [sufficient statistics](https://en.wikipedia.org/wiki/Sufficient_statistic#:~:text=Typically%2C%20the%20sufficient%20statistic%20is,unknown%20or%20not%20fully%20specified.) in this context.  
+
+We can sample from the Gaussian distribution with mean $0$ and variance $1$ with the `randn()` function. 
 """
 
 # ╔═╡ 06f497e4-d1a3-4e99-86f4-f63f69920f53
-gauss = randn(10^5)
+gauss = randn(10)
 
 # ╔═╡ 6747980b-7072-4267-84c5-a352abf4ec25
 md"""
@@ -390,7 +392,7 @@ One way to specify a continous random variable $X$ is via its **probability dens
 
 $$\mathbb{P}(X \in [a, b]) = \int_{a}^b f_X(y) \, dx.$$
 
-**Notation remark**: The tradition in statistics is to use capital letters for random variables and then lowe case letters for realisation of that random variable. Our notation will change from the second lecture onward. Please make a note of this so that you do not get confused by notation. I will mention this again in another lecture. 
+**Notation remark**: The tradition in statistics is to use capital letters for random variables and then lower case letters for realisation of that random variable. Our notation will change from the second lecture onward. Please make a note of this so that you do not get confused by notation. I will mention this again in another lecture. 
 
 """
 
@@ -425,7 +427,7 @@ md"""
 """
 
 # ╔═╡ a825e358-1fdc-42cb-87cf-ab0dbd092cb0
-md" One fo the nice things about Gaussians is that the sum of two Gaussians is also Gaussian. We will make use of this property of the Gaussian in future, so take note. In order to show this, let us sample from two Gaussian random variables and add the resulting random variable. "
+md" One of the nice things about Gaussians is that the sum of two Gaussians is also Gaussian. We will make use of this property of the Gaussian in future, so take note. In order to show this, let us sample from two Gaussian random variables and add the resulting random variable. "
 
 # ╔═╡ c55f846d-d578-4c81-bdc4-ce5d03c62dba
 md" Quite interesting, we get a Gaussian again -- the green one at the end is the sum. Gaussians form part of a larger group of distributions called [stable distributions](https://en.wikipedia.org/wiki/Stable_distribution) that share this property. 

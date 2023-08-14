@@ -173,10 +173,23 @@ md" We can also generate random matrices in with this function. "
 md" ## Uniform sampling "
 
 # ╔═╡ b1d3017e-8caf-462f-bb0b-8154202f21e6
-md" The `rand` function has performed uniform sampling, which means that each object has the same probability of being selected. For our next example we will be counting heads and tails using the `countmap` function. "
+md" The `rand()` function has performed uniform sampling. This means sampling from the uniform distribution. In the uniform distribution, each object has the same probability of being selected. 
+
+For our next example we will be counting heads and tails using the `countmap` function. "
 
 # ╔═╡ 7254eb45-8170-40f2-afd3-e30ec5c26781
-md" In this case we have a dictionary that maps keys, such as `heads` and `tails`, to specific values. "
+md" In this case we have a dictionary that maps keys, such as `heads` and `tails`, to specific values. If you don't know what a dictionary is, you can look online. Or, in most cases, you can simply consult the Julia manual for the answer. "
+
+# ╔═╡ 8d51e323-f9f1-4356-b75d-2123d5fed38f
+md" Let us quickly break down what the operation above is doing
+
+`toss_counts[tail]`: This refers to the count of `tail` occurrences in the coin tosses. `toss_counts` is a dictionary that keeps track of the number of times `head` and `tail` appear, `toss_counts[tail]` would give you the number of `tail` occurrences.
+
+`length(tosses)`: This returns the total number of coin tosses. The `length()` function is typically used to get the size of an array, so `tosses` are an array containing the results of all the coin tosses.
+
+`prob_tail = toss_counts[tail] / length(tosses)`: This line of code divides the count of `tail` occurrences by the total number of tosses, giving you the probability of getting a `tail` in those tosses. It then assigns this probability to the variable prob_tail.
+
+"
 
 # ╔═╡ cdad68ca-dac9-49ad-8149-939d18f00778
 md" ## Tossing a weighted coin "
@@ -2302,6 +2315,7 @@ version = "1.4.1+0"
 # ╠═4f5e9c1f-d510-4897-9176-218a1a2f4057
 # ╟─7254eb45-8170-40f2-afd3-e30ec5c26781
 # ╠═caeee82e-b854-4b34-b34f-5899e5a9b952
+# ╟─8d51e323-f9f1-4356-b75d-2123d5fed38f
 # ╟─cdad68ca-dac9-49ad-8149-939d18f00778
 # ╟─ea5a71b7-845b-4310-b1fb-f69ee71ac3fb
 # ╟─d6aa79f3-45c8-4ff5-84d6-1cd79b845b2f
